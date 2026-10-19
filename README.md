@@ -49,6 +49,18 @@ invented red flag with no matching words is dropped, "safe" needs a clean intent
 and a low-confidence verdict never becomes a training example. The UI shows the trace ("How I decided").
 `python -m scripts.eval_check` reports the false-SAFE rate (must be 0).
 
+### Measured accuracy (offline rules; the live model is not yet tuned)
+| Set | Scams | Missed as "safe" | Flagged | Legit false alarms |
+|---|---|---|---|---|
+| Seed bank (in-sample) | 36 | 0 | 36 | 0 / 6 |
+| Held-out #1 (first run, before tuning) | 24 | 3 | 20 | 0 / 12 |
+| Held-out #2 (first run, before tuning) | 20 | **2** | 14 (+4 "unsure") | 0 / 10 |
+
+First-run misses were novel phrasings (crypto presale, "send it back" overpayment). Fixes made afterwards mean sets #1 and #2
+are now dev sets, so the honest generalisation figure is the **first-run** row: roughly 1 in 10 novel scams slipped
+through offline. That is why the pipeline never lets rules alone clear a message it can't read, and why the next step is a
+third, fresh set (ideally real forwarded scams) and the live model.
+
 ## Setup
 ```bash
 python3 -m venv .venv && source .venv/bin/activate

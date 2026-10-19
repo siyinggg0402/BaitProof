@@ -23,7 +23,6 @@ async function next(v) {
     el("h2", { textContent: `I'm ${r.pct}% Baitproof 🛡️ (${r.right} of ${r.total})` }),
     ...r.review.map((x, i) => el("p", { className: "feedback " + (x.correct ? "correct" : "incorrect"),
       textContent: `${i + 1}. ${x.correct ? "✅" : "💡"} ${x.is_scam ? "Scam" : "Fine"}. ${x.tell}` })),
-    el("p", {}, "Send this to someone you want to protect:"),
-    el("input", { value: link, readOnly: true, ariaLabel: "Share link", onfocus: (e) => e.target.select() }),
+    familyBox(r.pct, link),
     el("a", { className: "big", href: link, textContent: "Open my result card" })));
 }

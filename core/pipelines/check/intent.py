@@ -15,7 +15,7 @@ ASKS = ("pay", "share_code", "share_credentials", "install", "click", "call", "r
 HIGH_RISK_ASKS = {"pay", "share_code", "share_credentials", "install"}
 
 ASK_RULES = {
-    "pay": C(r"\b(?:pay|send|transfer|wire|deposit|top up|buy|move)\b[^.!?\n]{0,40}(?:[$€£]|\d+ ?(?:dollars|usd|eur)|\bfee\b|\btax\b|gift ?cards?|bitcoin|crypto|usdt|voucher|balance|savings|money|cash)|\bpag(?:ue|ar)\b"),
+    "pay": C(r"\b(?:pay|send|transfer|wire|deposit|top up|buy|move)\b[^.!?\n]{0,40}(?:[$€£]|\d+ ?(?:dollars|usd|eur)|\bfee\b|\btax\b|gift ?cards?|bitcoin|crypto|usdt|voucher|balance|savings|money|cash)|\bpag(?:ue|ar)\b|\b(?:send|return|refund|pay|transfer) (?:it|that|the money|the funds|them) back\b"),
     "share_code": C(r"\b(?:reply|send|read|share|give|forward|tell)\b[^.!?\n]{0,25}\b(?:code|otp|pin)\b|\bread (?:it|them) (?:out )?to me\b"),
     "share_credentials": C(r"\b(?:enter|confirm|verify|provide|share|give|send|need|require|ask(?:ed)? for)\s+(?:only |just )?(?:us |me )?(?:your |the )?(?:password|pin|ssn|social security number|card number|medicare number|date of birth|bank details|login)"),
     "install": C(r"\binstall\b|\bdownload (?:the |this )?(?:app|software)\b"),

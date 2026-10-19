@@ -12,6 +12,7 @@ from .ingest import Entities, Ingested
 from .knowledge import BAD_TLDS, BRANDS, LEET, SHORTENERS
 from .trace import Trace
 
+SCAM_WORDS = ("secure", "login", "verify", "account", "update", "billing", "bankmail", "support", "refund", "confirm")
 IRREVERSIBLE = {"gift-card", "crypto", "wire", "safe-account"}
 
 
@@ -37,6 +38,9 @@ def domain_check(host: str) -> dict:
         soft.append("is a link shortener that hides the real address")
     if host.endswith(BAD_TLDS):
         soft.append(f"ends in {host[host.rfind('.'):]}, common in throwaway scam sites")
+    words = {w for w in re.split(r"[.\-]", host) for k in SCAM_WORDS if k in w}
+    if len(words) >= 2 and not brand:
+        soft.append("stacks words like 'secure' and 'login' that scam sites love")
     if host.count("-") >= 3:
         soft.append("has many hyphens")
     return {"host": host, "hard": hard, "soft": soft}

@@ -66,3 +66,31 @@ document.getElementById("textsize")?.addEventListener("click", (e) => {
   try { localStorage.setItem("bp-big", on ? "1" : "0"); } catch (_) {}
 });
 document.getElementById("textsize")?.setAttribute("aria-pressed", String(document.documentElement.classList.contains("big")));
+
+// "Send it to Mum": pre-written, personalised share links (WhatsApp / SMS / email / copy).
+function familyBox(pct, link) {
+  const msg = (name) =>
+    `Hi ${name || "there"}, I just tried a quick 2-minute quiz on spotting scam messages and got ${pct}%. ` +
+    `Scammers target families like ours, so could you try it too? ${link}`;
+  const name = el("input", { value: "Mum", maxLength: 30, ariaLabel: "Who is this for?" });
+  const wa = el("a", { className: "btn sec", target: "_blank", rel: "noopener", textContent: "WhatsApp" });
+  const sms = el("a", { className: "btn sec", textContent: "Text message" });
+  const mail = el("a", { className: "btn sec", textContent: "Email" });
+  const note = el("p", { className: "muted", ariaLive: "polite" });
+  const copy = el("button", { type: "button", className: "btn sec", textContent: "Copy message", onclick: async () => {
+    try { await navigator.clipboard.writeText(msg(name.value)); note.textContent = "Copied! Paste it into any chat."; }
+    catch (_) { note.textContent = msg(name.value); }
+  } });
+  const update = () => {
+    const t = encodeURIComponent(msg(name.value));
+    wa.href = `https://wa.me/?text=${t}`;
+    sms.href = `sms:?&body=${t}`;
+    mail.href = `mailto:?subject=${encodeURIComponent("Can you try this scam quiz?")}&body=${t}`;
+  };
+  name.addEventListener("input", update);
+  update();
+  return el("div", { className: "panel family" },
+    el("b", { textContent: "Send it to someone you want to protect" }),
+    el("label", { textContent: "Who is it for?" }), name,
+    el("div", { className: "famrow" }, wa, sms, mail, copy), note);
+}

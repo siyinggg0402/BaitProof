@@ -1,3 +1,5 @@
+const fam = document.getElementById("family");
+if (fam) fam.append(familyBox(fam.dataset.pct, fam.dataset.url));
 document.getElementById("share").addEventListener("click", async (e) => {
   const { url, text } = e.target.dataset, note = document.getElementById("shared");
   try {
