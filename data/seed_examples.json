@@ -1,0 +1,340 @@
+[
+ {
+  "id": "s01",
+  "is_scam": true,
+  "tactics": [
+   "urgency-pressure",
+   "lookalike-link"
+  ],
+  "text": "DHL: Your parcel is on hold. Pay the $1.99 fee within 24 hours or it will be returned. Pay now: dhl-fee-pay.xyz/track",
+  "tell_phrase": "within 24 hours",
+  "tell": "A fee plus a deadline in hours is a pressure trick, and dhl-fee-pay.xyz is not DHL.",
+  "action": "Ignore it. If you expect a parcel, open the courier's real website yourself."
+ },
+ {
+  "id": "s02",
+  "is_scam": true,
+  "tactics": [
+   "urgency-pressure",
+   "impersonation-official"
+  ],
+  "text": "Your electricity will be cut off today at 5pm unless your overdue bill is paid. Call 0800-555-0199 immediately to avoid disconnection. Do not ignore this notice.",
+  "tell_phrase": "cut off today at 5pm",
+  "tell": "Real utility companies send warnings by letter and give you time. A deadline today is pressure.",
+  "action": "Don't call. Check your bill and call the number printed on it."
+ },
+ {
+  "id": "s03",
+  "is_scam": true,
+  "tactics": [
+   "authority-spoofing",
+   "urgency-pressure"
+  ],
+  "text": "This is Officer Daniels from the Cyber Crime Unit. Your name appeared in a fraud case. Stay on the line and do not tell your bank or family. We will guide you.",
+  "tell_phrase": "do not tell your bank or family",
+  "tell": "Real police never ask you to keep it secret from your bank or family.",
+  "action": "Hang up. Call your local police on a number you look up yourself."
+ },
+ {
+  "id": "s04",
+  "is_scam": true,
+  "tactics": [
+   "authority-spoofing",
+   "irreversible-payment"
+  ],
+  "text": "Message from your bank's security team: We froze your account after suspicious activity. To unfreeze it, move your savings to the safe account we give you now.",
+  "tell_phrase": "move your savings to the safe account",
+  "tell": "A bank never asks you to move your money to a 'safe account'. That account belongs to the scammer.",
+  "action": "Don't move any money. Call the number on the back of your bank card."
+ },
+ {
+  "id": "s05",
+  "is_scam": true,
+  "tactics": [
+   "otp-credential-phish"
+  ],
+  "text": "Security alert: someone tried to sign in to your account. We just texted you a 6-digit code. Reply with that code to cancel the sign-in.",
+  "tell_phrase": "Reply with that code",
+  "tell": "The code that was texted to you is the key to your account. Nobody real asks you to send it back.",
+  "action": "Never share the code. Change your password on the official app or website."
+ },
+ {
+  "id": "s06",
+  "is_scam": true,
+  "tactics": [
+   "otp-credential-phish"
+  ],
+  "text": "Hi, I'm interested in the sofa you're selling, but my buyer protection needs a check. I'm sending you a code by text, please read it to me so I can verify you're real.",
+  "tell_phrase": "read it to me",
+  "tell": "A buyer never needs a code sent to your phone. They are using it to take over your account.",
+  "action": "Don't share the code. Block the buyer and report them to the marketplace."
+ },
+ {
+  "id": "s07",
+  "is_scam": true,
+  "tactics": [
+   "emotional-manipulation",
+   "irreversible-payment"
+  ],
+  "text": "Hi grandma it's me, I'm in trouble and need cash. Please buy four $100 gift cards and send me the numbers on the back. Don't tell Mom.",
+  "tell_phrase": "send me the numbers on the back",
+  "tell": "Gift card numbers are like cash. Asking you to keep it secret is a big warning.",
+  "action": "Call your grandchild on the number you already have. Don't buy any gift cards."
+ },
+ {
+  "id": "s08",
+  "is_scam": true,
+  "tactics": [
+   "irreversible-payment",
+   "advance-fee",
+   "too-good-to-be-true"
+  ],
+  "text": "To release your prize, pay the $250 tax by buying a Bitcoin voucher at any kiosk and sending us the code.",
+  "tell_phrase": "buying a Bitcoin voucher",
+  "tell": "Real prizes never ask you to pay with vouchers or crypto first.",
+  "action": "Ignore it. You can't win a contest you never entered."
+ },
+ {
+  "id": "s09",
+  "is_scam": true,
+  "tactics": [
+   "lookalike-link"
+  ],
+  "text": "Netflix: your payment failed. Update your billing details to keep watching: netflix-billing-help.top/login",
+  "tell_phrase": "netflix-billing-help.top",
+  "tell": "The address ends in .top and has extra words. The real Netflix address ends in netflix.com.",
+  "action": "Don't tap it. Open the Netflix app or type netflix.com yourself."
+ },
+ {
+  "id": "s10",
+  "is_scam": true,
+  "tactics": [
+   "lookalike-link",
+   "impersonation-official"
+  ],
+  "text": "Amazon: We noticed a login from a new device. If this wasn't you, secure your account here: amaz0n-security.click/verify. Thanks, Amazon Support",
+  "tell_phrase": "amaz0n-security.click",
+  "tell": "Look closely: 'amaz0n' has a zero instead of an o, and the ending is .click.",
+  "action": "Don't tap it. Open the Amazon app yourself to check your account."
+ },
+ {
+  "id": "s11",
+  "is_scam": true,
+  "tactics": [
+   "too-good-to-be-true",
+   "advance-fee"
+  ],
+  "text": "Congratulations! You've been selected to win a new phone in our loyalty draw. You only need to answer 3 questions and pay $4.95 shipping. Claim here: bit.ly/win-phone16",
+  "tell_phrase": "pay $4.95 shipping",
+  "tell": "You didn't enter, and the 'shipping fee' is how they get your card details.",
+  "action": "Ignore it. Never pay to claim a prize."
+ },
+ {
+  "id": "s12",
+  "is_scam": true,
+  "tactics": [
+   "too-good-to-be-true",
+   "urgency-pressure"
+  ],
+  "text": "Earn $400 a day from your phone with no experience. Guaranteed returns, no risk. Limited spots, message me on Telegram to start.",
+  "tell_phrase": "Guaranteed returns, no risk",
+  "tell": "Nothing is guaranteed and risk-free. Easy money is the bait.",
+  "action": "Don't reply. Real work doesn't recruit by unknown text."
+ },
+ {
+  "id": "s13",
+  "is_scam": true,
+  "tactics": [
+   "emotional-manipulation",
+   "urgency-pressure"
+  ],
+  "text": "Mum, my phone broke so I'm using a friend's. I'm stuck abroad and my wallet was stolen. Can you transfer $800 right now? I'll explain later, please don't call.",
+  "tell_phrase": "please don't call",
+  "tell": "A real child in trouble would take your call. 'Don't call' keeps you from checking.",
+  "action": "Call your child's old number, or someone who is with them, before sending anything."
+ },
+ {
+  "id": "s14",
+  "is_scam": true,
+  "tactics": [
+   "emotional-manipulation",
+   "advance-fee"
+  ],
+  "text": "I know we've only talked online for 3 weeks but I feel like I've known you forever. My shipment is stuck at customs and I need $1,200 to release it. I love you.",
+  "tell_phrase": "need $1,200 to release it",
+  "tell": "Someone you have never met asking for money is a romance scam, however kind they seem.",
+  "action": "Stop sending money. Talk to a friend or family member you trust."
+ },
+ {
+  "id": "s15",
+  "is_scam": true,
+  "tactics": [
+   "remote-access-request",
+   "impersonation-official"
+  ],
+  "text": "Microsoft Support: Your computer has a virus. Call us now and install AnyDesk so our technician can remove it for free.",
+  "tell_phrase": "install AnyDesk so our technician",
+  "tell": "Real support never contacts you first. Giving remote access lets them see everything.",
+  "action": "Don't call or install anything. Close the page. If a window won't close, restart the computer."
+ },
+ {
+  "id": "s16",
+  "is_scam": true,
+  "tactics": [
+   "remote-access-request",
+   "urgency-pressure"
+  ],
+  "text": "We accidentally refunded you $3,000 instead of $300. Please install QuickSupport so we can reverse the extra amount. Do not close your screen.",
+  "tell_phrase": "install QuickSupport",
+  "tell": "Refunds don't need remote control of your computer. This is a trick to reach your bank.",
+  "action": "Don't install anything. Call your bank using the number on your card."
+ },
+ {
+  "id": "s17",
+  "is_scam": true,
+  "tactics": [
+   "advance-fee",
+   "too-good-to-be-true"
+  ],
+  "text": "I am a lawyer representing the estate of a late relative of yours who left $4.5 million. To release the funds, you need to pay a $900 legal processing fee first.",
+  "tell_phrase": "pay a $900 legal processing fee first",
+  "tell": "Real inheritances don't ask you to pay before you get the money.",
+  "action": "Delete it. No stranger is leaving you millions."
+ },
+ {
+  "id": "s18",
+  "is_scam": true,
+  "tactics": [
+   "advance-fee"
+  ],
+  "text": "Your loan of $10,000 is approved! No credit check. Just send a $150 insurance deposit and the money will arrive today.",
+  "tell_phrase": "send a $150 insurance deposit",
+  "tell": "Real lenders take fees out of the loan. They never ask you to pay first.",
+  "action": "Don't send anything. Apply only with a lender you can look up."
+ },
+ {
+  "id": "s19",
+  "is_scam": true,
+  "tactics": [
+   "impersonation-official",
+   "irreversible-payment",
+   "urgency-pressure"
+  ],
+  "text": "IRS Notice: You have an unpaid tax balance. A warrant will be issued unless you pay today by gift card. Case #44821.",
+  "tell_phrase": "pay today by gift card",
+  "tell": "Tax offices never accept gift cards and never threaten arrest by text.",
+  "action": "Ignore it. Check your tax account on the official government website."
+ },
+ {
+  "id": "s20",
+  "is_scam": true,
+  "tactics": [
+   "impersonation-official",
+   "lookalike-link"
+  ],
+  "text": "Medicare: Your new card is ready. Confirm your Medicare number and date of birth at the link to avoid losing coverage: medicare-card-update.info",
+  "tell_phrase": "Confirm your Medicare number",
+  "tell": "Health services don't text you links to 'confirm' your details. .info is not an official ending.",
+  "action": "Don't tap it. Call the number on your current card."
+ },
+ {
+  "id": "s21",
+  "is_scam": true,
+  "tactics": [
+   "investment-crypto",
+   "too-good-to-be-true"
+  ],
+  "text": "Hi, I saw your profile. My uncle's team posts trading signals with 300% monthly returns. Join our private group and deposit with USDT to start.",
+  "tell_phrase": "300% monthly returns",
+  "tell": "No honest investment makes 300% a month. High returns plus a rush to deposit is the trap.",
+  "action": "Don't deposit. Ask a trusted family member or a licensed adviser."
+ },
+ {
+  "id": "s22",
+  "is_scam": true,
+  "tactics": [
+   "investment-crypto",
+   "advance-fee"
+  ],
+  "text": "Your crypto account balance shows $12,400 profit! To withdraw it you must first pay a 10% release fee. Add funds to unlock withdrawal.",
+  "tell_phrase": "pay a 10% release fee",
+  "tell": "Fake sites show fake profits, then ask for a fee to withdraw. The money isn't real.",
+  "action": "Stop adding money. Contact your bank and a trusted adviser."
+ },
+ {
+  "id": "s23",
+  "is_scam": true,
+  "tactics": [
+   "job-task-scam"
+  ],
+  "text": "We're hiring! Boost app ratings and earn $30 per task, 20 minutes a day. First, deposit $50 to activate your work account, refunded with your first payout.",
+  "tell_phrase": "deposit $50 to activate your work account",
+  "tell": "A real job pays you. It never asks you to pay in first.",
+  "action": "Don't reply. Block the sender."
+ },
+ {
+  "id": "s24",
+  "is_scam": true,
+  "tactics": [
+   "job-task-scam"
+  ],
+  "text": "Part-time job: like videos and get paid. Complete 40 tasks to unlock your commission. Some premium tasks need you to top up your balance first.",
+  "tell_phrase": "top up your balance first",
+  "tell": "Being asked to top up your balance means you are paying them.",
+  "action": "Walk away. Don't put money into any job account."
+ },
+ {
+  "id": "l01",
+  "is_scam": false,
+  "tactics": [],
+  "text": "Hi, this is Dr. Lee's clinic. Reminder: your appointment is tomorrow at 10:30am. Reply C to confirm or call us on the number on your appointment card to reschedule.",
+  "tell_phrase": "",
+  "tell": "Nothing here asks for money, codes or a rush. If unsure, contact them on a number you already know.",
+  "action": "It's fine, but you can always call the clinic yourself."
+ },
+ {
+  "id": "l02",
+  "is_scam": false,
+  "tactics": [],
+  "text": "Your library hold is ready for pickup at the front desk until Friday. Bring your library card.",
+  "tell_phrase": "",
+  "tell": "Nothing here asks for money, codes or a rush. If unsure, contact them on a number you already know.",
+  "action": "Fine to follow. Bring your card."
+ },
+ {
+  "id": "l03",
+  "is_scam": false,
+  "tactics": [],
+  "text": "Mom, running 10 minutes late, please start dinner without me. Love you!",
+  "tell_phrase": "",
+  "tell": "Nothing here asks for money, codes or a rush. If unsure, contact them on a number you already know.",
+  "action": "No action needed."
+ },
+ {
+  "id": "l04",
+  "is_scam": false,
+  "tactics": [],
+  "text": "Your bank: a new statement is ready. Sign in through our official app to view it. We will never ask for your PIN or full password.",
+  "tell_phrase": "",
+  "tell": "It points you to the official app and asks for nothing. Even so, never tap links in texts about money.",
+  "action": "Open your bank's app yourself."
+ },
+ {
+  "id": "l05",
+  "is_scam": false,
+  "tactics": [],
+  "text": "Hi, it's Sam from the soccer club. Practice moved to Saturday 9am at the north field. Bring water.",
+  "tell_phrase": "",
+  "tell": "Nothing here asks for money, codes or a rush. If unsure, contact them on a number you already know.",
+  "action": "No action needed."
+ },
+ {
+  "id": "l06",
+  "is_scam": false,
+  "tactics": [],
+  "text": "Your verification code is 482913. Don't share it with anyone. If you didn't request it, ignore this message.",
+  "tell_phrase": "",
+  "tell": "It only gives you a code you asked for. It doesn't ask you to send it anywhere.",
+  "action": "Use it only if YOU just asked for it. Otherwise ignore it."
+ }
+]
