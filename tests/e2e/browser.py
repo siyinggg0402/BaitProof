@@ -1,5 +1,5 @@
 """Real-browser smoke test (not collected by pytest). Needs: pip install playwright + Google Chrome installed.
-Run: python -m tests.e2e_browser"""
+Run: python -m tests.e2e.browser"""
 import os
 import subprocess
 import sys
@@ -13,7 +13,8 @@ CHROME = os.getenv("CHROME_PATH", "/Applications/Google Chrome.app/Contents/MacO
 
 
 def main() -> int:
-    env = {**os.environ, "BAITPROOF_DB": tempfile.mkdtemp() + "/e2e.sqlite"}
+    # NEBIUS_API_KEY="" forces offline rules: the e2e test must never spend model credit (dotenv does not override set vars)
+    env = {**os.environ, "BAITPROOF_DB": tempfile.mkdtemp() + "/e2e.sqlite", "NEBIUS_API_KEY": ""}
     srv = subprocess.Popen([sys.executable, "-m", "uvicorn", "web.main:app", "--port", str(PORT)], env=env,
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     time.sleep(2.5)

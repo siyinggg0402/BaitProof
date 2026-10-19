@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}Baitproof{% endblock %}</title>
 {% block meta %}{% endblock %}
-<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-<link rel="stylesheet" href="/static/style.css">
-<script src="/static/boot.js"></script>
+<link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg">
+<link rel="stylesheet" href="/static/css/style.css">
+<script src="/static/js/boot.js"></script>
 </head>
 <body>
 <div class="glow" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -23,8 +23,8 @@
 </div></div></header>
 <main class="wrap">{% block content %}{% endblock %}</main>
 <footer class="wrap">We keep the <em>tricks</em> you meet, not your messages.{% if not ai %} · Offline mode: AI not configured, using built-in checks.{% endif %}</footer>
-<script src="/static/app.js"></script>
-<script src="/static/fx.js"></script>
+<script src="/static/js/app.js"></script>
+<script src="/static/js/fx.js"></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>

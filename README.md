@@ -47,7 +47,7 @@ ingest ─▶ victim triage ─▶ intent ─▶ tools ─▶ analysis ─▶ gr
 The model proposes; deterministic gates decide. The model can add suspicion but never clear hard evidence, an
 invented red flag with no matching words is dropped, "safe" needs a clean intent + no links + a second reviewer,
 and a low-confidence verdict never becomes a training example. The UI shows the trace ("How I decided").
-`python -m scripts.eval_check` reports the false-SAFE rate (must be 0).
+`python -m scripts.eval_offline` reports the false-SAFE rate (must be 0); `python -m scripts.eval_live` does the same against the live model with a hard token budget.
 
 ### Measured accuracy (offline rules; the live model is not yet tuned)
 | Set | Scams | Missed as "safe" | Flagged | Legit false alarms |
@@ -60,6 +60,17 @@ First-run misses were novel phrasings (crypto presale, "send it back" overpaymen
 are now dev sets, so the honest generalisation figure is the **first-run** row: roughly 1 in 10 novel scams slipped
 through offline. That is why the pipeline never lets rules alone clear a message it can't read, and why the next step is a
 third, fresh set (ideally real forwarded scams) and the live model.
+
+## Repository layout
+```
+core/        channel-agnostic engine (domain / storage / ai / pipelines, see above)
+web/         FastAPI app: main.py (routes), deps.py (profiles, rate limit, headers), cardimg.py, templates/, static/{css,js,img}
+bot/         optional Telegram front-end (handlers.py is the tested logic)
+data/        curated seed scams + legitimate examples
+scripts/     verify_setup (Phase 0), eval_offline, eval_live, seed_demo
+tests/       core/ web/ bot/ (pytest), data/ (labelled eval sets), e2e/ (real-browser click-through)
+deploy/      Nebius VM: setup script, systemd unit, Caddyfile
+```
 
 ## Setup
 ```bash

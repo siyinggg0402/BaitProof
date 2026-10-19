@@ -2,7 +2,7 @@ import pytest
 
 from core.ai import llm
 from core.domain.schemas import TacticHit, Verdict as V
-from core.pipelines import evaluate
+from core.pipelines.check import evaluate
 from core.pipelines.check import analysis, gates, intent, tools
 from core.pipelines.check import check_message
 from core.pipelines.check.ingest import ingest
@@ -61,7 +61,7 @@ def _fake_llm(monkeypatch, analysis_out, critic_out=None, intent_out=None):
     def fake(system, user, heavy=True, retries=1):
         if "diagnose what a message wants" in system:
             return intent_out or {"asks": [], "pressure": False}
-        if "sceptical second reviewer" in system:
+        if "second reviewer" in system:
             return critic_out or {"concern": False}
         return analysis_out
     monkeypatch.setattr(llm, "chat_json", fake)

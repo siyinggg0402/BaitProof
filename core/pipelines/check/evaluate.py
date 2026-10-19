@@ -4,7 +4,7 @@ from __future__ import annotations
 from core.domain.schemas import Verdict
 from core.storage import library
 
-from .check import check_message
+from .pipeline import check_message
 
 
 def run() -> dict:

@@ -6,6 +6,15 @@ import os
 import re
 
 
+# Running totals so spend is visible and a budget can be enforced (scripts/eval_live.py).
+USAGE = {"calls": 0, "prompt_tokens": 0, "completion_tokens": 0}
+MAX_TOKENS = int(os.getenv("BAITPROOF_MAX_TOKENS", "2500"))  # per call
+# Nemotron reasons silently for ~2k tokens before answering (slow, costly, and it truncated our JSON at 1.5k). Verdict
+# quality doesn't need it, so thinking is OFF unless BAITPROOF_THINKING=1. Models that reject the flag are retried without it.
+_THINKING = os.getenv("BAITPROOF_THINKING") == "1"
+_flag_supported = True
+
+
 class LLMUnavailable(Exception):
     """No key configured, or the call/JSON failed. Callers must degrade, never crash."""
 
@@ -33,14 +42,27 @@ def chat_json(system: str, user: str, heavy: bool = True, retries: int = 1) -> d
     if not available():
         raise LLMUnavailable("Nebius not configured")
     model = os.environ["NEBIUS_MODEL"] if heavy else os.getenv("NEBIUS_MODEL_LIGHT") or os.environ["NEBIUS_MODEL"]
+    global _flag_supported
     last: Exception | None = None
     for _ in range(retries + 1):
         try:
-            resp = _client().chat.completions.create(
-                model=model,
-                temperature=0.2,
-                messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
-            )
+            extra = {} if _THINKING or not _flag_supported else {"extra_body": {"chat_template_kwargs": {"enable_thinking": False}}}
+            try:
+                resp = _client().chat.completions.create(
+                    model=model, temperature=0.2, max_tokens=MAX_TOKENS,
+                    messages=[{"role": "system", "content": system}, {"role": "user", "content": user}], **extra)
+            except Exception as e:
+                if extra and getattr(e, "status_code", None) == 400:  # this model doesn't know the flag
+                    _flag_supported = False
+                    resp = _client().chat.completions.create(
+                        model=model, temperature=0.2, max_tokens=MAX_TOKENS,
+                        messages=[{"role": "system", "content": system}, {"role": "user", "content": user}])
+                else:
+                    raise
+            USAGE["calls"] += 1
+            if resp.usage:
+                USAGE["prompt_tokens"] += resp.usage.prompt_tokens or 0
+                USAGE["completion_tokens"] += resp.usage.completion_tokens or 0
             return parse_json(resp.choices[0].message.content or "")
         except Exception as e:  # network, auth, bad JSON: all degrade the same way
             last = e
