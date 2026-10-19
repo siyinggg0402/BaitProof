@@ -1,11 +1,29 @@
 {% extends "base.html" %}
 {% block content %}
-<span class="eyebrow">Your family's scam coach</span>
-<h1>Is this message a scam?</h1>
-<p class="lead">Paste a text, email or message you received. I'll tell you what I think, show you the one giveaway, and turn it into quick practice so the next one doesn't fool you.</p>
-<form method="post" action="/check" class="card">
+<section class="hero">
+  <div>
+    <span class="pill rise"><b>FREE</b> Private by design. We keep tricks, not messages.</span>
+    <h1 class="rise d1">Make your family <span class="dots"><span class="grad">harder to fool</span></span>.</h1>
+    <p class="lead rise d2">Paste any suspicious message. Baitproof tells you if it's a scam, shows you the one giveaway, then turns it into quick practice so the next one doesn't work on you.</p>
+    <div class="cta-row rise d3"><a class="btn big" href="#check">Check a message</a><a class="btn big sec" href="/train">Start practice</a></div>
+    <ul class="trust rise d4"><li>Plain language</li><li>Read aloud</li><li>Learns which tricks fool you</li></ul>
+  </div>
+  <div class="rise d2" aria-hidden="true">
+    <div class="mock">
+      <div class="mock-top"><i></i><i></i><i></i><span>New message</span></div>
+      <div class="mock-body">
+        <div class="bubble" id="demo-bubble">DHL: Your parcel is on hold. Pay the $1.99 fee within 24 hours. Pay now: dhl-fee-pay.xyz</div>
+        <div class="mock-tags" id="demo-tags"><span>Rushing you</span><span>Fake website address</span></div>
+        <div class="mock-verdict show" id="demo-verdict">Scam. Don't pay, don't tap the link.</div>
+      </div>
+    </div>
+    <p class="mock-cap">Example only</p>
+  </div>
+</section>
+
+<form method="post" action="/check" class="card reveal" id="check">
   <label for="message">Paste the message here</label>
-  <textarea id="message" name="message" rows="6" required maxlength="4000" placeholder="e.g. “Your parcel is on hold. Pay a $1.99 fee within 24 hours…”">{{ text }}</textarea>
+  <textarea id="message" name="message" rows="5" required maxlength="4000" placeholder="e.g. “Your parcel is on hold. Pay a $1.99 fee within 24 hours…”">{{ text }}</textarea>
   <div class="examples"><span>Try an example:</span>
     <button type="button" class="ghost" data-example="Hi grandma, it's me. I'm in trouble and need cash. Please buy four $100 gift cards and send me the numbers. Don't tell Mom.">Grandchild in trouble</button>
     <button type="button" class="ghost" data-example="DHL: Your parcel is on hold. Pay the $1.99 fee within 24 hours or it will be returned. Pay now: dhl-fee-pay.xyz/track">Parcel fee</button>
@@ -13,14 +31,21 @@
   </div>
   <button class="big">Check it</button>
 </form>
+
 {% if result %}
-<section class="card result v-{{ result.verdict.value }}" aria-live="polite" id="result">
-  <div class="banner">{{ result.headline }}</div>
+{% set v = result.verdict.value %}
+<section class="card result v-{{ v }}" aria-live="polite" id="result">
+  <div class="banner"><span class="vicon" aria-hidden="true"><svg viewBox="0 0 24 24">
+    {% if v in ('scam','likely_scam') %}<path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/>
+    {% elif v == 'safe' %}<path d="M20 6 9 17l-5-5"/>
+    {% elif v == 'victim_support' %}<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>
+    {% else %}<path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/>{% endif %}</svg></span>
+    <span>{{ result.headline.split(' ', 1)[1] }}</span></div>
   <div class="body">
     {% if result.tell %}<div class="panel"><b>The giveaway</b>{{ result.tell }}</div>{% endif %}
     {% if result.action %}<div class="panel"><b>What to do</b>{{ result.action }}</div>{% endif %}
     {% if result.tactics %}<ul class="chips" aria-label="Tricks found">{% for t in result.tactics %}<li title="{{ t.quote }}">{{ labels[t.id] }}</li>{% endfor %}</ul>{% endif %}
-    {% if result.added_to_training %}<p class="added">📚 Added to your practice: {% for t in result.added_to_training %}{{ labels[t] }}{{ ", " if not loop.last }}{% endfor %}</p>{% endif %}
+    {% if result.added_to_training %}<p class="added">Added to your practice: {% for t in result.added_to_training %}{{ labels[t] }}{{ ", " if not loop.last }}{% endfor %}</p>{% endif %}
     <details class="trace"><summary>How I decided ({{ result.confidence }} confidence)</summary>
       <ol>{% for s in result.trace %}<li class="st-{{ s.status }}"><strong>{{ s.stage }}</strong>: {{ s.detail }}</li>{% endfor %}</ol></details>
     <button class="speak" data-say="{{ result.headline }} {{ result.tell }} {{ result.action }}">🔊 Read aloud</button>
@@ -30,4 +55,4 @@
 {% endif %}
 {% include "_map.html" %}
 {% endblock %}
-{% block scripts %}<script src="/static/app.js"></script><script src="/static/examples.js"></script>{% endblock %}
+{% block scripts %}<script src="/static/examples.js"></script>{% endblock %}

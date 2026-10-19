@@ -1,3 +1,4 @@
+// Shared helpers (loaded before fx.js; animateNumber/reduce come from fx.js and are only used after load).
 document.querySelectorAll(".speak").forEach((b) =>
   b.addEventListener("click", () => {
     if (!("speechSynthesis" in window)) return;
@@ -5,20 +6,36 @@ document.querySelectorAll(".speak").forEach((b) =>
     speechSynthesis.speak(new SpeechSynthesisUtterance(b.dataset.say));
   })
 );
+
+let mapFilter = "all";
+function applyFilter() {
+  document.querySelectorAll("#map li").forEach((li) => {
+    const lv = li.dataset.level;
+    li.hidden = !(mapFilter === "all" || (mapFilter === "weak" ? lv === "weak" || lv === "untested" : lv === mapFilter));
+  });
+}
+document.querySelectorAll(".filters button").forEach((b) =>
+  b.addEventListener("click", () => {
+    mapFilter = b.dataset.filter;
+    document.querySelectorAll(".filters button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+    applyFilter();
+  })
+);
+
 function renderMap(m) {
   const ul = document.getElementById("map");
   if (!ul) return;
-  document.getElementById("score").textContent = m.score;
+  animateNumber(document.getElementById("score"), m.score, 800);
   document.getElementById("ring")?.setAttribute("stroke-dasharray", `${m.score} 100`);
   ul.replaceChildren(...m.tactics.map((t) => {
-    const li = document.createElement("li");
-    const n = Object.assign(document.createElement("span"), { className: "tname", textContent: t.label });
-    const bars = Object.assign(document.createElement("span"), { className: "bars" });
-    for (let i = 0; i < 5; i++) bars.append(Object.assign(document.createElement("i"), { className: (i < t.bars ? "on " : "") + t.level }));
-    const l = Object.assign(document.createElement("span"), { className: "lvl " + t.level, textContent: t.level_text });
-    li.append(n, bars, l);
+    const li = el("li", { className: "tick" });
+    li.dataset.level = t.level;
+    const bars = el("span", { className: "bars" });
+    for (let i = 0; i < 5; i++) bars.append(el("i", { className: (i < t.bars ? "on " : "") + t.level }));
+    li.append(el("span", { className: "tname", textContent: t.label }), bars, el("span", { className: "lvl " + t.level, textContent: t.level_text }));
     return li;
   }));
+  applyFilter();
 }
 function el(tag, props, ...kids) {
   const e = Object.assign(document.createElement(tag), props || {});
@@ -34,6 +51,10 @@ function speakBtn(text) {
 }
 function progress(done, total) {
   const bar = el("div", { className: "progress", ariaHidden: "true" });
-  for (let i = 0; i < total; i++) bar.append(el("i", { className: i < done ? "done" : "" }));
+  for (let i = 0; i < total; i++) bar.append(el("i", { className: i < done ? "done" : i === done ? "now" : "" }));
   return bar;
+}
+const LETTERS = "ABCD";
+function option(text, i, onclick) {
+  return el("button", { className: "opt", onclick }, el("kbd", { textContent: LETTERS[i] }), el("span", { textContent: text }));
 }

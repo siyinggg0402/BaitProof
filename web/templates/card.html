@@ -9,15 +9,15 @@
 <meta name="twitter:image" content="{{ image }}">
 {% endblock %}
 {% block content %}
-<span class="eyebrow">Baitproof family challenge</span>
-<section class="card share">
+<section class="card share narrow rise">
+  <span class="pill"><b>BAITPROOF</b> Family challenge</span>
   <p class="bigpct">{{ pct }}%</p>
   <h1>I'm {{ pct }}% Baitproof 🛡️</h1>
   <p class="lead">I spotted {{ right }} of {{ total }} messages. Can you beat me?</p>
   <p><a class="big" href="{{ url }}">Take the challenge</a></p>
-  <button class="big" id="share" data-url="{{ url }}" data-text="I'm {{ pct }}% Baitproof 🛡️ Can you beat me?">Share with family</button>
+  <button class="big sec" id="share" data-url="{{ url }}" data-text="I'm {{ pct }}% Baitproof 🛡️ Can you beat me?">Share with family</button>
   <p class="muted" id="shared" aria-live="polite">Challenge link: {{ url }}</p>
 </section>
 {% endblock %}
 
-{% block scripts %}<script src="/static/app.js"></script><script src="/static/share.js"></script>{% endblock %}
+{% block scripts %}<script src="/static/share.js"></script>{% endblock %}
