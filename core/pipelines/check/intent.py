@@ -64,13 +64,22 @@ def _heuristic(ing: Ingested) -> Intent:
     return it
 
 
+def _supported(ask: str, ing: Ingested) -> bool:
+    """A model-added ask must be physically possible: no link in the message means nothing to click."""
+    if ask == "click":
+        return bool(ing.entities.hosts)
+    if ask == "call":
+        return bool(re.search(r"\bcall\b|\d{3}[\s.-]?\d{3,}", ing.text, re.I))
+    return True
+
+
 def diagnose(ing: Ingested) -> Intent:
     it = _heuristic(ing)
     if llm.available():
         try:
             out = llm.chat_json(INTENT_SYSTEM, "MESSAGE:\n" + ing.redacted, heavy=False)
             # Union, never replace: a model can only ADD suspicion, not remove what the rules saw.
-            it.asks |= {a for a in out.get("asks", []) if a in ASKS}
+            it.asks |= {a for a in out.get("asks", []) if a in ASKS and _supported(a, ing)}
             it.pressure = it.pressure or bool(out.get("pressure"))
             it.claimed = it.claimed or str(out.get("claimed_identity") or "")[:60]
             it.used_ai = True

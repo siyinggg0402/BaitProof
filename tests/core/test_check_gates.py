@@ -103,3 +103,11 @@ def test_trace_has_every_stage():
     r = check_message("Pay with gift cards today.")
     assert [s.stage for s in r.trace][:1] == ["ingest"]
     assert {"intent", "tools", "grounding", "arbiter", "flywheel"} <= {s.stage for s in r.trace}
+
+
+def test_model_cannot_invent_a_link_to_click(monkeypatch):
+    _fake_llm(monkeypatch, {"verdict": "safe", "tactics": []}, intent_out={"asks": ["click", "call"], "pressure": False})
+    it = intent.diagnose(ingest("Your prescription is ready to collect. Open until 6pm today."))
+    assert "click" not in it.asks and "call" not in it.asks
+    r = check_message("Your prescription is ready to collect. Open until 6pm today.")
+    assert r.verdict == V.SAFE

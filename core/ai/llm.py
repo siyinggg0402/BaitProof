@@ -8,6 +8,7 @@ import re
 
 # Running totals so spend is visible and a budget can be enforced (scripts/eval_live.py).
 USAGE = {"calls": 0, "prompt_tokens": 0, "completion_tokens": 0}
+TEMPERATURE = float(os.getenv("BAITPROOF_TEMP", "0"))  # deterministic: the same message should get the same verdict
 MAX_TOKENS = int(os.getenv("BAITPROOF_MAX_TOKENS", "2500"))  # per call
 # Nemotron reasons silently for ~2k tokens before answering (slow, costly, and it truncated our JSON at 1.5k). Verdict
 # quality doesn't need it, so thinking is OFF unless BAITPROOF_THINKING=1. Models that reject the flag are retried without it.
@@ -49,13 +50,13 @@ def chat_json(system: str, user: str, heavy: bool = True, retries: int = 1) -> d
             extra = {} if _THINKING or not _flag_supported else {"extra_body": {"chat_template_kwargs": {"enable_thinking": False}}}
             try:
                 resp = _client().chat.completions.create(
-                    model=model, temperature=0.2, max_tokens=MAX_TOKENS,
+                    model=model, temperature=TEMPERATURE, max_tokens=MAX_TOKENS,
                     messages=[{"role": "system", "content": system}, {"role": "user", "content": user}], **extra)
             except Exception as e:
                 if extra and getattr(e, "status_code", None) == 400:  # this model doesn't know the flag
                     _flag_supported = False
                     resp = _client().chat.completions.create(
-                        model=model, temperature=0.2, max_tokens=MAX_TOKENS,
+                        model=model, temperature=TEMPERATURE, max_tokens=MAX_TOKENS,
                         messages=[{"role": "system", "content": system}, {"role": "user", "content": user}])
                 else:
                     raise
