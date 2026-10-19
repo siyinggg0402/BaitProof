@@ -1,0 +1,5 @@
+# Automatic HTTPS. Replace the domain (or use `:80` for plain HTTP on an IP-only demo).
+baitproof.example.com {
+    encode gzip
+    reverse_proxy 127.0.0.1:8000
+}

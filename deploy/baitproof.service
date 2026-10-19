@@ -1,0 +1,20 @@
+[Unit]
+Description=Baitproof web app
+After=network.target
+
+[Service]
+User=baitproof
+WorkingDirectory=/opt/baitproof
+EnvironmentFile=/opt/baitproof/.env
+Environment=BAITPROOF_MULTIUSER=1
+Environment=BAITPROOF_DB=/var/lib/baitproof/baitproof.sqlite
+ExecStart=/opt/baitproof/.venv/bin/uvicorn web.main:app --host 127.0.0.1 --port 8000 --proxy-headers --forwarded-allow-ips=127.0.0.1
+Restart=on-failure
+# hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/baitproof
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
