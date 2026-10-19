@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Can you spot the scam?{% endblock %}
 {% block content %}
+<span class="eyebrow">Family challenge</span>
 <h1>Can you spot the scam?</h1>
-<section class="card" id="stage" aria-live="polite" data-cid="{{ cid }}" data-items='{{ items|tojson|forceescape }}'><button class="big" id="start">Start ({{ items|length }} messages)</button></section>
+<p class="lead">{{ items|length }} real-style messages. Decide which are scams and which are fine, then share your score.</p>
+<section class="card" id="stage" aria-live="polite" data-cid="{{ cid }}" data-items='{{ items|tojson|forceescape }}'><button class="big" id="start">Start the challenge</button></section>
 {% endblock %}
 {% block scripts %}<script src="/static/app.js"></script><script src="/static/challenge.js"></script>{% endblock %}

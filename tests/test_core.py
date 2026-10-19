@@ -154,3 +154,15 @@ def test_rate_limit_and_headers(monkeypatch):
     codes = [c.post("/check", data={"message": "hello there friend"}).status_code for _ in range(5)]
     assert codes[:3] == [200] * 3 and codes[3] == 429
     assert "default-src 'self'" in c.get("/").headers["content-security-policy"]
+
+
+def test_share_card_image_and_og_tags():
+    from web.main import app
+
+    c = TestClient(app)
+    cid = c.post("/challenge/new", follow_redirects=False).headers["location"].split("/")[-1]
+    png = c.get(f"/card-image/{cid}.png?s=4")
+    assert png.status_code == 200 and png.content[:8] == b"\x89PNG\r\n\x1a\n"
+    page = c.get(f"/card/{cid}?s=4").text
+    assert 'og:image' in page and f"/card-image/{cid}.png?s=4" in page and 'id="share"' in page
+    assert c.get("/card-image/nope.png").status_code == 404

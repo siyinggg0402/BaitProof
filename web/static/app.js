@@ -9,6 +9,7 @@ function renderMap(m) {
   const ul = document.getElementById("map");
   if (!ul) return;
   document.getElementById("score").textContent = m.score;
+  document.getElementById("ring")?.setAttribute("stroke-dasharray", `${m.score} 100`);
   ul.replaceChildren(...m.tactics.map((t) => {
     const li = document.createElement("li");
     const n = Object.assign(document.createElement("span"), { className: "tname", textContent: t.label });
@@ -30,4 +31,9 @@ function speakBtn(text) {
     speechSynthesis.cancel();
     speechSynthesis.speak(new SpeechSynthesisUtterance(text));
   } });
+}
+function progress(done, total) {
+  const bar = el("div", { className: "progress", ariaHidden: "true" });
+  for (let i = 0; i < total; i++) bar.append(el("i", { className: i < done ? "done" : "" }));
+  return bar;
 }

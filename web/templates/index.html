@@ -1,25 +1,33 @@
 {% extends "base.html" %}
 {% block content %}
+<span class="eyebrow">Your family's scam coach</span>
 <h1>Is this message a scam?</h1>
-<p class="lead">Paste a message you got. I'll tell you, show you the one giveaway, and add that trick to your practice.</p>
+<p class="lead">Paste a text, email or message you received. I'll tell you what I think, show you the one giveaway, and turn it into quick practice so the next one doesn't fool you.</p>
 <form method="post" action="/check" class="card">
   <label for="message">Paste the message here</label>
-  <textarea id="message" name="message" rows="6" required maxlength="4000">{{ text }}</textarea>
+  <textarea id="message" name="message" rows="6" required maxlength="4000" placeholder="e.g. “Your parcel is on hold. Pay a $1.99 fee within 24 hours…”">{{ text }}</textarea>
+  <div class="examples"><span>Try an example:</span>
+    <button type="button" class="ghost" data-example="Hi grandma, it's me. I'm in trouble and need cash. Please buy four $100 gift cards and send me the numbers. Don't tell Mom.">Grandchild in trouble</button>
+    <button type="button" class="ghost" data-example="DHL: Your parcel is on hold. Pay the $1.99 fee within 24 hours or it will be returned. Pay now: dhl-fee-pay.xyz/track">Parcel fee</button>
+    <button type="button" class="ghost" data-example="Hi, this is Dr. Lee's clinic. Reminder: your appointment is tomorrow at 10:30am. Please call the number on your appointment card to reschedule.">A normal message</button>
+  </div>
   <button class="big">Check it</button>
 </form>
 {% if result %}
-<section class="card result v-{{ result.verdict.value }}" aria-live="polite">
-  <h2>{{ result.headline }}</h2>
-  {% if result.tell %}<p><strong>The giveaway:</strong> {{ result.tell }}</p>{% endif %}
-  {% if result.action %}<p><strong>What to do:</strong> {{ result.action }}</p>{% endif %}
-  {% if result.tactics %}<ul>{% for t in result.tactics %}<li>{{ t.id }}{% if t.quote %}: “{{ t.quote }}”{% endif %}</li>{% endfor %}</ul>{% endif %}
-  {% if result.added_to_training %}<p class="added">📚 Added to your practice: {{ result.added_to_training|join(", ") }}</p>{% endif %}
-  <details class="trace"><summary>How I decided ({{ result.confidence }} confidence)</summary>
-    <ol>{% for s in result.trace %}<li class="st-{{ s.status }}"><strong>{{ s.stage }}</strong>: {{ s.detail }}</li>{% endfor %}</ol></details>
-  <button class="speak" data-say="{{ result.headline }} {{ result.tell }} {{ result.action }}">🔊 Read aloud</button>
-  <p><a class="big" href="/train">Practice now →</a></p>
+<section class="card result v-{{ result.verdict.value }}" aria-live="polite" id="result">
+  <div class="banner">{{ result.headline }}</div>
+  <div class="body">
+    {% if result.tell %}<div class="panel"><b>The giveaway</b>{{ result.tell }}</div>{% endif %}
+    {% if result.action %}<div class="panel"><b>What to do</b>{{ result.action }}</div>{% endif %}
+    {% if result.tactics %}<ul class="chips" aria-label="Tricks found">{% for t in result.tactics %}<li title="{{ t.quote }}">{{ labels[t.id] }}</li>{% endfor %}</ul>{% endif %}
+    {% if result.added_to_training %}<p class="added">📚 Added to your practice: {% for t in result.added_to_training %}{{ labels[t] }}{{ ", " if not loop.last }}{% endfor %}</p>{% endif %}
+    <details class="trace"><summary>How I decided ({{ result.confidence }} confidence)</summary>
+      <ol>{% for s in result.trace %}<li class="st-{{ s.status }}"><strong>{{ s.stage }}</strong>: {{ s.detail }}</li>{% endfor %}</ol></details>
+    <button class="speak" data-say="{{ result.headline }} {{ result.tell }} {{ result.action }}">🔊 Read aloud</button>
+    <p><a class="big" href="/train">Practise this trick →</a></p>
+  </div>
 </section>
 {% endif %}
 {% include "_map.html" %}
 {% endblock %}
-{% block scripts %}<script src="/static/app.js"></script>{% endblock %}
+{% block scripts %}<script src="/static/app.js"></script><script src="/static/examples.js"></script>{% endblock %}

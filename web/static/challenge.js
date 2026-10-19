@@ -6,6 +6,7 @@ document.getElementById("start").onclick = show;
 function show() {
   const d = items[idx];
   stage.replaceChildren(
+    progress(idx, items.length),
     el("p", { className: "chip", textContent: `${idx + 1} of ${items.length}` }),
     el("blockquote", { textContent: d.text }), speakBtn(d.text),
     el("h2", { textContent: "Scam or fine?" }),

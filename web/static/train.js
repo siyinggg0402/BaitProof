@@ -10,6 +10,7 @@ document.getElementById("start").onclick = async () => {
 function show() {
   const d = items[idx];
   const kids = [
+    progress(idx, items.length),
     el("p", { className: "chip", textContent: `${idx + 1} of ${items.length} · ${d.reason}` }),
     el("blockquote", { textContent: d.scenario }), speakBtn(d.scenario),
     el("h2", { textContent: d.question }),

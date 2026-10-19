@@ -1,8 +1,10 @@
 {% extends "base.html" %}
+{% block title %}Practice · Baitproof{% endblock %}
 {% block content %}
+<span class="eyebrow">About one minute</span>
 <h1>Quick practice</h1>
-<p class="lead">About a minute. Getting it wrong is how we learn. Every miss shows you the giveaway.</p>
-<section class="card" id="stage" aria-live="polite"><button class="big" id="start">Start practice</button></section>
+<p class="lead">Getting one wrong is how we learn. Every miss shows you the giveaway, so there are no wrong turns here.</p>
+<section class="card" id="stage" aria-live="polite"><p>Four short questions, picked from the tricks you meet most and the ones you find hardest.</p><button class="big" id="start">Start practice</button></section>
 {% include "_map.html" %}
 {% endblock %}
 {% block scripts %}<script src="/static/app.js"></script><script src="/static/train.js"></script>{% endblock %}

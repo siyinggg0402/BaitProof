@@ -7,7 +7,7 @@ from collections import OrderedDict, defaultdict, deque
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
@@ -15,8 +15,10 @@ from pydantic import BaseModel
 import core  # noqa: F401  (loads .env)
 from core.ai import llm
 from core.domain.schemas import Drill
+from core.domain.tactics import TACTICS
 from core.pipelines import challenge, check, train
 from core.storage import db, model
+from web import cardimg
 
 BASE = Path(__file__).parent
 
@@ -65,7 +67,7 @@ SESSIONS: "OrderedDict[str, dict[str, Drill]]" = OrderedDict()  # in-memory; ans
 
 
 def page(request: Request, name: str, **ctx):
-    return templates.TemplateResponse(request, name, {"map": model.resilience_map(), "ai": llm.available(), **ctx})
+    return templates.TemplateResponse(request, name, {"map": model.resilience_map(), "ai": llm.available(), "labels": {k: v["label"] for k, v in TACTICS.items()}, **ctx})
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -155,7 +157,19 @@ def card(request: Request, cid: str, s: int = 0):
     total = len(items)
     s = max(0, min(s, total))
     return page(request, "card.html", cid=cid, pct=round(100 * s / total), right=s, total=total,
-                url=str(request.url_for("challenge_page", cid=cid)))
+                url=str(request.url_for("challenge_page", cid=cid)),
+                image=str(request.url_for("card_image", cid=cid)) + f"?s={s}")
+
+
+@app.get("/card-image/{cid}.png")
+def card_image(cid: str, s: int = 0):
+    """Share-card image for link previews (Open Graph). Public: contains only the score, no message content."""
+    items = challenge.get(cid)
+    if items is None:
+        raise HTTPException(404, "Challenge not found")
+    s = max(0, min(s, len(items)))
+    return Response(cardimg.render(round(100 * s / len(items)), s, len(items)), media_type="image/png",
+                    headers={"Cache-Control": "public, max-age=86400"})
 
 
 @app.get("/api/map")
