@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Quick practice</h1>
+<p class="lead">About a minute. Getting it wrong is how we learn. Every miss shows you the giveaway.</p>
+<section class="card" id="stage" aria-live="polite"><button class="big" id="start">Start practice</button></section>
+{% include "_map.html" %}
+{% endblock %}
+{% block scripts %}<script src="/static/app.js"></script><script src="/static/train.js"></script>{% endblock %}

@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Baitproof{% endblock %}</title>
+{% block meta %}{% endblock %}
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+  <a class="brand" href="/">🛡️ Baitproof</a>
+  <nav><a href="/">Check a message</a><a href="/train">Practice</a>
+  <form method="post" action="/challenge/new"><button class="linklike">Challenge a friend</button></form></nav>
+</header>
+<main>{% block content %}{% endblock %}</main>
+<footer>We keep the <em>tricks</em> you meet, not your messages. {% if not ai %}<span class="muted">Offline mode: AI not configured, using built-in checks.</span>{% endif %}</footer>
+{% block scripts %}{% endblock %}
+</body>
+</html>

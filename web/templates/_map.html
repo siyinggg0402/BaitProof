@@ -1,0 +1,11 @@
+<section class="card" aria-labelledby="map-h">
+  <h2 id="map-h">Your scam resilience</h2>
+  <p class="score">Baitproof score: <strong id="score">{{ map.score }}</strong> / 100</p>
+  <ul class="map" id="map">
+  {% for t in map.tactics %}
+    <li><span class="tname">{{ t.label }}</span>
+      <span class="bars" aria-hidden="true">{% for i in range(5) %}<i class="{{ 'on' if i < t.bars }} {{ t.level }}"></i>{% endfor %}</span>
+      <span class="lvl {{ t.level }}">{{ t.level_text }}</span></li>
+  {% endfor %}
+  </ul>
+</section>
