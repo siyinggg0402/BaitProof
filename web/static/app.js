@@ -58,3 +58,11 @@ const LETTERS = "ABCD";
 function option(text, i, onclick) {
   return el("button", { className: "opt", onclick }, el("kbd", { textContent: LETTERS[i] }), el("span", { textContent: text }));
 }
+
+// text size toggle (remembered in this browser only)
+document.getElementById("textsize")?.addEventListener("click", (e) => {
+  const on = document.documentElement.classList.toggle("big");
+  e.currentTarget.setAttribute("aria-pressed", String(on));
+  try { localStorage.setItem("bp-big", on ? "1" : "0"); } catch (_) {}
+});
+document.getElementById("textsize")?.setAttribute("aria-pressed", String(document.documentElement.classList.contains("big")));

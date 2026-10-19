@@ -51,6 +51,9 @@ h2{font:650 1.25rem/1.25 var(--sans);letter-spacing:-.015em;margin:0 0 .5em}
 .pill{display:inline-flex;align-items:center;gap:8px;font:600 .78rem var(--sans);color:var(--muted);border:1px solid var(--line);background:var(--surface);padding:5px 14px 5px 6px;border-radius:999px;box-shadow:var(--shadow)}
 .pill b{background:var(--brand-soft);color:var(--brand);border-radius:999px;padding:2px 9px;font-size:.68rem;letter-spacing:.06em}
 
+html.big body{font-size:22px}html.big .lead{font-size:1.2rem}
+#textsize{font-weight:700;border:1px solid var(--line-2)!important;margin-right:4px}#textsize[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+.pill.due{margin-top:8px;text-decoration:none;color:var(--warn)}.pill.due b{background:var(--warn-soft);color:var(--warn)}
 /* animated accent word + filter chips */
 .grad{background:linear-gradient(90deg,var(--brand),var(--violet),var(--cyan),var(--brand)) 0 0/220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 7s linear infinite}
 @keyframes shine{to{background-position:220% 0}}

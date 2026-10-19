@@ -78,10 +78,17 @@ def baitproof_score(rows: list[dict] | None = None) -> int:
     return round(100 * total / len(rows))
 
 
+def due_count(rows: list[dict] | None = None) -> int:
+    """Tricks you've practised that are due for a spaced-repetition review."""
+    now = db.now()
+    return sum(1 for r in (rows or all_mastery()) if r["level"] != "untested" and (d := db.parse(r["due"])) and d <= now)
+
+
 def resilience_map() -> dict:
     rows = all_mastery()
     return {
         "score": baitproof_score(rows),
+        "due": due_count(rows),
         "tactics": [
             {"id": r["tactic"], "label": TACTICS[r["tactic"]]["label"], "level": r["level"],
              "level_text": LEVEL_TEXT[r["level"]], "bars": LEVEL_BARS[r["level"]]}

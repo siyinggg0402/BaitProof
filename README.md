@@ -72,6 +72,12 @@ Done: check, tactic model, drills (spot-the-trick, find-the-tell, what-to-do, sa
 ## License
 MIT
 
+## Telegram bot (optional)
+`pip install "python-telegram-bot>=21"`, set `TELEGRAM_BOT_TOKEN` (and `BAITPROOF_URL`), then `python -m bot.telegram_bot`.
+Paste or forward a message to get the same gated verdict; `/score` shows your Baitproof score. The bot logic lives in
+`bot/handlers.py` (no Telegram import, fully unit-tested); only the thin connector in `bot/telegram_bot.py` is untested
+without a token. Set `BAITPROOF_MULTIUSER=1` so each chat gets its own anonymous profile.
+
 ## Deploy (Nebius VM)
 `bash deploy/setup_vm.sh <repo-url>` installs the app behind Caddy (HTTPS) with a hardened systemd unit.
 Public mode (`BAITPROOF_MULTIUSER=1`, set by the unit) gives every visitor their own anonymous profile database

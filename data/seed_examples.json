@@ -336,5 +336,153 @@
   "tell_phrase": "",
   "tell": "It only gives you a code you asked for. It doesn't ask you to send it anywhere.",
   "action": "Use it only if YOU just asked for it. Otherwise ignore it."
+ },
+ {
+  "id": "s25",
+  "is_scam": true,
+  "tactics": [
+   "urgency-pressure",
+   "lookalike-link",
+   "impersonation-official"
+  ],
+  "text": "Your parcel could not be delivered. Confirm your address and pay a $2 redelivery fee in the next 12 hours: post-redeliver.top/confirm",
+  "tell_phrase": "pay a $2 redelivery fee",
+  "tell": "A tiny fee plus a short deadline is the trick. The address ends in .top, not a real courier.",
+  "action": "Ignore it. Track your parcel on the courier's real website."
+ },
+ {
+  "id": "s26",
+  "is_scam": true,
+  "tactics": [
+   "urgency-pressure",
+   "authority-spoofing"
+  ],
+  "text": "Your account will be closed in 2 hours. Verify now or lose access to your savings. This is your last warning.",
+  "tell_phrase": "This is your last warning",
+  "tell": "Real banks don't give 'last warnings' by text, and they never close accounts in hours.",
+  "action": "Don't reply. Open your bank's app yourself, or call the number on your card."
+ },
+ {
+  "id": "s27",
+  "is_scam": true,
+  "tactics": [
+   "authority-spoofing",
+   "irreversible-payment",
+   "urgency-pressure"
+  ],
+  "text": "Hello, this is Detective Marsh from the Financial Crimes Unit. A warrant has been issued in your name. To clear it, buy prepaid cards and read us the numbers.",
+  "tell_phrase": "buy prepaid cards and read us the numbers",
+  "tell": "Police never take payment in prepaid cards. That is how scammers get paid.",
+  "action": "Hang up. Call your local police on a number you look up yourself."
+ },
+ {
+  "id": "s28",
+  "is_scam": true,
+  "tactics": [
+   "otp-credential-phish"
+  ],
+  "text": "We have detected a sign-in to your email from another country. To block it, tell us the one-time password we just sent you.",
+  "tell_phrase": "tell us the one-time password",
+  "tell": "The one-time password is for you alone. Anyone asking for it wants into your account.",
+  "action": "Never share it. Change your password on the official site."
+ },
+ {
+  "id": "s29",
+  "is_scam": true,
+  "tactics": [
+   "too-good-to-be-true",
+   "advance-fee",
+   "irreversible-payment"
+  ],
+  "text": "Congratulations, your number won our monthly draw! To receive $2,000, first send a $40 courier fee through a Bitcoin machine.",
+  "tell_phrase": "send a $40 courier fee through a Bitcoin machine",
+  "tell": "You can't win a draw you didn't enter, and real prizes never need a fee.",
+  "action": "Ignore it. Never pay to collect a prize."
+ },
+ {
+  "id": "s30",
+  "is_scam": true,
+  "tactics": [
+   "emotional-manipulation",
+   "irreversible-payment",
+   "urgency-pressure"
+  ],
+  "text": "Hi Nan, I'm at the airport and my card was declined. Please wire $600 to my friend right now and don't tell Mum, I'll explain later.",
+  "tell_phrase": "don't tell Mum",
+  "tell": "Asking you to keep it secret stops you from checking. It is a classic family-emergency scam.",
+  "action": "Phone your grandchild on the number you already have before sending anything."
+ },
+ {
+  "id": "s31",
+  "is_scam": true,
+  "tactics": [
+   "remote-access-request",
+   "impersonation-official"
+  ],
+  "text": "Your PC is sending us error codes. Open the link and run the support tool so our agent can connect to your screen and clean it.",
+  "tell_phrase": "connect to your screen",
+  "tell": "Real tech support never contacts you first or asks to control your screen.",
+  "action": "Close it and don't run anything. Turn off the computer's internet if you did."
+ },
+ {
+  "id": "s32",
+  "is_scam": true,
+  "tactics": [
+   "advance-fee",
+   "too-good-to-be-true"
+  ],
+  "text": "Dear friend, I have inherited funds and need a trustworthy partner abroad. Pay a $350 transfer tax and you will receive 30% of $6 million.",
+  "tell_phrase": "Pay a $350 transfer tax",
+  "tell": "Real inheritances don't ask a stranger to pay a tax first.",
+  "action": "Delete it. No stranger is sharing millions with you."
+ },
+ {
+  "id": "s33",
+  "is_scam": true,
+  "tactics": [
+   "impersonation-official",
+   "lookalike-link",
+   "urgency-pressure"
+  ],
+  "text": "Tax Office: you are owed a refund of $614. Claim it at gov-refund-claim.info within 48 hours or it will be cancelled.",
+  "tell_phrase": "gov-refund-claim.info",
+  "tell": "Government websites end in .gov, not .info. A refund link with a deadline is a classic trick.",
+  "action": "Don't tap it. Log in to the real tax website by typing the address yourself."
+ },
+ {
+  "id": "s34",
+  "is_scam": true,
+  "tactics": [
+   "investment-crypto",
+   "too-good-to-be-true",
+   "urgency-pressure"
+  ],
+  "text": "A friend of mine made 40% in a week with this crypto group. Join today and send USDT to start, spots are limited.",
+  "tell_phrase": "made 40% in a week",
+  "tell": "Big fast returns plus pressure to deposit is how fake investment groups work.",
+  "action": "Don't send money. Talk to someone you trust and check the company is registered."
+ },
+ {
+  "id": "s35",
+  "is_scam": true,
+  "tactics": [
+   "job-task-scam"
+  ],
+  "text": "Remote data entry job, $25 per task, 30 minutes a day. Recharge $80 into your work wallet to unlock higher paying tasks.",
+  "tell_phrase": "Recharge $80 into your work wallet",
+  "tell": "A job that makes you put money in is taking your money, not paying you.",
+  "action": "Don't reply. Block the sender."
+ },
+ {
+  "id": "s36",
+  "is_scam": true,
+  "tactics": [
+   "lookalike-link",
+   "impersonation-official"
+  ],
+  "text": "Security notice: your PayPal account is limited. Restore access at paypa1-resolution.com and confirm your password to avoid closure.",
+  "tell_phrase": "paypa1-resolution.com",
+  "tell": "'paypa1' has a number 1 instead of the letter l. The real address is paypal.com.",
+  "action": "Don't tap it. Open the PayPal app yourself."
  }
 ]
