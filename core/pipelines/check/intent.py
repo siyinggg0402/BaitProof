@@ -6,6 +6,7 @@ import re
 from dataclasses import dataclass, field
 
 from core.ai import llm
+from core.domain import intents
 from core.ai.prompts import INTENT_SYSTEM
 
 from .ingest import Ingested
@@ -18,7 +19,7 @@ HIGH_RISK_ASKS = {"pay", "share_code", "share_credentials", "install"}
 ASK_RULES = {
     "pay": C(r"\b(?:txt|text|sms|send|reply)\b[^.!?\n]{0,70}\b(?:to|2)\s*\d{4,6}\b|\b(?:pay|send|transfer|wire|deposit|top up|buy|move)\b[^.!?\n]{0,40}(?:[$€£]|\d+ ?(?:dollars|usd|eur)|\bfee\b|\btax\b|gift ?cards?|bitcoin|crypto|usdt|voucher|balance|savings|money|cash)|\bpag(?:ue|ar)\b|\b(?:send|return|refund|pay|transfer) (?:it|that|the money|the funds|them) back\b"),
     "share_code": C(r"\b(?:repl(?:y|ying)|send(?:ing)?|read|shar(?:e|ing)|giv(?:e|ing)|forward|tell|submit(?:ting)?|provid(?:e|ing)|enter(?:ing)?)\b[^.!?\n]{0,25}\b(?:code|otp|pin)\b|\bread (?:it|them) (?:out )?to me\b"),
-    "share_credentials": C(r"\b(?:enter|confirm|verify|provide|share|give|send|need|require|ask(?:ed)? for)\s+(?:only |just )?(?:us |me )?(?:your |the )?(?:password|pin|ssn|social security number|card number|medicare number|date of birth|bank details|login)"),
+    "share_credentials": C(r"\b(?:enter|confirm|verify|provide|share|give|send|need|require|ask(?:ed)? for)\s+(?:only |just )?(?:us |me )?(?:your |the )?(?:password|pin|ssn|social security number|card number|medicare number|date of birth|bank details|login|(?:personal |bank |card |account |contact |full )?(?:details|info(?:rmation)?|id\b))"),
     "install": C(r"\binstall\b|\bdownload (?:the |this )?(?:app|software)\b"),
     "click": C(r"\b(?:click|tap|open)\b[^.!?\n]{0,15}\b(?:link|here)\b"),
     "call": C(r"\bcall\b"),
@@ -57,6 +58,8 @@ class Intent:
     evidence: dict[str, str] = field(default_factory=dict)  # ask/pressure/identity/scenario -> quoted text
     disagreements: list[str] = field(default_factory=list)  # rules vs model: an open question for the confidence loop
     opener: str = ""  # quote of an out-of-the-blue first-contact phrase (the usual first step of a scam)
+    purpose: str = ""  # what the message is FOR, chosen by rules from the closed catalogue (core/domain/intents.py)
+    model_purpose: str = ""  # the model's choice from the same catalogue, kept only if the text supports it
     used_ai: bool = False
 
     @property
@@ -70,7 +73,8 @@ class Intent:
     def summary(self) -> str:
         who = f"{self.claimed} ({self.claimed_kind})" if self.claimed else "unknown"
         sc = (f"; follows_script={self.scenario}" if self.scenario else "") + ("; first-contact opener" if self.opener else "")
-        return f"asks={sorted(self.asks) or 'nothing'}; pressure={sorted(self.pressure_kinds) or 'none'}; claims_to_be={who}{sc}"
+        pur = self.purpose + (f" (model: {self.model_purpose})" if self.model_purpose and self.model_purpose != self.purpose else "")
+        return f"purpose={pur or 'unknown'}; asks={sorted(self.asks) or 'nothing'}; pressure={sorted(self.pressure_kinds) or 'none'}; claims_to_be={who}{sc}"
 
 
 def _heuristic(ing: Ingested) -> Intent:
@@ -104,6 +108,7 @@ def _heuristic(ing: Ingested) -> Intent:
     if it.scenario:
         it.evidence["scenario"] = q
     _mismatches(it, ing)
+    it.purpose = classify_purpose(ing, it)
     return it
 
 
@@ -126,6 +131,62 @@ def _mismatches(it: Intent, ing: Ingested) -> None:
     if kind == "relation" and "pay" in it.asks and suspicious_context:
         it.mismatches.append(("Says it's family and asks for money, but gives you no way to check it's really them",
                               it.evidence.get("pay", ""), "emotional-manipulation"))
+
+
+SCENARIO_PURPOSE = {
+    "prize-lottery": "claim-prize-reward", "claim-approved": "claim-prize-reward", "government-rebate": "claim-prize-reward", "inheritance-advance-fee": "claim-prize-reward",
+    "ticket-prepay": "request-payment", "rental-deposit": "request-payment", "cheque-overpayment": "request-payment", "overpayment": "request-payment", "charity-appeal": "request-payment",
+    "job-task": "offer-job-or-investment", "investment": "offer-job-or-investment",
+    "account-verification": "urgent-account-warning", "bank-security": "urgent-account-warning", "tax-government": "urgent-account-warning", "utility-bill": "urgent-account-warning",
+    "parcel-fee": "urgent-account-warning", "billing-update": "urgent-account-warning", "tech-support": "request-install-access",
+    "family-emergency": "emotional-plea", "romance": "emotional-plea", "boss-gift-card": "emotional-plea",
+    "subscription-renewal": "callback-request", "warranty-callback": "callback-request", "marketplace-code": "request-secret",
+}
+
+
+def classify_purpose(ing: Ingested, it: Intent) -> str:
+    """Rule-based purpose from the closed catalogue. Purposes that ask the reader to give something up are checked first, in priority order."""
+    pur = intents.PURPOSES
+    risky = {
+        "request-secret": bool(it.asks & {"share_code", "share_credentials"}) or it.scenario == "marketplace-code",
+        "request-install-access": "install" in it.asks or bool(pur["request-install-access"].cues.search(ing.text) and it.scenario == "tech-support"),
+        "request-payment": "pay" in it.asks or SCENARIO_PURPOSE.get(it.scenario) == "request-payment",
+        "claim-prize-reward": SCENARIO_PURPOSE.get(it.scenario) == "claim-prize-reward",
+        "offer-job-or-investment": SCENARIO_PURPOSE.get(it.scenario) == "offer-job-or-investment",
+        "urgent-account-warning": SCENARIO_PURPOSE.get(it.scenario) == "urgent-account-warning" or bool(it.pressure_kinds & {"threat"} and pur["urgent-account-warning"].cues.search(ing.text)),
+        "emotional-plea": bool(it.pressure_kinds & {"emotional", "secrecy"}) or SCENARIO_PURPOSE.get(it.scenario) == "emotional-plea",
+        "first-contact-opener": bool(it.opener),
+        "callback-request": ("call" in it.asks and bool(ing.entities.phones)) or SCENARIO_PURPOSE.get(it.scenario) == "callback-request",
+    }
+    for pid in intents.PRIORITY_RISKY:
+        if risky[pid]:
+            return pid
+    for pid in intents.PRIORITY_NORMAL:
+        p = pur[pid]
+        if pid == "social-chat":
+            if len(ing.text) < 300 and not ing.entities.hosts and not ing.entities.rails:
+                return pid
+        elif p.cues is not None and p.cues.search(ing.text):
+            return pid
+    return "other"
+
+
+def purpose_supported(pid: str, ing: Ingested, it: Intent) -> bool:
+    """A purpose the MODEL chose is kept only if the message contains what that purpose needs (same idea as the tactic preconditions)."""
+    if not intents.valid(pid):
+        return False
+    p = intents.PURPOSES[pid]
+    if pid in ("other", "social-chat"):
+        return True
+    if pid == "request-payment":
+        return "pay" in it.asks
+    if pid == "request-secret":
+        return bool(it.asks & {"share_code", "share_credentials"})
+    if pid == "first-contact-opener":
+        return bool(it.opener) or ("reply" in it.asks and not it.claimed)
+    if pid == "callback-request":
+        return "call" in it.asks and bool(ing.entities.phones)
+    return bool(p.cues and p.cues.search(ing.text))
 
 
 def _supported(ask: str, ing: Ingested) -> bool:
@@ -165,6 +226,11 @@ def diagnose(ing: Ingested) -> Intent:
                 it.claimed = name.lower()  # only accepted if its words really appear in the message
                 k = str(ident.get("kind", "")) if isinstance(ident, dict) else ""
                 it.claimed_kind = k if k in ("authority", "organisation", "relation") else (it.claimed_kind or "organisation")
+            mp = str(out.get("purpose") or "")
+            if purpose_supported(mp, ing, it):
+                it.model_purpose = mp
+                if mp != it.purpose and intents.PURPOSES[mp].risk != intents.PURPOSES[it.purpose].risk and "other" not in (mp, it.purpose):
+                    it.disagreements.append(f"rules read this as “{intents.PURPOSES[it.purpose].label}”, the model as “{intents.PURPOSES[mp].label}”")
             sc = str(out.get("scenario") or "")
             if sc in scenarios.SCENARIOS:
                 if it.scenario and not scenarios.same_family(sc, it.scenario):

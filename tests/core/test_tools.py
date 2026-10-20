@@ -177,7 +177,8 @@ def ev(**f):  # noqa: E302
     ing = ingest("Call 1-876-555-0123 or visit new-site.xyz and amazon.com")
     it = SimpleNamespace(asks=set(), pressure=False, pressure_kinds=set(), scenario="", mismatches=[], model_scenario="", evidence={}, opener="")
     L = Ledger()
-    fin = tools.Findings(hosts=["new-site.xyz", "amazon.com"], **f)
+    hosts = f.pop("hosts", ["new-site.xyz", "amazon.com"])
+    fin = tools.Findings(hosts=hosts, **f)
     analysis.rule_evidence(ing, it, fin, L)
     return L
 
@@ -232,7 +233,7 @@ def test_open_questions_only_propose_calls_the_gate_would_allow(monkeypatch):
 
 def test_answered_questions_are_not_asked_again(monkeypatch):
     ing, it, f, g, L = _qs(True, monkeypatch)
-    f.done |= {("domain_age", "acme-secure.top"), ("dns_check", "acme-secure.top"), ("reputation", "acme-secure.top"), ("brand_lookup", "acme bank")}
+    f.done |= {("domain_age", "acme-secure.top"), ("dns_check", "acme-secure.top"), ("reputation", "acme-secure.top"), ("brand_lookup", "acme bank"), ("official_site_wikidata", "acme bank")}
     assert planner.open_questions(ing, it, f, g) == []
 
 
@@ -265,3 +266,63 @@ def test_outgoing_prompts_are_scrubbed_and_counted(monkeypatch):
     llm.chat_json("s", "mail bob@x.com or call +61 412 345 678, acct 123456789012", purpose="t")
     assert "bob@" not in captured["user"] and "412" not in captured["user"] and "123456789012" not in captured["user"]
     assert run.llm[0]["pii_scrubbed"] == 3
+
+
+
+# ---------------------------------------------------------------- company verification (Wikidata, free and keyless)
+def _wikidata(monkeypatch, label="Netflix", site="https://www.netflix.com/", qid="Q907311"):
+    seen = []
+
+    def fake(url, **kw):
+        seen.append(url)
+        if "wbsearchentities" in url:
+            return {"search": [{"id": qid, "label": label}]}
+        return {"entities": {qid: {"claims": {"P856": [{"mainsnak": {"datavalue": {"value": site}}}]}}}}
+    monkeypatch.setattr(tools, "_http_json", fake)
+    return seen
+
+
+def test_wikidata_returns_the_official_site_and_only_the_org_name_is_sent(monkeypatch):
+    seen = _wikidata(monkeypatch)
+    out = tools.official_site_wikidata("netflix")
+    assert out["hosts"] == ["netflix.com"] and out["label"] == "Netflix"
+    assert all(u.startswith("https://www.wikidata.org/") for u in seen) and "search=netflix" in seen[0]
+
+
+def test_wikidata_ignores_a_top_hit_that_is_about_something_else(monkeypatch):
+    _wikidata(monkeypatch, label="Banana Republic")
+    assert tools.official_site_wikidata("netflix")["hosts"] == []
+
+
+def test_wikidata_never_trusts_an_odd_entity_id(monkeypatch):
+    _wikidata(monkeypatch, qid="Q1/../../etc")
+    assert tools.official_site_wikidata("netflix")["hosts"] == []
+
+
+@pytest.mark.parametrize("org", ["bank", "your bank", "the bank", "customer service", "support team", "your provider"])
+def test_generic_words_and_unclaimed_names_are_never_looked_up(net, org):
+    ing, tr, g, f = gate_for(f"This is {org}: verify at acme-secure.top", org=org)
+    assert g.run([("official_site_wikidata", org)], f) == 0
+
+
+def test_a_person_name_is_never_sent_because_only_organisation_claims_reach_the_gate(net):
+    # pipeline only passes claimed identities of kind organisation/authority as `org`; a relation/person claim arrives as ""
+    ing, tr, g, f = gate_for("Hi, it's Jennifer, can you check this: acme-secure.top", org="")
+    assert g.run([("official_site_wikidata", "jennifer")], f) == 0 and tr.steps[-1].status == "block"
+
+
+def test_wikidata_match_is_reassuring_and_a_mismatch_is_a_weak_flag():
+    L = ev(brand_sites={"netflix": ["netflix.com"]}, brand_src={"netflix": "wikidata"}, hosts=["www.netflix.com.example", "netflix.co.uk"])
+    by = {(e.supports, e.strength): e.claim for e in L.items if e.source == "brand_lookup"}
+    assert ("safe", "medium") in by and "netflix.co.uk" in by[("safe", "medium")]  # same brand, different country domain
+    assert ("scam", "weak") in by  # the lookalike host does not match
+    L2 = ev(brand_sites={"netflix": ["netflix.com"]}, brand_src={"netflix": "web search"})
+    assert not [e for e in L2.items if e.source == "brand_lookup" and e.strength == "medium"]  # a plain web search is weaker than Wikidata
+
+
+def test_the_loop_asks_wikidata_when_a_company_is_claimed_and_the_link_is_unverified(net, monkeypatch):
+    _wikidata(monkeypatch, label="Acme Bank", site="https://www.acmebank.com/", qid="Q42")
+    monkeypatch.setitem(tools.SPECS, "domain_age", tools.Spec("domain_age", "host", lambda h: {"host": h, "domain": h, "age_days": None}, "d", net=True))
+    monkeypatch.setitem(tools.SPECS, "dns_check", tools.Spec("dns_check", "host", lambda h: {"host": h, "status": "ok"}, "d", net=True))
+    r = check_message("Acme Bank: please review your statement at acmebank-statements.top")
+    assert any(e.source == "brand_lookup" and e.supports == "scam" and "acmebank.com" in e.claim for e in r.evidence)

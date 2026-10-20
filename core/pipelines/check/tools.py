@@ -18,7 +18,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Callable
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 from urllib.request import Request, urlopen
 
 from core import obs
@@ -172,6 +172,35 @@ def dns_check(host: str) -> dict:
     return {"host": host, "status": "private" if any(_internal(ip) for ip in ips) else "ok"}
 
 
+GENERIC_ORGS = {"bank", "your bank", "the bank", "support", "support team", "customer service", "your provider", "service", "team", "office", "company", "your account"}
+
+
+def official_site_wikidata(org: str) -> dict:
+    """Free, keyless: ask Wikidata (community-maintained, public) what the organisation's OFFICIAL WEBSITE is (property P856).
+    Only the organisation name from the message is sent; we never visit any website."""
+    hit_label, hosts = None, []
+    found = _http_json("https://www.wikidata.org/w/api.php?action=wbsearchentities&language=en&format=json&limit=3&type=item&search=" + quote(org))
+    words = {w for w in re.findall(r"[a-z0-9]{3,}", org.lower())}
+    for hit in found.get("search", [])[:3]:
+        label = str(hit.get("label", "")).lower()
+        if words and not (words & set(re.findall(r"[a-z0-9]{3,}", label))):
+            continue  # the top hit must actually be about this name
+        qid = hit.get("id", "")
+        if not re.fullmatch(r"Q\d+", qid):
+            continue
+        ent = _http_json(f"https://www.wikidata.org/wiki/Special:EntityData/{qid}.json")
+        for claim in ent.get("entities", {}).get(qid, {}).get("claims", {}).get("P856", []):
+            url = claim.get("mainsnak", {}).get("datavalue", {}).get("value")
+            if isinstance(url, str):
+                h = re.sub(r"^www\.", "", (urlparse(url).hostname or "").lower())
+                if h:
+                    hosts.append(h)
+        if hosts:
+            hit_label = hit.get("label")
+            break
+    return {"org": org, "hosts": list(dict.fromkeys(hosts)), "label": hit_label}
+
+
 def brand_lookup(org: str) -> dict:
     return {"org": org, "hosts": verify.official_sites(org)}
 
@@ -197,6 +226,7 @@ SPECS: dict[str, Spec] = {s.name: s for s in [
     Spec("phone_check", "phone", phone_check, "Is a phone number's area code linked to one-ring / premium-rate scams (local, free)."),
     Spec("domain_age", "host", domain_age, "How long ago the website address was registered, via the public registry. New sites are a scam sign.", net=True, timeout=6),
     Spec("dns_check", "host", dns_check, "Does the website address exist, and does it point somewhere internal.", net=True, timeout=4),
+    Spec("official_site_wikidata", "org", official_site_wikidata, "Ask Wikidata (free, public) for the real company's official website, to compare with the link in the message.", net=True, timeout=8),
     Spec("brand_lookup", "org", brand_lookup, "Search the web for the real website of the company the message claims to be.", net=True, timeout=10, requires="TAVILY_API_KEY"),
     Spec("reputation", "host", reputation, "Search the web for scam reports about this website.", net=True, timeout=10, requires="TAVILY_API_KEY"),
 ]}
@@ -214,6 +244,7 @@ class Findings:
     ages: dict[str, int | None] = field(default_factory=dict)  # host -> registration age in days
     dns: dict[str, str] = field(default_factory=dict)  # host -> ok | nxdomain | private
     brand_sites: dict[str, list[str]] = field(default_factory=dict)  # org -> hostnames the web says are official
+    brand_src: dict[str, str] = field(default_factory=dict)  # org -> 'wikidata' | 'web search'
     web_notes: list[str] = field(default_factory=list)  # UNTRUSTED: shown as neutral notes, never weighed
     done: set = field(default_factory=set)  # (tool, arg) already answered
 
@@ -245,8 +276,10 @@ class Findings:
             self.ages[arg] = d["age_days"]
         elif tool == "dns_check":
             self.dns[arg] = d["status"]
-        elif tool == "brand_lookup":
-            self.brand_sites[arg] = d["hosts"]
+        elif tool in ("brand_lookup", "official_site_wikidata"):
+            if d["hosts"] or arg not in self.brand_sites:  # never let an empty answer overwrite a real one
+                self.brand_sites[arg] = d["hosts"]
+                self.brand_src[arg] = "wikidata" if tool == "official_site_wikidata" else "web search"
         elif tool == "reputation":
             self.web_notes += d["notes"]
 
@@ -257,7 +290,7 @@ class Findings:
         parts += [f"{h} was registered {a} days ago" for h, a in self.ages.items() if a is not None]
         parts += [f"{h} does not resolve" for h, s in self.dns.items() if s == "nxdomain"]
         parts += [f"phone {p} looks like a {k} number" for p, k in self.phones.items() if k in ("caribbean", "premium")]
-        parts += [f"the web lists {', '.join(h[:3])} as {o}'s official site" for o, h in self.brand_sites.items() if h]
+        parts += [f"{self.brand_src.get(o, 'the web')} lists {', '.join(h[:3])} as {o}'s official site" for o, h in self.brand_sites.items() if h]
         return "\n".join(parts) or "no deterministic findings"
 
 
@@ -280,7 +313,7 @@ class ToolGate:
         if spec.arg == "phone":
             return arg in e.phones
         if spec.arg == "org":
-            return bool(arg) and arg.lower() in ({self.org} | set(e.brands)) and arg.lower() in self.ing.text.lower()
+            return bool(arg) and arg.lower() not in GENERIC_ORGS and arg.lower() in ({self.org} | set(e.brands)) and arg.lower() in self.ing.text.lower()
         return False
 
     def available(self, name: str, arg: str, done: set) -> bool:

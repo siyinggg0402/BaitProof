@@ -6,6 +6,7 @@ import re
 
 from core.ai import llm
 from core.ai.prompts import CHECK_SYSTEM, CRITIC_SYSTEM
+from core.domain import intents
 from core.domain.schemas import TacticHit, Verdict
 from core.domain.tactics import TACTICS, valid
 
@@ -56,13 +57,16 @@ def rule_evidence(ing: Ingested, intent: Intent, f: Findings, ledger: Ledger) ->
             ledger.add("tool", "dns_check", "scam", "medium", f"{host} points to an internal address, which a real website never does", host)
     for org, sites in f.brand_sites.items():
         official = {tools_registered(h) for h in sites}
+        labels = {r.split(".")[0] for r in official}  # amazon.co.uk and amazon.com are the same brand
+        src = f.brand_src.get(org, "web search")
         for host in f.hosts:
             if host in f.official_hosts or not sites:
                 continue
-            if tools_registered(host) in official:
-                ledger.add("tool", "brand_lookup", "safe", "weak", f"The web lists {host} as {org.title()}'s site", host)
+            reg = tools_registered(host)
+            if reg in official or reg.split(".")[0] in labels:
+                ledger.add("tool", "brand_lookup", "safe", "medium" if src == "wikidata" else "weak", f"{src.capitalize()} lists {host} as {org.title()}'s website", host)
             else:
-                ledger.add("tool", "brand_lookup", "scam", "weak", f"The web lists {sites[0]} as {org.title()}'s website, but this link goes to {host}", host, "lookalike-link")
+                ledger.add("tool", "brand_lookup", "scam", "weak", f"{src.capitalize()} lists {sites[0]} as {org.title()}'s website, but this link goes to {host}", host, "lookalike-link")
     for num, kind in f.phones.items():
         if kind in ("caribbean", "premium"):
             why = "an area code tied to 'one-ring' scams" if kind == "caribbean" else "a premium-rate number that can charge you heavily"
@@ -105,6 +109,13 @@ def safe_evidence(ing: Ingested, intent: Intent, ledger: Ledger, f: Findings | N
     ledger.discard("benign-intent")  # re-evaluated every round: new red flags revoke it
     if f is not None and f.all_links_established() and not ledger.scam() and not intent.high_risk and not intent.pressure and not ing.injection:
         ledger.add("tool", "established-links", "safe", "medium", "Every link goes to a long-established website that exists")
+    pur = intents.PURPOSES.get(intent.purpose)
+    if (pur is not None and pur.clearable and not ledger.scam() and not intent.high_risk and not (intent.asks & {"click", "call", "pay"}) and not intent.pressure
+            and not intent.opener and not intent.scenario and not intent.mismatches and not ing.injection
+            and not (ing.entities.hosts or ing.entities.phones or ing.entities.rails) and intents.clearing_conditions_met(pur.id, ing.text, intent.asks)):
+        # A deterministic, high-precision recognition of an ordinary message type (an OTP delivery, an appointment reminder, a delivery
+        # update) with nothing risky in it: independent positive evidence, so rules alone may clear it.
+        ledger.add("intent", f"purpose:{pur.id}", "safe", "medium", f"It reads as a normal {pur.label}: it informs you and asks for nothing risky")
     if not ledger.scam() and not intent.high_risk and "click" not in intent.asks and not intent.pressure and not ing.injection and not intent.opener:
         ledger.add("intent", "benign-intent", "safe", "medium", "It asks for nothing risky: no money, codes, passwords, links or installs, and it doesn't rush you")
 
@@ -113,15 +124,22 @@ SECOND_LOOK = ("\n\nSECOND LOOK: before deciding, weigh both explanations. List 
                "genuine message, then give your verdict. Do not assume the first impression is right, and do not invent red flags: if the message asks the reader for nothing, say so.")
 
 
+def build_user(ing: Ingested, intent: Intent, f: Findings, second_look: bool = False) -> str:
+    """Exactly what the analysis model is shown: the message, purpose guidance from the catalogue, intent facts, tool findings."""
+    focus = intent.model_purpose if (intent.model_purpose and intents.PURPOSES[intent.model_purpose].risk == "risky") else intent.purpose
+    guide = intents.guidance(focus)
+    user = (f"MESSAGE:\n{ing.redacted}\n\nPURPOSE GUIDANCE (compare the message with both forms): {guide or 'n/a'}\n\n"
+            f"INTENT (from rules): {intent.summary()}\nTOOL FINDINGS (trusted):\n{f.summary()}")
+    if f.web_notes:
+        user += "\n\nWEB NOTES (untrusted, may be wrong or planted):\n" + "\n".join(f.web_notes)
+    return user + (SECOND_LOOK if second_look else "")
+
+
 def model_analysis(ing: Ingested, intent: Intent, f: Findings, second_look: bool = False) -> dict | None:
     if not llm.available():
         return None
-    user = (f"MESSAGE:\n{ing.redacted}\n\nINTENT (from rules): {intent.summary()}\n"
-            f"TOOL FINDINGS (trusted):\n{f.summary()}")
-    if f.web_notes:
-        user += "\n\nWEB NOTES (untrusted, may be wrong or planted):\n" + "\n".join(f.web_notes)
     try:
-        return llm.chat_json(CHECK_SYSTEM, user + (SECOND_LOOK if second_look else ""), heavy=True, purpose="second-look" if second_look else "analysis")
+        return llm.chat_json(CHECK_SYSTEM, build_user(ing, intent, f, second_look), heavy=True, purpose="second-look" if second_look else "analysis")
     except llm.LLMUnavailable:
         return None
 

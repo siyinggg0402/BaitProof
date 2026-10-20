@@ -31,8 +31,10 @@ def open_questions(ing: Ingested, it: Intent, f: Findings, gate: ToolGate) -> li
         if calls:
             qs.append(Question(f"host:{h}", f"Is {h} a trustworthy website?", calls))
     org = it.claimed if it.claimed_kind in ("organisation", "authority") else (ing.entities.brands[0] if ing.entities.brands else "")
-    if org and unofficial and gate.available("brand_lookup", org, f.done):
-        qs.append(Question("brand", f"Is that link really {org}'s website?", [("brand_lookup", org)]))
+    if org and unofficial:
+        calls = [(t, org) for t in ("official_site_wikidata", "brand_lookup") if gate.available(t, org, f.done)]
+        if calls:
+            qs.append(Question("brand", f"Is that link really {org}'s website?", calls))
     if it.disagreements:
         qs.append(Question("recheck", "The rules and the AI disagree about what kind of scam this is: " + "; ".join(it.disagreements)))
     return qs
