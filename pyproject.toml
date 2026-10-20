@@ -5,3 +5,6 @@ extend-exclude = ["data"]
 
 [tool.ruff.lint]
 select = ["F"]               # pyflakes: unused imports and variables, undefined names
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

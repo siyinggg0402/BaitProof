@@ -90,7 +90,37 @@ Earlier build, real English financial messages (Mendeley, 100 scams + 70 genuine
 
 **Honest reading:** a single model call is the better scam *catcher* and a poor judge of genuine messages; the pipeline gives up some catches (as "not sure", never as "safe") to stop calling a parent's real bank text a scam. That is the right trade for a family tool, but it means roughly one in four scams currently gets "not sure" rather than a firm verdict.
 
-**Data caveats.** Datasets are older (2003-2012 UK/Singapore/India SMS) and English; "spam" is not always "scam"; some labelled-genuine finance messages were volunteer-written and look templated. Our own seed and hard sets are partly contaminated because rules were written after seeing failure categories, which is why the fresh train split is the headline number. None of the third-party data is committed.
+**3. Chinese.** Hand-written by us from common real scam scripts (39 scams, 40 genuine messages: Simplified, Traditional and mixed Chinese/English; `tests/data/zh/holdout.py`), written after the rules were designed and measured once before tuning. The first, untuned reading with rules only was 36 / 39 scams caught and **5 of 40 genuine messages falsely flagged** (a "don't share the code" warning read as a request, "5分钟内有效" read as a deadline, Alipay 支付宝 read as the verb "to pay", ...); after one round of fixes it is 0 of 40, which makes it a development set. Final build, live model:
+
+| System | Scams caught | "Not sure" | Called safe | Genuine cleared | "Not sure" | False alarms |
+|---|---|---|---|---|---|---|
+| One plain model call | 37 / 39 | 2 | 0 | 26 / 40 | 1 | **13** |
+| **Baitproof pipeline** | 36 / 39 | 3 | **0** | 32 / 40 | 8 | **0** |
+
+The three scams it only calls "not sure" are short first-contact messages with no link, two of them with no request at all ("你好，请问是李先生吗？我是你同学的朋友…"): honestly ambiguous on their own. One honest negative result on the way: adding Chinese calibration examples and an always-on "reply language" line to the prompt made the model *more* suspicious (20 of 40 genuine cleared instead of 30), so both were removed (the language line is only added when the answer must be in a different language from the message).
+
+**4. Malay and Indonesian** (`tests/data/ms/`, 20 + 20 written before the rules and 15 + 15 written after them). The first reading before any Malay rules was 1 of 20 scams caught. Both sets were then used to fix gaps (the 15 + 15 set first read 11 / 15 caught with 1 false alarm), so neither is a clean holdout. Final build, live model:
+
+| Set | Plain model: caught / false alarms | Baitproof: caught / called safe / false alarms | Genuine cleared |
+|---|---|---|---|
+| 20 + 20 | 20 / 20, 6 of 20 flagged | 20 / 20, **0**, 0 flagged | 15 / 20 |
+| 15 + 15 | 15 / 15, 4 of 15 flagged | 15 / 15, **0**, 1 flagged | 9 / 15 |
+
+(The one false alarm, a genuine Indonesian "kode verifikasi" notice, was a rule bug that is now fixed and tested; it was not re-measured live.)
+
+**5. Languages without rules** (Japanese, Korean, Hindi, Arabic, Spanish, French; Indonesian before its rules existed). The UCI SMS Spam Collection machine-translated into each language (`scripts.eval.multilingual`, 40 scams + 40 genuine per language). This checks that nothing breaks where the rules can't read the text; the translations are noisy (Hindi especially), so catch rates say little about real scams. A first run showed that a model-only "safe" let **1 to 2 scams in 40 through** in five of these languages, so for a language the rules can't read Baitproof now never says "safe":
+
+| Language | Plain model caught | False alarms | Baitproof caught | "Not sure" | **Called safe** | False alarms |
+|---|---|---|---|---|---|---|
+| Indonesian | 40 / 40 | 4 / 40 | 24 / 40 | 16 | **0** | 0 |
+| Japanese | 40 / 40 | 6 / 40 | 27 / 40 | 13 | **0** | 1 |
+| Korean | 40 / 40 | 4 / 40 | 28 / 40 | 12 | **0** | 0 |
+| Hindi | 32 / 40 | 2 / 40 | 3 / 40 | 37 | **0** | 0 |
+| Arabic | 38 / 40 | 4 / 40 | 22 / 40 | 18 | **0** | 0 |
+| Spanish | 38 / 40 | 4 / 40 | 23 / 40 | 17 | **0** | 0 |
+| French | 40 / 40 | 6 / 40 | 23 / 40 | 17 | **0** | 0 |
+
+**Data caveats.** The English datasets are older (2003-2012 UK/Singapore/India SMS); "spam" is not always "scam"; some labelled-genuine finance messages were volunteer-written and look templated. Our own seed and hard sets are partly contaminated because rules were written after seeing failure categories, which is why the fresh train split is the headline number. None of the third-party data is committed.
 
 ## Telegram
 ```bash

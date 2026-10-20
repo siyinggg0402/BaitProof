@@ -10,3 +10,4 @@ logs/
 # third-party datasets are downloaded by scripts/data/fetch.py, never committed (see data/external/README.md)
 data/external/*
 !data/external/README.md
+.ruff_cache/
