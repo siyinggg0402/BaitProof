@@ -86,7 +86,7 @@ Note: the first rules-only pass found **one** scam called safe (a premium-conten
 | Hard set 2 (20+20) | 20 / 20, 4 of 20 flagged | 20 / 20, 1 flagged | 0 |
 | Hard set 3 (20+20) | 19 / 20, 5 of 20 flagged | 12 / 20, 0 flagged | 0 |
 
-Earlier build, real English financial messages (Mendeley, 100 scams + 70 genuine): the plain model caught 98 / 100 but flagged **23 of 70 genuine notices (33%)** as scams; the pipeline caught 56 / 100, said "not sure" on 42, and flagged 2 of 70. Not re-run on the final build.
+Earlier build, real English financial messages (Mendeley, 100 scams + 70 genuine): the plain model caught 98 / 100 but flagged **23 of 70 genuine notices (33%)** as scams; the pipeline caught 56 / 100, said "not sure" on 42, **called 2 safe** (the weakest result we have: they were a car-insurance claim approval and an annual-fee-waiver offer), and flagged 2 of 70 genuine ones. Not re-run on the final build.
 
 **Honest reading:** a single model call is the better scam *catcher* and a poor judge of genuine messages; the pipeline gives up some catches (as "not sure", never as "safe") to stop calling a parent's real bank text a scam. That is the right trade for a family tool, but it means roughly one in four scams currently gets "not sure" rather than a firm verdict.
 
