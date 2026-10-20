@@ -69,3 +69,12 @@ def test_english_answers_are_unchanged():
 def test_victim_support_and_the_cautious_fallback_are_translated():
     r = check_message("我被骗了，刚才把验证码告诉了对方", store=False, log=False)
     assert r.verdict is V.VICTIM and r.lang == "zh" and "不是你的错" in r.headline
+
+
+def test_traditional_wording_for_common_ui_words():
+    assert to_traditional("5分钟内，请复制消息") == "5分鐘內，請複製訊息"
+
+
+def test_chinese_tells_use_a_full_width_colon_before_the_fallback_explanation():
+    r = check_message("请把验证码发给我，我帮你领取优惠券。", store=False, log=False)  # offline: the tell is built from the quote and the tactic's explanation
+    assert "”：" in r.tell and ": " not in r.tell

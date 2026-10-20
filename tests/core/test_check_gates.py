@@ -100,3 +100,13 @@ def test_model_cannot_invent_a_link_to_click(monkeypatch):
     assert "click" not in it.asks and "call" not in it.asks
     r = check_message("Your prescription is ready to collect. Open until 6pm today.")
     assert r.verdict == V.SAFE
+
+
+def test_safe_is_withheld_for_a_language_the_rules_cannot_read(monkeypatch):
+    """Measured: on translated SMS in languages without rules, a model-only 'safe' let 1-2 scams in 40 through. Only 'not sure' is allowed."""
+    _fake_llm(monkeypatch, {"verdict": "safe", "tactics": [], "the_tell": "", "action": ""})
+    es = check_message("Hola, mañana nos vemos en la cafetería a las tres de la tarde, ¿vale? Un abrazo.", store=False, log=False)
+    assert es.verdict == V.UNSURE
+    assert any("can't fully check this language" in s.detail for s in es.trace)
+    en = check_message("Hi, see you tomorrow at the cafe at three, ok? Hugs.", store=False, log=False)
+    assert en.verdict == V.SAFE  # English (and Chinese) have rules, so a model 'safe' with a clean second review still stands

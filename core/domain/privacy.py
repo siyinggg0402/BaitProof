@@ -9,6 +9,7 @@ URL_RE = re.compile(rf"(?:https?://|www\.)[^{_NOT_URL}]+|(?<![a-z0-9-])[a-z0-9-]
 EMAIL_RE = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
 PHONE_RE = re.compile(r"\+?\d[\d\s().-]{6,}\d")
 LONG_DIGITS_RE = re.compile(r"\d{9,}")  # account / card style numbers
+ID_RE = re.compile(r"(?<!\d)\d{17}[\dXx](?![\dA-Za-z])")  # a mainland-China resident ID number (18 characters, the last may be X)
 DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
 
 
@@ -21,6 +22,7 @@ def redact(text: str, links: bool = True) -> str:
     """URLs shrink to bare host (scam domains aren't personal; paths/tokens may be); emails and phone numbers go."""
     text = EMAIL_RE.sub("[email]", text)
     text = URL_RE.sub(lambda m: host_of(m.group(0)), text)
+    text = ID_RE.sub("[number]", text)
     text = PHONE_RE.sub("[number]", text)
     return text.strip()
 
@@ -55,6 +57,7 @@ def scrub_outgoing(text: str) -> tuple[str, int]:
         return f
 
     text = EMAIL_RE.sub(bump("[email]"), text)
+    text = ID_RE.sub(bump("[number]"), text)
     text = PHONE_RE.sub(bump("[number]"), text)
     text = LONG_DIGITS_RE.sub(bump("[number]"), text)
     return text, n

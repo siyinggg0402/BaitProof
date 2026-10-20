@@ -111,7 +111,7 @@ def _check(text: str, store: bool, tr_: Trace, run: obs.Run, reply: str = "en") 
     tactics = ledger.tactic_hits()
     verdict, first = d.verdict, (tactics[0].id if tactics else None)
     if not tell and first:
-        tell = (f"“{tactics[0].quote}”: " if tactics[0].quote else "") + tactic_text(first, "tell", reply, TACTICS)
+        tell = (f"“{tactics[0].quote}”{'：' if reply != 'en' else ': '}" if tactics[0].quote else "") + tactic_text(first, "tell", reply, TACTICS)
     if not action:
         action = tactic_text(first, "action", reply, TACTICS) if first and verdict != Verdict.SAFE else T(CAVEAT)
     if verdict == Verdict.SAFE and not tell:

@@ -60,3 +60,13 @@ def test_the_real_bank_link_is_not_called_a_lookalike():
 def test_singapore_and_malaysia_banks_with_other_official_domains_are_recognised():
     r = check_message("DBS: your statement is ready at https://www.dbs.com.sg/personal", store=False, log=False)
     assert not any(e.source == "domain_check" and e.supports == "scam" and e.strength == "strong" for e in r.evidence)
+
+
+def test_chinese_personal_numbers_are_redacted_before_anything_is_stored_or_sent():
+    from core.domain.privacy import redact, scrub_outgoing
+
+    text = "我是王芳，手机13812345678，身份证11010519491231002X，银行卡6217000012345678901，邮箱wang@example.com，微信转账。"
+    out = redact(text)
+    assert "13812345678" not in out and "11010519491231002X" not in out and "6217000012345678901" not in out and "wang@example.com" not in out
+    clean, n = scrub_outgoing(text)
+    assert n >= 3 and "13812345678" not in clean and "11010519491231002X" not in clean

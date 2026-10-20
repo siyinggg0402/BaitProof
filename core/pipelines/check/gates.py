@@ -100,6 +100,11 @@ def arbitrate(ledger: Ledger, intent: Intent, f: Findings, model_verdict: Verdic
         d = Decision(Verdict.LIKELY_SCAM, "medium" if d.confidence == "high" else d.confidence, d.reasons + [T("only the AI raised these flags, so 'likely' rather than 'scam'")],
                      model_dependent=True)
 
+    if d.verdict == Verdict.SAFE and not english:
+        # Our rules cannot read this language, so nothing independent has checked the message: a model's "safe" stands alone. Measured on
+        # machine-translated SMS (Indonesian, Japanese, Korean, Hindi, Arabic) that let 1-2 scams in 40 through, so "safe" is withheld.
+        d = Decision(Verdict.UNSURE, "low", [T("can't fully check this language with built-in rules, so I can't call it safe")])
+
     if injection and d.verdict == Verdict.SAFE:
         d = Decision(Verdict.UNSURE, "low", [T("message tries to instruct the checker")])
     return d

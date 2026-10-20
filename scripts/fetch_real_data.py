@@ -1,5 +1,7 @@
 """Download the independent evaluation datasets listed in data/external/README.md. Files are untrusted: they are only ever read as text.
-Usage: python -m scripts.fetch_real_data"""
+Usage: python -m scripts.fetch_real_data                 (English datasets)
+       python -m scripts.fetch_real_data --multilingual  (the machine-translated SMS set, 13 languages; needs pyarrow)"""
+import sys
 import hashlib
 import json
 import urllib.request
@@ -29,7 +31,31 @@ def fetch(url: str, dest: Path, tries: int = 3) -> None:
     raise SystemExit(f"could not download {url}")
 
 
+ML_DATASET = "dbarbedillo/SMS_Spam_Multilingual_Collection_Dataset"  # the UCI SMS Spam Collection, machine-translated (GPL-3.0): a robustness check, not real local scams
+ML_LANGS = ["zh", "id", "ja", "ko", "hi", "ar", "es", "fr", "de", "ru", "pt", "tr", "bn"]
+
+
+def fetch_multilingual() -> None:
+    """Download the dataset's parquet file (about 8 MB) and keep the label plus one text column per language. Needs `pip install pyarrow`."""
+    try:
+        import io
+
+        import pyarrow.parquet as pq
+    except ImportError:
+        raise SystemExit("this optional step needs pyarrow: pip install pyarrow")
+    tmp = ROOT / "multilingual_sms" / "train.parquet"
+    fetch(f"https://huggingface.co/datasets/{ML_DATASET}/resolve/refs%2Fconvert%2Fparquet/default/train/0000.parquet", tmp)
+    table = pq.read_table(io.BytesIO(tmp.read_bytes())).to_pylist()
+    out = [{"label": r["labels"], "en": r["text"], **{lang: r.get(f"text_{lang}") for lang in ML_LANGS}} for r in table]
+    dest = ROOT / "multilingual_sms" / "rows.jsonl"
+    dest.write_text("\n".join(json.dumps(x, ensure_ascii=False) for x in out), encoding="utf-8")
+    tmp.unlink()
+    print("ok:", len(out), "rows ->", dest)
+
+
 def main() -> None:
+    if "--multilingual" in sys.argv:
+        return fetch_multilingual()
     manifest = {}
     for rel, url in FILES.items():
         dest = ROOT / rel

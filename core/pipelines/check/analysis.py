@@ -116,6 +116,8 @@ def rule_evidence(ing: Ingested, intent: Intent, f: Findings, ledger: Ledger) ->
 def safe_evidence(ing: Ingested, intent: Intent, ledger: Ledger, f: Findings | None = None) -> None:
     T = lambda s, **kw: tr(s, ing.reply, **kw)  # noqa: E731
     ledger.discard("benign-intent")  # re-evaluated every round: new red flags revoke it
+    if not ing.english:
+        return  # our rules cannot read this language, so "the rules found nothing risky" would be a claim about text they never understood
     if f is not None and f.all_links_established() and not ledger.scam() and not intent.high_risk and not intent.pressure and not ing.injection:
         ledger.add("tool", "established-links", "safe", "medium", T("Every link goes to a long-established website that exists"))
     pur = intents.PURPOSES.get(intent.purpose)

@@ -45,7 +45,7 @@ _PREF = {"复": "複", "干": "幹", "里": "裡"}  # where the table's first ch
 _PHRASES = (  # words that differ between Simplified and Traditional usage, or whose character depends on the word
     ("回复", "回覆"), ("联系", "聯繫"), ("关系", "關係"), ("短信", "簡訊"), ("软件", "軟體"), ("网络", "網路"), ("信息", "資訊"), ("视频", "影片"), ("链接", "連結"),
     ("二维码", "QR碼"), ("转账", "轉帳"), ("支付宝", "支付寶"), ("质量", "品質"), ("程序", "程式"), ("硬件", "硬體"), ("打印", "列印"), ("默认", "預設"), ("数据", "資料"),
-    ("账户", "帳戶"), ("账号", "帳號"), ("干净", "乾淨"), ("后来", "後來"),
+    ("账户", "帳戶"), ("账号", "帳號"), ("干净", "乾淨"), ("后来", "後來"), ("分钟", "分鐘"), ("复制", "複製"), ("消息", "訊息"), ("反馈", "回饋"), ("刷新", "重新整理"),
 )
 
 
@@ -161,6 +161,7 @@ ZH: dict[str, str] = {
     "the AI isn't sure and nothing else explains it": "AI也拿不准，其他检查也解释不了",
     "asks for something sensitive or is hard to judge": "涉及敏感要求，或者难以判断",
     "can't judge this language with built-in rules alone": "仅凭内置规则无法判断这种语言",
+    "can't fully check this language with built-in rules, so I can't call it safe": "内置规则无法完整检查这种语言，所以我不能说它是安全的",
     "contains a link that can't be verified": "含有无法核实的链接",
     "built-in rules alone can't vouch that a message is safe": "只靠内置规则，无法担保一条消息安全",
     "asks for nothing risky and no red flags found": "没有要求有风险的事，也没发现红旗",
