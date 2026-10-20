@@ -7,9 +7,10 @@ from dataclasses import dataclass, field
 
 from core.ai import llm
 from core.domain import intents
+from core.domain import ms as MS
 from core.domain import zh as ZH
 from core.domain.i18n import tr
-from core.domain.lang import CJK, Dual, Z, canon
+from core.domain.lang import CJK, CURRENT, Dual, Z, canon
 from core.ai.prompts import INTENT_SYSTEM
 
 from .ingest import Ingested
@@ -20,18 +21,18 @@ ASKS = ("pay", "share_code", "share_credentials", "install", "click", "call", "r
 HIGH_RISK_ASKS = {"pay", "share_code", "share_credentials", "install"}
 
 ASK_RULES = {
-    "pay": Dual(r"\b(?:txt|text|sms|send|reply)\b[^.!?\n]{0,70}\b(?:to|2)\s*\d{4,6}\b|\b(?:pay|send|transfer|wire|deposit|top up|buy|move)\b[^.!?\n]{0,40}(?:[$€£]|\d+ ?(?:dollars|usd|eur)|\bfee\b|\btax\b|gift ?cards?|bitcoin|crypto|usdt|voucher|balance|savings|money|cash)|\bpag(?:ue|ar)\b|\b(?:send|return|refund|pay|transfer) (?:it|that|the money|the funds|them) back\b", ZH.ASK["pay"]),
-    "share_code": Dual(r"\b(?:repl(?:y|ying)|send(?:ing)?|read|shar(?:e|ing)|giv(?:e|ing)|forward|tell|submit(?:ting)?|provid(?:e|ing)|enter(?:ing)?)\b[^.!?\n]{0,25}\b(?:code|otp|pin)\b|\bread (?:it|them) (?:out )?to me\b", ZH.ASK["share_code"]),
-    "share_credentials": Dual(r"\b(?:enter|confirm|verify|provide|share|give|send|need|require|ask(?:ed)? for)\s+(?:only |just )?(?:us |me )?(?:your |the )?(?:password|pin|ssn|social security number|card number|medicare number|date of birth|bank details|login|(?:personal |bank |card |account |contact |full )?(?:details|info(?:rmation)?|id\b))", ZH.ASK["share_credentials"]),
-    "install": Dual(r"\binstall\b|\bdownload (?:the |this )?(?:app|software)\b", ZH.ASK["install"]),
-    "click": Dual(r"\b(?:click|tap|open)\b[^.!?\n]{0,15}\b(?:link|here)\b", ZH.ASK["click"]),
-    "call": Dual(r"\bcall\b", ZH.ASK["call"]),
-    "reply": Dual(r"\breply\b|\brespond\b", ZH.ASK["reply"]),
+    "pay": Dual(r"\b(?:txt|text|sms|send|reply)\b[^.!?\n]{0,70}\b(?:to|2)\s*\d{4,6}\b|\b(?:pay|send|transfer|wire|deposit|top up|buy|move)\b[^.!?\n]{0,40}(?:[$€£]|\d+ ?(?:dollars|usd|eur)|\bfee\b|\btax\b|gift ?cards?|bitcoin|crypto|usdt|voucher|balance|savings|money|cash)|\bpag(?:ue|ar)\b|\b(?:send|return|refund|pay|transfer) (?:it|that|the money|the funds|them) back\b", ZH.ASK["pay"], MS.ASK["pay"]),
+    "share_code": Dual(r"\b(?:repl(?:y|ying)|send(?:ing)?|read|shar(?:e|ing)|giv(?:e|ing)|forward|tell|submit(?:ting)?|provid(?:e|ing)|enter(?:ing)?)\b[^.!?\n]{0,25}\b(?:code|otp|pin)\b|\bread (?:it|them) (?:out )?to me\b", ZH.ASK["share_code"], MS.ASK["share_code"]),
+    "share_credentials": Dual(r"\b(?:enter|confirm|verify|provide|share|give|send|need|require|ask(?:ed)? for)\s+(?:only |just )?(?:us |me )?(?:your |the )?(?:password|pin|ssn|social security number|card number|medicare number|date of birth|bank details|login|(?:personal |bank |card |account |contact |full )?(?:details|info(?:rmation)?|id\b))", ZH.ASK["share_credentials"], MS.ASK["share_credentials"]),
+    "install": Dual(r"\binstall\b|\bdownload (?:the |this )?(?:app|software)\b", ZH.ASK["install"], MS.ASK["install"]),
+    "click": Dual(r"\b(?:click|tap|open)\b[^.!?\n]{0,15}\b(?:link|here)\b", ZH.ASK["click"], MS.ASK["click"]),
+    "call": Dual(r"\bcall\b", ZH.ASK["call"], MS.ASK["call"]),
+    "reply": Dual(r"\breply\b|\brespond\b", ZH.ASK["reply"], MS.ASK["reply"]),
 }
-NEGATION = Dual(r"\b(?:never|don'?t|do not|won'?t|will not)\b[^.!?]{0,25}$", ZH.NEGATION)
-RELATIONS = Dual(r"\b(mum|mom|dad|grandma|grandpa|nan|nana|gran|son|daughter|grandson|granddaughter|it'?s me)\b", ZH.RELATIONS)
-AUTHORITY = Dual(r"\b(officer|detective|police|irs|hmrc|social security|court|tax office|government|cyber ?crime|fraud department|security team)\b", ZH.AUTHORITY)
-ORGANISATION = Dual(r"\b((?:your|the) bank(?! (?:details|account|transfer|statement|holiday|balance))|bank (?:alert|notice|security|team|fraud)|\w+ bank(?! (?:details|account|transfer|statement|holiday))|microsoft|apple|amazon|paypal|netflix|your provider|support team|customer service)\b", ZH.ORGANISATION)
+NEGATION = Dual(r"\b(?:never|don'?t|do not|won'?t|will not)\b[^.!?]{0,25}$", ZH.NEGATION, MS.NEGATION)
+RELATIONS = Dual(r"\b(mum|mom|dad|grandma|grandpa|nan|nana|gran|son|daughter|grandson|granddaughter|it'?s me)\b", ZH.RELATIONS, MS.RELATIONS)
+AUTHORITY = Dual(r"\b(officer|detective|police|irs|hmrc|social security|court|tax office|government|cyber ?crime|fraud department|security team)\b", ZH.AUTHORITY, MS.AUTHORITY)
+ORGANISATION = Dual(r"\b((?:your|the) bank(?! (?:details|account|transfer|statement|holiday|balance))|bank (?:alert|notice|security|team|fraud)|\w+ bank(?! (?:details|account|transfer|statement|holiday))|microsoft|apple|amazon|paypal|netflix|your provider|support team|customer service)\b", ZH.ORGANISATION, MS.ORGANISATION)
 OPENER = Dual(
     r"\b[Ii]s this [A-Z][a-z]+\s*\?|\bwrong (?:person|number)\b|\b(?:got|found|have) your (?:number|email|contact|details) (?:from|through|via|on)\b"
     r"|\b(?:gave|sent|passed|shared|given) (?:me|us) your (?:number|email|contact|details|address)\b|\bfriend of (?:your|a (?:friend|colleague))\b|\bmutual (?:friend|contact|acquaintance)\b"
@@ -39,16 +40,16 @@ OPENER = Dual(
     r"|\bcan you (?:check|confirm|see) (?:if )?you can (?:receive|get)\b|\bare you (?:available|at your desk)\b"
     r"|\b(?:add me on|message me on|find me on|move (?:to|this to)|continue (?:on|in)) (?:telegram|whatsapp|signal|wechat)\b"
     r"|\b(?:is (?:the|this) item|is it) still (?:available|for sale)\b|\bstill available\b"
-    r"|\b(?:saw|found|came across|noticed) your (?:profile|listing|ad|post|resume|cv)\b|\b(?:text|call|message) me (?:on|at) \+?[\d(]", ZH.OPENER)
+    r"|\b(?:saw|found|came across|noticed) your (?:profile|listing|ad|post|resume|cv)\b|\b(?:text|call|message) me (?:on|at) \+?[\d(]", ZH.OPENER, MS.OPENER)
 
 PRESSURE_KINDS = {
     "deadline": PRESSURE_RE,
-    "threat": Dual(r"\b(?:arrest\w*|warrant|court|legal action|lawsuit|account (?:will be )?(?:closed|suspended|blocked|deactivated)|disconnect\w*|detain\w*|penalty|lose access)\b", ZH.THREAT),
-    "secrecy": Dual(r"\b(?:don'?t tell|do not tell|keep (?:this|it) (?:a )?secret|between us|do not (?:speak|talk) to|don'?t call|please don'?t call)\b", ZH.SECRECY),
-    "emotional": Dual(r"\b(?:emergency|hospital|in trouble|stuck|please hurry|i love you|lonely|bail|accident)\b", ZH.EMOTIONAL),
+    "threat": Dual(r"\b(?:arrest\w*|warrant|court|legal action|lawsuit|account (?:will be )?(?:closed|suspended|blocked|deactivated)|disconnect\w*|detain\w*|penalty|lose access)\b", ZH.THREAT, MS.THREAT),
+    "secrecy": Dual(r"\b(?:don'?t tell|do not tell|keep (?:this|it) (?:a )?secret|between us|do not (?:speak|talk) to|don'?t call|please don'?t call)\b", ZH.SECRECY, MS.SECRECY),
+    "emotional": Dual(r"\b(?:emergency|hospital|in trouble|stuck|please hurry|i love you|lonely|bail|accident)\b", ZH.EMOTIONAL, MS.EMOTIONAL),
 }
-_PAY_VERB = Dual(r"\b(?:buy|send|pay)\b", r"转|汇|付|买|购|支付|充值|缴")
-_NEW_NUMBER = Dual(r"\b(?:new (?:number|phone)|lost my|dropped my phone)\b", ZH.NEW_NUMBER)
+_PAY_VERB = Dual(r"\b(?:buy|send|pay)\b", r"转|汇|付|买|购|支付|充值|缴", r"\b(?:bayar|transfer|pindahkan|beli|kirim)\b")
+_NEW_NUMBER = Dual(r"\b(?:new (?:number|phone)|lost my|dropped my phone)\b", ZH.NEW_NUMBER, MS.NEW_NUMBER)
 
 
 @dataclass
@@ -154,8 +155,8 @@ SCENARIO_PURPOSE = {
 }
 
 
-ALARM = Dual(r"\b(?:blocked|hacked|suspended|locked|compromised|unauthori[sz]ed|suspicious|fraudulent|deactivat\w+|disabled|limited|expir\w+|delayed|on hold|is full|storage (?:is )?full|storage limit|failed login|violation)\b", ZH.ALARM)
-ACTION = Dual(r"\b(?:verify|verifying|reactivate|re-?activate|secure (?:it|your)|change (?:your )?password|open the app|click|tap|log ?in|sign in|renew now|track now|update (?:your )?(?:details|info|account)|confirm (?:your|identity)|act now|claim|call (?:us|now)|respond)\b", ZH.ACTION)
+ALARM = Dual(r"\b(?:blocked|hacked|suspended|locked|compromised|unauthori[sz]ed|suspicious|fraudulent|deactivat\w+|disabled|limited|expir\w+|delayed|on hold|is full|storage (?:is )?full|storage limit|failed login|violation)\b", ZH.ALARM, MS.ALARM)
+ACTION = Dual(r"\b(?:verify|verifying|reactivate|re-?activate|secure (?:it|your)|change (?:your )?password|open the app|click|tap|log ?in|sign in|renew now|track now|update (?:your )?(?:details|info|account)|confirm (?:your|identity)|act now|claim|call (?:us|now)|respond)\b", ZH.ACTION, MS.ACTION)
 
 
 def classify_purpose(ing: Ingested, it: Intent) -> str:
@@ -209,11 +210,11 @@ def _supported(ask: str, ing: Ingested) -> bool:
     if ask == "click":
         return bool(ing.entities.hosts)
     if ask == "call":
-        return bool(re.search(r"\bcall\b|\d{3}[\s.-]?\d{3,}", ing.text, re.I) or (CJK.search(ing.text) and Z(ZH.CALL_POSSIBLE).search(ing.text)))
+        return bool(re.search(r"\bcall\b|\d{3}[\s.-]?\d{3,}", ing.text, re.I) or (CJK.search(ing.text) and Z(ZH.CALL_POSSIBLE).search(ing.text)) or (CURRENT.get() == "ms" and re.search(MS.CALL_POSSIBLE, ing.text, re.I)))
     return True
 
 
-CONSEQUENCE = Dual(r"\b(?:or|unless|otherwise|else|before)\b[^.!?]{0,70}\b(?:will|be|lose|cancel\w*|clos\w+|suspend\w*|block\w*|disconnect\w*|fine|penalt\w*|return\w*|delet\w+|arrest\w*|expire)\b", ZH.CONSEQUENCE)
+CONSEQUENCE = Dual(r"\b(?:or|unless|otherwise|else|before)\b[^.!?]{0,70}\b(?:will|be|lose|cancel\w*|clos\w+|suspend\w*|block\w*|disconnect\w*|fine|penalt\w*|return\w*|delet\w+|arrest\w*|expire)\b", ZH.CONSEQUENCE, MS.CONSEQUENCE)
 
 
 def _pressure_supported(kind: str, ing: Ingested) -> bool:

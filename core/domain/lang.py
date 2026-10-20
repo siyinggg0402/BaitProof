@@ -5,6 +5,7 @@ returns one that also matches the Traditional forms, so each rule is written onc
 OpenCC project's TSCharacters.txt (Apache-2.0), restricted to one-to-one common characters so text length never changes."""
 from __future__ import annotations
 
+import contextvars
 import json
 import re
 import unicodedata
@@ -24,15 +25,20 @@ _SCRIPTS = {  # non-Latin scripts we recognise, mapped to an ISO-ish code (the m
     "ta": re.compile(r"[஀-௿]"), "th": re.compile(r"[฀-๿]"), "ru": re.compile(r"[Ѐ-ӿ]"),
 }
 _EN = frozenset("the and you your to is a of for in on it i we are be this that with at my me can will please have has not from or if as so by an".split())
-_MS = frozenset("yang dan anda untuk dengan di ini itu akan telah kami saya tidak atau dalam pada dari sila kod ke akaun boleh jangan sudah ada kita mereka adalah "
-                "kepada tahniah wang bank sebagai oleh juga lagi sahaja tolong nombor baru telefon sedang masa hari esok semua".split())
+_MS = frozenset(("yang dan anda untuk dengan di ini itu akan telah kami saya tidak atau dalam pada dari sila kod ke akaun boleh jangan sudah ada kita mereka adalah "
+                 "kepada tahniah wang sebagai oleh juga lagi sahaja tolong nombor baru telefon sedang masa hari esok semua besok kamu aku udah dah nanti ya yg gak nggak "
+                 "enggak ga kok sih deh kan saja banget aja bisa mau tak nak kat tu ni je la lah kau dia sampai pun pula hanya sangat sekali masih bila mana siapa kenapa "
+                 "bagaimana macam perlu mesti harus ingin mahu hendak buat pergi datang balik pulang makan minum semalam tadi setiap antara hingga kerana sebab supaya agar "
+                 "jika kalau apabila ketika sambil selepas sebelum selama belum pernah terima kasih selamat hadiah saudara tuan puan rekening bayar duit pinjam segera "
+                 "sekarang klik pautan tautan transfer kode anda").split())
 _OTHER_LATIN = {  # a few stopwords is enough to say "this is Latin script but not English or Malay"
     "es": frozenset("el la los las de que y en un una por con para su es se no lo como más pero sus".split()),
     "fr": frozenset("le la les de des et en un une du que qui pour dans est pas vous nous votre sur avec".split()),
     "de": frozenset("der die das und ist nicht ein eine zu den mit sie ich von für auf dem sich".split()),
     "pt": frozenset("o a os as de que e em um uma para com não é se do da por mais seu".split()),
 }
-RULES_LANGS = frozenset({"en", "zh", "zh-Hant"})  # languages our built-in rules understand; everything else is judged by the model alone
+RULES_LANGS = frozenset({"en", "zh", "zh-Hant", "ms"})  # languages our built-in rules understand (ms = Malay and Indonesian); everything else is judged by the model alone
+CURRENT: contextvars.ContextVar[str] = contextvars.ContextVar("baitproof_lang", default="en")  # the language of the message being checked (set by ingest)
 
 
 def is_traditional_char(c: str) -> bool:
@@ -112,40 +118,44 @@ def Z(p: str, flags: int = re.I | re.S) -> re.Pattern:
 
 
 class Dual:
-    """An English pattern and its Chinese twin. The Chinese one runs only on text that contains Chinese characters, so English behaviour
-    (and every English number we have measured) is untouched. Offers the same search/finditer/sub/findall a compiled pattern does."""
-    __slots__ = ("en", "zh")
+    """An English pattern with a Chinese twin and a Malay/Indonesian twin. The Chinese one runs only on text that contains Chinese characters, the
+    Malay one only while the message being checked is detected as Malay/Indonesian, so English behaviour (and every English number we have
+    measured) is untouched. Offers the same search/finditer/sub/findall a compiled pattern does."""
+    __slots__ = ("en", "zh", "ms")
 
-    def __init__(self, en: str | re.Pattern | None, zh: str | None = None, flags: int = re.I | re.S) -> None:
+    def __init__(self, en: str | re.Pattern | None, zh: str | None = None, ms: str | None = None, flags: int = re.I | re.S) -> None:
         self.en = (re.compile(en, flags) if isinstance(en, str) else en)
         self.zh = Z(zh, flags) if zh else None
+        self.ms = re.compile(ms, flags) if ms else None
 
     @property
     def pattern(self) -> str:
         return self.en.pattern if self.en is not None else ""
 
-    def _zh_on(self, text: str) -> bool:
-        return self.zh is not None and bool(CJK.search(text))
+    def _twins(self, text: str) -> list:
+        out = [self.en] if self.en is not None else []
+        if self.zh is not None and CJK.search(text):
+            out.append(self.zh)
+        if self.ms is not None and CURRENT.get() == "ms":
+            out.append(self.ms)
+        return out
 
     def search(self, text: str, pos: int = 0):
-        a = self.en.search(text, pos) if self.en is not None else None
-        if self._zh_on(text):
-            b = self.zh.search(text, pos)
-            if b is not None and (a is None or b.start() < a.start()):
-                return b
-        return a
+        best = None
+        for rx in self._twins(text):
+            m = rx.search(text, pos)
+            if m is not None and (best is None or m.start() < best.start()):
+                best = m
+        return best
 
     def finditer(self, text: str):
-        ms = list(self.en.finditer(text)) if self.en is not None else []
-        if self._zh_on(text):
-            ms += list(self.zh.finditer(text))
+        ms = [m for rx in self._twins(text) for m in rx.finditer(text)]
         return iter(sorted(ms, key=lambda m: m.start()))
 
     def findall(self, text: str) -> list:
-        out = self.en.findall(text) if self.en is not None else []
-        return out + (self.zh.findall(text) if self._zh_on(text) else [])
+        return [x for rx in self._twins(text) for x in rx.findall(text)]
 
     def sub(self, repl, text: str) -> str:
-        if self.en is not None:
-            text = self.en.sub(repl, text)
-        return self.zh.sub(repl, text) if self._zh_on(text) else text
+        for rx in self._twins(text):
+            text = rx.sub(repl, text)
+        return text

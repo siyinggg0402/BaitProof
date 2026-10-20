@@ -1,0 +1,50 @@
+"""Malay and Indonesian HOLDOUT: written by hand BEFORE any Malay/Indonesian rules existed, from common scams in Malaysia, Singapore and Indonesia
+(Macau-scam police calls, parcel and customs fees, bank blocks, prizes with an admin fee, task jobs, boss/family 'new number', fake investments,
+OTP/TAC read-outs) and ordinary messages in both languages. Authored, not captured: a development signal, not a benchmark.
+Measured once before any tuning; after tuning it counts as a development set."""
+
+SCAMS = [
+    ("pdrm-call", "PDRM: Anda disyaki terlibat dalam kes penipuan. Sila hubungi Inspektor Azman di 03-2345 6789 segera atau waran tangkap akan dikeluarkan."),
+    ("poslaju", "Pos Laju: Bungkusan anda tidak dapat dihantar kerana alamat tidak lengkap. Kemaskini di http://poslaju-semak.top dalam masa 24 jam atau akan dikembalikan."),
+    ("shopee-prize", "Tahniah! Nombor anda terpilih memenangi RM8,000 dalam cabutan bertuah Shopee. Hubungi WhatsApp 012-345 6789 untuk menuntut, bayar yuran proses RM150 dahulu."),
+    ("maybank-block", "Maybank2u: Akaun anda telah disekat kerana aktiviti mencurigakan. Sahkan butiran anda di http://maybank-secure-login.cc sekarang."),
+    ("job-deposit", "Kerja sambilan dari rumah! Komisen RM300 sehari, tiada pengalaman diperlukan. Sertai kumpulan Telegram kami dan buat deposit RM100 untuk mula."),
+    ("mak-new-number", "Mak, ni nombor baru Ali. Telefon rosak. Boleh tolong transfer RM1,500 ke akaun ni sekarang? Jangan beritahu abah dulu."),
+    ("lhdn-tax", "LHDN: Anda mempunyai tunggakan cukai RM3,420. Bayar segera melalui pautan ini untuk mengelakkan tindakan mahkamah: http://lhdn-bayar.xyz"),
+    ("crypto-ms", "Pelaburan kripto pasti untung! Pulangan 30% sebulan, modal selamat. Hubungi ejen kami di WhatsApp untuk daftar."),
+    ("tac-readout", "Kod TAC anda ialah 482913. Sila beritahu kod ini kepada pegawai bank kami yang akan menghubungi anda."),
+    ("customs-fee", "Anda menerima pakej dari luar negara tetapi perlu bayar cukai kastam RM260. Sila pindahkan ke akaun yang diberi untuk dilepaskan."),
+    ("shopee-id", "Selamat! Anda memenangkan hadiah Rp 50.000.000 dari Shopee. Hubungi admin di WhatsApp 0812-3456-7890 dan transfer biaya administrasi Rp 500.000."),
+    ("bca-block", "Rekening BCA Anda akan diblokir hari ini. Segera verifikasi data di http://bca-klik-verifikasi.top atau hubungi CS kami."),
+    ("mamah-new-number", "Mah, ini nomor baru Dimas. HP lagi rusak. Tolong transfer Rp 2.000.000 ke rekening ini sekarang, jangan bilang papa ya."),
+    ("bea-cukai", "Paket Anda tertahan di bea cukai. Bayar biaya Rp 150.000 melalui http://jnt-cek-paket.cc agar paket segera dikirim."),
+    ("like-job", "Lowongan kerja online, gaji Rp 500 ribu per hari cukup like dan subscribe. Daftar via Telegram, deposit awal Rp 200.000."),
+    ("polisi-aman", "Polisi: Anda terlibat kasus pencucian uang. Transfer dana Anda ke rekening aman untuk diperiksa dan jangan beritahu siapa pun."),
+    ("saham-vip", "Investasi saham dijamin untung 40% per bulan, dana aman. Gabung grup VIP kami sekarang."),
+    ("kode-otp-minta", "Kode OTP Anda 593021. Berikan kode ini kepada petugas kami yang menelepon untuk membatalkan transaksi."),
+    ("wa-nonaktif", "Akun WhatsApp Anda akan dinonaktifkan. Klik http://wa-verifikasi.xyz untuk memverifikasi dalam 24 jam."),
+    ("pinjaman-asuransi", "Halo, saya Rina dari bank. Pinjaman Anda disetujui Rp 30 juta tanpa jaminan, cukup bayar biaya asuransi Rp 1.000.000 dulu."),
+]
+
+LEGIT = [
+    ("otp-ms", "Kod OTP anda ialah 593021. Jangan kongsi dengan sesiapa. Sah selama 5 minit."),
+    ("cafe-ms", "Esok kita jumpa di kafe pukul 3 petang ya."),
+    ("parcel-ms", "Bungkusan anda telah dihantar dan akan tiba esok antara 9 pagi hingga 5 petang."),
+    ("mak-dinner", "Mak, malam ni saya balik makan, tak payah masak banyak."),
+    ("clinic-ms", "Temu janji anda dengan Dr. Tan pada 25 Oktober, 10:00 pagi telah disahkan. Sila hubungi klinik jika perlu menukar."),
+    ("maybank-alert", "Maybank: Anda telah membayar RM45.00 di Giant pada 20/10 14:32. Baki boleh disemak di aplikasi MAE."),
+    ("meeting-ms", "Mesyuarat pasukan dipindahkan ke jam 2 petang esok, bilik mesyuarat A."),
+    ("tnb-bill", "Ini peringatan: bil elektrik anda sebanyak RM120 perlu dijelaskan sebelum 30 Oktober melalui aplikasi myTNB."),
+    ("otp-id", "Kode OTP Anda adalah 482913. Jangan berikan kode ini kepada siapa pun."),
+    ("kantor-id", "Besok kita ketemu di kantor jam 9 ya, jangan lupa bawa laptop."),
+    ("paket-id", "Paket Anda sudah sampai di titik pengambilan. Silakan ambil dengan kode 872564."),
+    ("kos-id", "Ma, aku udah sampai kos, semua aman. Nanti kabarin lagi ya."),
+    ("dokter-id", "Jadwal konsultasi Anda dengan dokter besok pukul 10.00 sudah dikonfirmasi."),
+    ("bca-alert", "BCA: Transaksi sebesar Rp 150.000 di Indomaret berhasil. Cek mutasi di aplikasi myBCA."),
+    ("rt-id", "Selamat pagi, hari Jumat ada rapat RT jam 7 malam di balai warga."),
+    ("telur-id", "Jangan lupa beli telur dan susu dalam perjalanan balik, terima kasih!"),
+    ("yoga-ms", "Peringatan: kelas yoga bermula jam 6 petang hari ini di studio."),
+    ("rent-ms", "Pembayaran sewa bulan ini sebanyak RM1,200 telah saya transfer ke akaun anda, sila semak."),
+    ("pdrm-warning", "PDRM mengingatkan orang ramai supaya berwaspada dengan penipuan panggilan telefon yang mengaku pegawai polis. Jangan beri butiran bank anda."),
+    ("lobby-ms", "Saya akan sampai dalam 10 minit, tunggu di lobi ya."),
+]

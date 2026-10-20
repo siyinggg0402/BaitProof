@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 
 from core.domain import lang as L
 from core.domain import privacy
+from core.domain import ms as MS
 from core.domain import zh as ZH
 from core.domain.lang import Dual
 from core.storage import library
@@ -23,7 +24,7 @@ def looks_english(text: str) -> bool:
         return False
     foreign = sum(ord(c) > 0x24F for c in letters) / len(letters)  # non-Latin scripts
     return foreign < 0.1 and sum(w in STOPWORDS for w in words) / len(words) >= 0.15
-AMOUNT_RE = Dual(r"[$€£]\s?\d[\d,.]*|\b\d[\d,.]*\s?(?:dollars|usd|eur)\b|\bRM\s?\d[\d,.]*|\bS\$\s?\d[\d,.]*", ZH.AMOUNT)
+AMOUNT_RE = Dual(r"[$€£]\s?\d[\d,.]*|\b\d[\d,.]*\s?(?:dollars|usd|eur)\b|\bRM\s?\d[\d,.]*|\bS\$\s?\d[\d,.]*", ZH.AMOUNT, MS.AMOUNT)
 
 
 @dataclass
@@ -57,6 +58,7 @@ def ingest(raw: str) -> Ingested:
     low = text.lower()
     simp = L.to_simplified(text) if L.CJK.search(text) else ""  # Chinese brand names are matched in Simplified so Traditional text counts too
     lang = L.detect(text)
+    L.CURRENT.set(lang)  # the Malay/Indonesian twin patterns key off this
     ent = Entities(
         hosts=hosts,
         amounts=AMOUNT_RE.findall(text),

@@ -7,6 +7,7 @@ import re
 from core.ai import fewshot, llm
 from core.ai.prompts import CHECK_SYSTEM, CHINESE_EXAMPLES, CRITIC_SYSTEM
 from core.domain import intents
+from core.domain import ms as MS
 from core.domain import zh as ZH
 from core.domain.i18n import PROMPT_NAMES, tactic_text, tr, why as why_text
 from core.domain.lang import is_chinese
@@ -23,8 +24,8 @@ from .knowledge import PREMIUM_RE, RULES
 from .tools import Findings, registered_domain as tools_registered
 
 
-STRONG_URGENCY = Dual(r"\bwithin \d+ ?(?:hours?|hrs?|minutes?|mins?)|\bimmediately\b|\bact now\b|\bfinal (?:notice|demand|warning)\b|\blast (?:chance|warning)\b|\btoday (?:at|by)\b|\bby tonight\b|\bbefore midnight\b|\bright now\b", ZH.STRONG_DEADLINE)
-_ZH_WARNING = Z(ZH.WARNING_SENTENCE)
+STRONG_URGENCY = Dual(r"\bwithin \d+ ?(?:hours?|hrs?|minutes?|mins?)|\bimmediately\b|\bact now\b|\bfinal (?:notice|demand|warning)\b|\blast (?:chance|warning)\b|\btoday (?:at|by)\b|\bby tonight\b|\bbefore midnight\b|\bright now\b", ZH.STRONG_DEADLINE, MS.STRONG_DEADLINE)
+_WARNING = Dual(None, ZH.WARNING_SENTENCE, MS.WARNING_SENTENCE)  # warnings and public notices are not the scam they quote
 STRONG_RULE_TACTICS = {"remote-access-request"}  # a pattern hit that is near-conclusive on its own
 
 
@@ -32,7 +33,7 @@ def rule_evidence(ing: Ingested, intent: Intent, f: Findings, ledger: Ledger) ->
     """Independent (non-model) evidence from phrase rules, the domain/rail tools and the intent diagnosis."""
     L = ing.reply
     T = lambda s, **kw: tr(s, L, **kw)  # noqa: E731
-    scan = _ZH_WARNING.sub(" ", ing.text) if CJK.search(ing.text) else ing.text  # "请勿将验证码告知他人" warns against the very thing it names
+    scan = _WARNING.sub(" ", ing.text)  # "请勿将验证码告知他人" warns against the very thing it names
     for tid, pats in RULES.items():
         for p in pats:
             if m := p.search(scan):

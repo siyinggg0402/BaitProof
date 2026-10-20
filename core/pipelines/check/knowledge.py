@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import re
 
+from core.domain import ms as MS
 from core.domain import zh as ZH
 from core.domain.lang import Dual
 
@@ -10,21 +11,21 @@ C = lambda p: re.compile(p, re.I | re.S)  # noqa: E731
 
 VICTIM_RE = Dual(
     r"\bi (?:already |have |just )?(?:paid|sent (?:them|the|it|money)|transferred|gave (?:them|him|her)|clicked|installed|shared (?:the|my))\b"
-    r"|\bi(?:'ve| have) been scammed\b|\bi think i (?:was|got) scammed\b", ZH.VICTIM)
+    r"|\bi(?:'ve| have) been scammed\b|\bi think i (?:was|got) scammed\b", ZH.VICTIM, MS.VICTIM)
 
 # A message that tries to instruct the checker is itself a red flag.
-INJECTION_RE = Dual(r"ignore (?:all |the |any )?(?:previous|above|prior) (?:instructions?|rules?)|system prompt|you are now\b|mark (?:this|it) as (?:safe|legit)|respond (?:only )?with.{0,20}\bsafe\b|\bas an ai\b|verdict\s*:", ZH.INJECTION)
+INJECTION_RE = Dual(r"ignore (?:all |the |any )?(?:previous|above|prior) (?:instructions?|rules?)|system prompt|you are now\b|mark (?:this|it) as (?:safe|legit)|respond (?:only )?with.{0,20}\bsafe\b|\bas an ai\b|verdict\s*:", ZH.INJECTION, MS.INJECTION)
 
-PRESSURE_RE = Dual(r"\bwithin \d+ ?(?:hours?|hrs?|minutes?|mins?)|\bimmediately\b|\bright now\b|\burgent(?:ly)?\b|\btoday (?:at|by)\b|\bby tonight\b|\blast (?:chance|warning)\b|\bact now\b|\bfinal (?:notice|demand|warning)\b|\b(?:offer|deal) ends\b|\babout to expire\b|\bbefore midnight\b|\bat once\b|\blimited spots?\b|\b(?:closes?|ends?|expires?|expiring|deadline)\b[^.!?]{0,20}\b(?:tonight|today|midnight)\b|\bor (?:your|the) .{0,30}(?:will be|is) (?:cut|closed|suspended|blocked|returned|arrested|frozen)", ZH.DEADLINE)
+PRESSURE_RE = Dual(r"\bwithin \d+ ?(?:hours?|hrs?|minutes?|mins?)|\bimmediately\b|\bright now\b|\burgent(?:ly)?\b|\btoday (?:at|by)\b|\bby tonight\b|\blast (?:chance|warning)\b|\bact now\b|\bfinal (?:notice|demand|warning)\b|\b(?:offer|deal) ends\b|\babout to expire\b|\bbefore midnight\b|\bat once\b|\blimited spots?\b|\b(?:closes?|ends?|expires?|expiring|deadline)\b[^.!?]{0,20}\b(?:tonight|today|midnight)\b|\bor (?:your|the) .{0,30}(?:will be|is) (?:cut|closed|suspended|blocked|returned|arrested|frozen)", ZH.DEADLINE, MS.DEADLINE)
 
 PREMIUM_RE = C(r"\b\d+(?:\.\d+)?\s?p\s?(?:per|/)\s?(?:min|msg|message|text|week|wk)\b|\bppm\b|\b[£$€]\s?\d+(?:\.\d{2})?\s?(?:/|per)\s?(?:msg|min|text|wk|week|month)\b"
                r"|\bcosts?\s+[£$€]\s?\d+(?:\.\d+)?|\bcosts?\s+\d+(?:\.\d+)?\s?(?:p|ppm|pence)\b|\b(?:txt|text|sms|send|reply)\b[^.!?\n]{0,70}\b(?:to|2)\s*\d{4,6}\b|\b\d{3,}p\b[^.!?\n]{0,20}\b(?:msg|message|text)")
 
 RAILS = {  # irreversible payment rails
-    "gift-card": Dual(r"\bgift ?cards?\b|\b(?:google play|itunes|steam|apple|amazon|prepaid) cards?\b", ZH.RAILS["gift-card"]),
-    "crypto": Dual(r"\bbitcoin\b|\bcrypto(?:currency)?\b|\busdt\b|\busdc\b|\bbtc\b|\beth(?:ereum)?\b|\bsolana\b|\bdogecoin\b", ZH.RAILS["crypto"]),
-    "wire": Dual(r"\bwire (?:transfer|the money)\b|\bwestern union\b|\bmoneygram\b", ZH.RAILS["wire"]),
-    "safe-account": Dual(r"\bsafe account\b", ZH.RAILS["safe-account"]),
+    "gift-card": Dual(r"\bgift ?cards?\b|\b(?:google play|itunes|steam|apple|amazon|prepaid) cards?\b", ZH.RAILS["gift-card"], MS.RAILS["gift-card"]),
+    "crypto": Dual(r"\bbitcoin\b|\bcrypto(?:currency)?\b|\busdt\b|\busdc\b|\bbtc\b|\beth(?:ereum)?\b|\bsolana\b|\bdogecoin\b", ZH.RAILS["crypto"], MS.RAILS["crypto"]),
+    "wire": Dual(r"\bwire (?:transfer|the money)\b|\bwestern union\b|\bmoneygram\b", ZH.RAILS["wire"], MS.RAILS["wire"]),
+    "safe-account": Dual(r"\bsafe account\b", ZH.RAILS["safe-account"], MS.RAILS["safe-account"]),
 }
 
 RULES: dict[str, list[re.Pattern]] = {k: [C(p) for p in v] for k, v in {
@@ -43,6 +44,9 @@ RULES["urgency-pressure"] = [PRESSURE_RE]  # English + Chinese deadline phrases
 for _tid, _pats in ZH.RULES.items():  # the Chinese twin of each tactic's phrases (only runs on text that contains Chinese)
     if _tid != "urgency-pressure":
         RULES[_tid] += [Dual(None, _p) for _p in _pats]
+for _tid, _pats in MS.RULES.items():  # and the Malay/Indonesian twin (only while the message is detected as Malay/Indonesian)
+    if _tid != "urgency-pressure":
+        RULES[_tid] += [Dual(None, None, _p) for _p in _pats]
 
 BRANDS = {  # brand -> its real domain. Used to spot imitation (hard evidence) and to recognise genuine links (reassuring evidence).
     "dhl": "dhl.com", "paypal": "paypal.com", "amazon": "amazon.com", "netflix": "netflix.com", "apple": "apple.com", "microsoft": "microsoft.com",

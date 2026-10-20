@@ -9,6 +9,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
+from core.domain import ms as MS
 from core.domain import zh as ZH
 from core.domain.lang import Dual
 
@@ -25,7 +26,7 @@ class Purpose:
 
 
 def _p(id, label, risk, genuine, scam, cues=None, clearable=False) -> Purpose:
-    return Purpose(id, label, risk, genuine, scam, Dual(cues, ZH.PURPOSE_CUES.get(id)) if cues else None, clearable)
+    return Purpose(id, label, risk, genuine, scam, Dual(cues, ZH.PURPOSE_CUES.get(id), MS.PURPOSE_CUES.get(id)) if cues else None, clearable)
 
 
 PURPOSES: dict[str, Purpose] = {p.id: p for p in [
@@ -109,14 +110,14 @@ def guidance(pid: str) -> str:
 # the cues decide what a message is ABOUT; these decide whether it is plainly ordinary.
 _NEGATIVE = Dual(r"\b(?:fee|pay|payment|claim|win|won|winner|prize|reward|free|delayed|held|on hold|failed|unpaid|track now|verify|confirm your|"
                        r"update your|click|link|reply|send|text|txt|call|urgent|immediately|suspend\w*|locked|expire[sd]?|"
-                       r"go ?to|download\w*|subscri\w+|wap|service menu|mobile internet|content|ringtone|tones?)\b", ZH.NEGATIVE)
+                       r"go ?to|download\w*|subscri\w+|wap|service menu|mobile internet|content|ringtone|tones?)\b", ZH.NEGATIVE, MS.NEGATIVE)
 _SPLIT_URL = re.compile(r"\b\w{2,}\.\s\w{1,}\.?\s?(?:tv|com|net|org|info|biz|mobi|xyz|co|uk|me)\b|\b\w+\.\s(?:tv|com|net|org|info|biz|mobi|xyz)\b", re.I)  # "wap. bangb. tv": a web address broken up to dodge link detection
-_STATUS = Dual(r"\b(?:has|have|been|is|are|was|will be)\b[^.!?]{0,30}\b(?:shipped|dispatched|delivered|arriv\w+|out for delivery|on (?:its|the) way|ready (?:for|to) collect\w*)\b", ZH.STATUS)
-_TIME = Dual(r"\b\d{1,2}(?::\d{2})?\s?(?:am|pm)\b|\b(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|tomorrow|today|tonight|next week)\b", ZH.TIME)
-_APPT = Dual(r"\b(?:appointment|booking|booked|reservation|table for|viewing)\b", ZH.APPT)
-_CODE_REQ = Dual(r"\b(?:reply|send|text|read|share|give|enter|submit|provide|call|click|verify)\b", ZH.CODE_REQ)
-_WARNING = Dual(r"[^.!?\n]*\b(?:never|do not|don'?t|not) share[^.!?\n]*[.!?]?", ZH.WARNING_SENTENCE)
-_APPT_NEGATIVE = Dual(r"\b(?:fee|deposit|pay|payment|claim|win|prize|free|urgent|immediately)\b", ZH.APPT_NEGATIVE)
+_STATUS = Dual(r"\b(?:has|have|been|is|are|was|will be)\b[^.!?]{0,30}\b(?:shipped|dispatched|delivered|arriv\w+|out for delivery|on (?:its|the) way|ready (?:for|to) collect\w*)\b", ZH.STATUS, MS.STATUS)
+_TIME = Dual(r"\b\d{1,2}(?::\d{2})?\s?(?:am|pm)\b|\b(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|tomorrow|today|tonight|next week)\b", ZH.TIME, MS.TIME)
+_APPT = Dual(r"\b(?:appointment|booking|booked|reservation|table for|viewing)\b", ZH.APPT, MS.APPT)
+_CODE_REQ = Dual(r"\b(?:reply|send|text|read|share|give|enter|submit|provide|call|click|verify)\b", ZH.CODE_REQ, MS.CODE_REQ)
+_WARNING = Dual(r"[^.!?\n]*\b(?:never|do not|don'?t|not) share[^.!?\n]*[.!?]?", ZH.WARNING_SENTENCE, MS.WARNING_SENTENCE)
+_APPT_NEGATIVE = Dual(r"\b(?:fee|deposit|pay|payment|claim|win|prize|free|urgent|immediately)\b", ZH.APPT_NEGATIVE, MS.APPT_NEGATIVE)
 
 
 def clearing_conditions_met(pid: str, text: str, asks: set) -> bool:
