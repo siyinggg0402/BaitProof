@@ -7,6 +7,8 @@ import re
 from core.ai import fewshot, llm
 from core.ai.prompts import CHECK_SYSTEM, CRITIC_SYSTEM
 from core.domain import intents
+from core.domain import zh as ZH
+from core.domain.lang import CJK, Dual, Z
 from core.domain.schemas import TacticHit, Verdict
 from core.domain.tactics import TACTICS, valid
 
@@ -19,15 +21,17 @@ from .knowledge import PREMIUM_RE, RULES
 from .tools import Findings, registered_domain as tools_registered
 
 
-STRONG_URGENCY = re.compile(r"\bwithin \d+ ?(?:hours?|hrs?|minutes?|mins?)|\bimmediately\b|\bact now\b|\bfinal (?:notice|demand|warning)\b|\blast (?:chance|warning)\b|\btoday (?:at|by)\b|\bby tonight\b|\bbefore midnight\b|\bright now\b", re.I)
+STRONG_URGENCY = Dual(r"\bwithin \d+ ?(?:hours?|hrs?|minutes?|mins?)|\bimmediately\b|\bact now\b|\bfinal (?:notice|demand|warning)\b|\blast (?:chance|warning)\b|\btoday (?:at|by)\b|\bby tonight\b|\bbefore midnight\b|\bright now\b", ZH.STRONG_DEADLINE)
+_ZH_WARNING = Z(ZH.WARNING_SENTENCE)
 STRONG_RULE_TACTICS = {"remote-access-request"}  # a pattern hit that is near-conclusive on its own
 
 
 def rule_evidence(ing: Ingested, intent: Intent, f: Findings, ledger: Ledger) -> None:
     """Independent (non-model) evidence from phrase rules, the domain/rail tools and the intent diagnosis."""
+    scan = _ZH_WARNING.sub(" ", ing.text) if CJK.search(ing.text) else ing.text  # "请勿将验证码告知他人" warns against the very thing it names
     for tid, pats in RULES.items():
         for p in pats:
-            if m := p.search(ing.text):
+            if m := p.search(scan):
                 q = m.group(0)[:80]
                 strength = "strong" if tid in STRONG_RULE_TACTICS else "medium"
                 if tid == "urgency-pressure" and not STRONG_URGENCY.search(ing.text):

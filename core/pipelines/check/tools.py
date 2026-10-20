@@ -25,7 +25,7 @@ from core import obs
 from core.ai import verify
 
 from .ingest import Ingested
-from .knowledge import AMBIGUOUS_BRANDS, BAD_TLDS, BRANDS, LEET, SHORTENERS
+from .knowledge import AMBIGUOUS_BRANDS, BAD_TLDS, BRANDS, LEET, OFFICIAL_ALT, SHORTENERS
 from .trace import Trace
 
 SCAM_WORDS = ("secure", "login", "verify", "account", "update", "billing", "bankmail", "support", "refund", "confirm")
@@ -71,7 +71,7 @@ def domain_check(host: str) -> dict:
         tokens.add(variant.replace("-", "").replace(".", ""))
     hard, soft, official = [], [], None
     brand = next((b for b in BRANDS if b in tokens or (b not in AMBIGUOUS_BRANDS and len(b) >= 5 and any(t.startswith(b) or t.endswith(b) for t in tokens))), None)
-    if brand and not _is_official(host, BRANDS[brand]):
+    if brand and not (_is_official(host, BRANDS[brand]) or any(_is_official(host, alt) for alt in OFFICIAL_ALT.get(brand, ()))):
         hard.append(f"imitates {brand} but is not {BRANDS[brand]}")
     elif brand:
         official = brand

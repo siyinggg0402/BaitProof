@@ -5,6 +5,9 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
+from core.domain import zh as ZH
+from core.domain.lang import Dual
+
 I = re.I
 
 
@@ -12,17 +15,19 @@ I = re.I
 class Scenario:
     id: str
     label: str
-    signals: tuple  # compiled regexes: each one that matches is one sign
+    signals: tuple  # Dual patterns (English + Chinese twin): each one that matches is one sign
     min: int = 3
     must: tuple = ()  # indexes of signs that MUST be present (the sign that separates a scam from a normal notice)
 
 
 def _s(id: str, label: str, signals: list[str], min: int = 3, must: tuple = ()) -> Scenario:
-    return Scenario(id, label, tuple(re.compile(p, I) for p in signals), min, must)
+    zh = ZH.SCENARIO_SIGNS.get(id)
+    assert zh is None or len(zh) == len(signals), id  # the Chinese signs line up one-to-one with the English ones (so `must` means the same)
+    return Scenario(id, label, tuple(Dual(p, zh[i] if zh else None) for i, p in enumerate(signals)), min, must)
 
 
 # Sentences that deny the risky thing ("we will never ask for your PIN") must not count as signs of it.
-NEGATED = re.compile(r"[^.!?\n]*\b(?:never|do not share|don'?t share|not share|will not ask|won'?t ask)\b[^.!?\n]*[.!?]?", I)
+NEGATED = Dual(r"[^.!?\n]*\b(?:never|do not share|don'?t share|not share|will not ask|won'?t ask)\b[^.!?\n]*[.!?]?", ZH.WARNING_SENTENCE)
 
 SCENARIOS: dict[str, Scenario] = {s.id: s for s in [
     _s("parcel-fee", "Parcel fee", [r"\b(?:parcel|package|delivery|courier|redeliver\w*|customs|colis)\b", r"\b(?:fee|pay|charge|settle|r[ée]glez)\b|[$€£]\s?\d", r"\b(?:on hold|held|could ?n[o']t be delivered|failed delivery|incomplete address|unpaid|en attente|clear (?:the )?customs|western union)\b", r"\b(?:confirm|update) your address\b|https?://|\b\S+\.(?:xyz|top|click|info|com|net)\b"]),
@@ -52,6 +57,10 @@ SCENARIOS: dict[str, Scenario] = {s.id: s for s in [
 ]}
 
 
+for _id, _label, _signs, _min, _must in ZH.NEW_SCENARIOS:  # scripts that mostly exist in Chinese-language scams
+    SCENARIOS[_id] = Scenario(_id, _label, tuple(Dual(None, p) for p in _signs), _min, _must)
+
+
 # Neighbouring scripts are not a real disagreement (a toll notice is 'tax' to one reader and 'billing' to another).
 FAMILIES = {
     "payment-notice": {"parcel-fee", "subscription-renewal", "billing-update", "utility-bill", "tax-government", "overpayment"},
@@ -59,6 +68,10 @@ FAMILIES = {
     "relationship": {"family-emergency", "romance", "boss-gift-card"},
     "windfall": {"prize-lottery", "inheritance-advance-fee", "investment", "job-task", "warranty-callback"},
 }
+
+
+for _id, _fam in ZH.SCENARIO_FAMILY.items():
+    FAMILIES[_fam].add(_id)
 
 
 def same_family(a: str, b: str) -> bool:

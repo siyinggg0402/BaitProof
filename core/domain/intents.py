@@ -9,6 +9,9 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
+from core.domain import zh as ZH
+from core.domain.lang import Dual
+
 
 @dataclass(frozen=True)
 class Purpose:
@@ -17,12 +20,12 @@ class Purpose:
     risk: str  # benign | neutral | risky
     genuine: str  # what a real one looks like
     scam: str  # what the scam version looks like
-    cues: re.Pattern | None = None  # text must contain one of these for the purpose to be valid
+    cues: Dual | None = None  # text must contain one of these for the purpose to be valid (English cues plus their Chinese twin)
     clearable: bool = False
 
 
 def _p(id, label, risk, genuine, scam, cues=None, clearable=False) -> Purpose:
-    return Purpose(id, label, risk, genuine, scam, re.compile(cues, re.I) if cues else None, clearable)
+    return Purpose(id, label, risk, genuine, scam, Dual(cues, ZH.PURPOSE_CUES.get(id)) if cues else None, clearable)
 
 
 PURPOSES: dict[str, Purpose] = {p.id: p for p in [
@@ -104,24 +107,26 @@ def guidance(pid: str) -> str:
 
 # ---- what a deterministic check must see before it may vouch for a message WITHOUT the model. Deliberately much stricter than `cues`:
 # the cues decide what a message is ABOUT; these decide whether it is plainly ordinary.
-_NEGATIVE = re.compile(r"\b(?:fee|pay|payment|claim|win|won|winner|prize|reward|free|delayed|held|on hold|failed|unpaid|track now|verify|confirm your|"
+_NEGATIVE = Dual(r"\b(?:fee|pay|payment|claim|win|won|winner|prize|reward|free|delayed|held|on hold|failed|unpaid|track now|verify|confirm your|"
                        r"update your|click|link|reply|send|text|txt|call|urgent|immediately|suspend\w*|locked|expire[sd]?|"
-                       r"go ?to|download\w*|subscri\w+|wap|service menu|mobile internet|content|ringtone|tones?)\b", re.I)
+                       r"go ?to|download\w*|subscri\w+|wap|service menu|mobile internet|content|ringtone|tones?)\b", ZH.NEGATIVE)
 _SPLIT_URL = re.compile(r"\b\w{2,}\.\s\w{1,}\.?\s?(?:tv|com|net|org|info|biz|mobi|xyz|co|uk|me)\b|\b\w+\.\s(?:tv|com|net|org|info|biz|mobi|xyz)\b", re.I)  # "wap. bangb. tv": a web address broken up to dodge link detection
-_STATUS = re.compile(r"\b(?:has|have|been|is|are|was|will be)\b[^.!?]{0,30}\b(?:shipped|dispatched|delivered|arriv\w+|out for delivery|on (?:its|the) way|ready (?:for|to) collect\w*)\b", re.I)
-_TIME = re.compile(r"\b\d{1,2}(?::\d{2})?\s?(?:am|pm)\b|\b(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|tomorrow|today|tonight|next week)\b", re.I)
-_APPT = re.compile(r"\b(?:appointment|booking|booked|reservation|table for|viewing)\b", re.I)
-_CODE_REQ = re.compile(r"\b(?:reply|send|text|read|share|give|enter|submit|provide|call|click|verify)\b", re.I)
+_STATUS = Dual(r"\b(?:has|have|been|is|are|was|will be)\b[^.!?]{0,30}\b(?:shipped|dispatched|delivered|arriv\w+|out for delivery|on (?:its|the) way|ready (?:for|to) collect\w*)\b", ZH.STATUS)
+_TIME = Dual(r"\b\d{1,2}(?::\d{2})?\s?(?:am|pm)\b|\b(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|tomorrow|today|tonight|next week)\b", ZH.TIME)
+_APPT = Dual(r"\b(?:appointment|booking|booked|reservation|table for|viewing)\b", ZH.APPT)
+_CODE_REQ = Dual(r"\b(?:reply|send|text|read|share|give|enter|submit|provide|call|click|verify)\b", ZH.CODE_REQ)
+_WARNING = Dual(r"[^.!?\n]*\b(?:never|do not|don'?t|not) share[^.!?\n]*[.!?]?", ZH.WARNING_SENTENCE)
+_APPT_NEGATIVE = Dual(r"\b(?:fee|deposit|pay|payment|claim|win|prize|free|urgent|immediately)\b", ZH.APPT_NEGATIVE)
 
 
 def clearing_conditions_met(pid: str, text: str, asks: set) -> bool:
     """True only when the message is plainly an ordinary instance of a clearable purpose."""
     if pid == "one-time-code":
         # delivers a code and asks for nothing; a warning not to share it is fine, any request to send or read it back is not
-        body = re.sub(r"[^.!?\n]*\b(?:never|do not|don'?t|not) share[^.!?\n]*[.!?]?", " ", text, flags=re.I)
+        body = _WARNING.sub(" ", text)
         return not asks and not _CODE_REQ.search(body)
     if pid == "delivery-update":
         return not asks and bool(_STATUS.search(text)) and not _NEGATIVE.search(text) and not _SPLIT_URL.search(text)
     if pid == "appointment-booking":
-        return not (asks - {"reply"}) and bool(_APPT.search(text)) and bool(_TIME.search(text)) and not re.search(r"\b(?:fee|deposit|pay|payment|claim|win|prize|free|urgent|immediately)\b", text, re.I)
+        return not (asks - {"reply"}) and bool(_APPT.search(text)) and bool(_TIME.search(text)) and not _APPT_NEGATIVE.search(text)
     return False

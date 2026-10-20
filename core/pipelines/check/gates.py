@@ -5,6 +5,7 @@ import re
 from dataclasses import dataclass, field
 
 from core.domain import intents
+from core.domain.lang import canon
 from core.domain.schemas import TacticHit, Verdict
 
 from .evidence import Ledger
@@ -13,7 +14,7 @@ from .tools import Findings
 
 
 def _norm(s: str) -> str:
-    return re.sub(r"\s+", " ", s).strip().lower()
+    return canon(s)  # width-folded, lower-case, Traditional folded to Simplified, spacing ignored for Chinese
 
 
 def grounding_gate(tactics: list[TacticHit], *texts: str) -> tuple[list[TacticHit], list[str]]:

@@ -6,6 +6,8 @@ from __future__ import annotations
 import re
 from typing import Callable
 
+from core.domain import zh as ZH
+from core.domain.lang import Dual
 from core.domain.schemas import TacticHit
 
 from .ingest import Ingested
@@ -15,20 +17,20 @@ from .tools import Findings
 I = re.I
 
 
-def _rx(p: str) -> Callable[[str], bool]:
-    r = re.compile(p, I)
+def _rx(p: str, zh: str | None = None) -> Callable[[str], bool]:
+    r = Dual(p, zh)  # the Chinese twin only runs on text that contains Chinese
     return lambda t: bool(r.search(t))
 
 
-_money_rail = _rx(r"\b(?:gift ?cards?|bitcoin|crypto|usdt|wire|western union|moneygram|cash ?app|zelle|venmo|prepaid|voucher|bank transfer|cheque|check|money order)\b")
-_remote = _rx(r"\b(?:install|download|anydesk|teamviewer|quicksupport|remote|screen[- ]?share|support app|connect to your (?:computer|screen|pc|laptop|device)|let (?:our|the) agent|access your (?:computer|device|phone))\b")
-_secret_ask = _rx(r"\b(?:reply|send|read|tell|give|share|confirm|provide|enter|submit|verify)\b[^.!?\n]{0,30}\b(?:code|otp|pin|password|passcode|date of birth|dob|card number|bank details|full name|login|ssn)\b")
-_job = _rx(r"\b(?:job|role|position|hiring|recruit\w*|vacanc\w*|tasks?|earn\w*|per (?:day|week|hour|task)|a (?:day|week)|commission|work from home|remote work|employ\w*|salary|paying|income)\b")
-_invest = _rx(r"\b(?:invest\w*|trading|trade|crypto\w*|bitcoin|token|returns?|profit\w*|forex|portfolio|signals?|dividends?|\d+ ?(?:%|percent))")
-_fee = _rx(r"\b(?:fee|deposit|tax|charge|processing|insurance|pay|payment|transfer|send|cheque|check|balance|refund)\b")
-_authority = _rx(r"\b(?:police|officer|detective|court|judge|agency|government|tax office|irs|hmrc|medicare|social security|fraud (?:team|department)|security (?:team|line|department)|investigator|barrister|lawyer|attorney|federal|council)\b")
-_emotional = _rx(r"\b(?:trouble|stuck|hospital|accident|arrested|please help|desperate|lonely|love you|miss you|don'?t tell|keep (?:it )?(?:a )?secret|only you|nobody else|favou?r|connection|trust you|widow\w*)\b")
-_windfall = _rx(r"\b(?:won|winner|prize|reward|selected|free|guaranteed|profit|returns?|earn\w*|bonus|jackpot|lottery|million|rebate|refund|forgiveness|grant|eligible|qualif\w+|entitled|estate|inherit\w*)\b")
+_money_rail = _rx(r"\b(?:gift ?cards?|bitcoin|crypto|usdt|wire|western union|moneygram|cash ?app|zelle|venmo|prepaid|voucher|bank transfer|cheque|check|money order)\b", ZH.PRE["money_rail"])
+_remote = _rx(r"\b(?:install|download|anydesk|teamviewer|quicksupport|remote|screen[- ]?share|support app|connect to your (?:computer|screen|pc|laptop|device)|let (?:our|the) agent|access your (?:computer|device|phone))\b", ZH.PRE["remote"])
+_secret_ask = _rx(r"\b(?:reply|send|read|tell|give|share|confirm|provide|enter|submit|verify)\b[^.!?\n]{0,30}\b(?:code|otp|pin|password|passcode|date of birth|dob|card number|bank details|full name|login|ssn)\b", ZH.PRE["secret_ask"])
+_job = _rx(r"\b(?:job|role|position|hiring|recruit\w*|vacanc\w*|tasks?|earn\w*|per (?:day|week|hour|task)|a (?:day|week)|commission|work from home|remote work|employ\w*|salary|paying|income)\b", ZH.PRE["job"])
+_invest = _rx(r"\b(?:invest\w*|trading|trade|crypto\w*|bitcoin|token|returns?|profit\w*|forex|portfolio|signals?|dividends?|\d+ ?(?:%|percent))", ZH.PRE["invest"])
+_fee = _rx(r"\b(?:fee|deposit|tax|charge|processing|insurance|pay|payment|transfer|send|cheque|check|balance|refund)\b", ZH.PRE["fee"])
+_authority = _rx(r"\b(?:police|officer|detective|court|judge|agency|government|tax office|irs|hmrc|medicare|social security|fraud (?:team|department)|security (?:team|line|department)|investigator|barrister|lawyer|attorney|federal|council)\b", ZH.PRE["authority"])
+_emotional = _rx(r"\b(?:trouble|stuck|hospital|accident|arrested|please help|desperate|lonely|love you|miss you|don'?t tell|keep (?:it )?(?:a )?secret|only you|nobody else|favou?r|connection|trust you|widow\w*)\b", ZH.PRE["emotional"])
+_windfall = _rx(r"\b(?:won|winner|prize|reward|selected|free|guaranteed|profit|returns?|earn\w*|bonus|jackpot|lottery|million|rebate|refund|forgiveness|grant|eligible|qualif\w+|entitled|estate|inherit\w*)\b", ZH.PRE["windfall"])
 
 
 def _lookalike(ing, it, f): return bool(ing.entities.hosts) and not f.all_links_official()

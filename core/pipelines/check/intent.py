@@ -7,6 +7,8 @@ from dataclasses import dataclass, field
 
 from core.ai import llm
 from core.domain import intents
+from core.domain import zh as ZH
+from core.domain.lang import CJK, Dual, Z, canon
 from core.ai.prompts import INTENT_SYSTEM
 
 from .ingest import Ingested
@@ -17,33 +19,35 @@ ASKS = ("pay", "share_code", "share_credentials", "install", "click", "call", "r
 HIGH_RISK_ASKS = {"pay", "share_code", "share_credentials", "install"}
 
 ASK_RULES = {
-    "pay": C(r"\b(?:txt|text|sms|send|reply)\b[^.!?\n]{0,70}\b(?:to|2)\s*\d{4,6}\b|\b(?:pay|send|transfer|wire|deposit|top up|buy|move)\b[^.!?\n]{0,40}(?:[$€£]|\d+ ?(?:dollars|usd|eur)|\bfee\b|\btax\b|gift ?cards?|bitcoin|crypto|usdt|voucher|balance|savings|money|cash)|\bpag(?:ue|ar)\b|\b(?:send|return|refund|pay|transfer) (?:it|that|the money|the funds|them) back\b"),
-    "share_code": C(r"\b(?:repl(?:y|ying)|send(?:ing)?|read|shar(?:e|ing)|giv(?:e|ing)|forward|tell|submit(?:ting)?|provid(?:e|ing)|enter(?:ing)?)\b[^.!?\n]{0,25}\b(?:code|otp|pin)\b|\bread (?:it|them) (?:out )?to me\b"),
-    "share_credentials": C(r"\b(?:enter|confirm|verify|provide|share|give|send|need|require|ask(?:ed)? for)\s+(?:only |just )?(?:us |me )?(?:your |the )?(?:password|pin|ssn|social security number|card number|medicare number|date of birth|bank details|login|(?:personal |bank |card |account |contact |full )?(?:details|info(?:rmation)?|id\b))"),
-    "install": C(r"\binstall\b|\bdownload (?:the |this )?(?:app|software)\b"),
-    "click": C(r"\b(?:click|tap|open)\b[^.!?\n]{0,15}\b(?:link|here)\b"),
-    "call": C(r"\bcall\b"),
-    "reply": C(r"\breply\b|\brespond\b"),
+    "pay": Dual(r"\b(?:txt|text|sms|send|reply)\b[^.!?\n]{0,70}\b(?:to|2)\s*\d{4,6}\b|\b(?:pay|send|transfer|wire|deposit|top up|buy|move)\b[^.!?\n]{0,40}(?:[$€£]|\d+ ?(?:dollars|usd|eur)|\bfee\b|\btax\b|gift ?cards?|bitcoin|crypto|usdt|voucher|balance|savings|money|cash)|\bpag(?:ue|ar)\b|\b(?:send|return|refund|pay|transfer) (?:it|that|the money|the funds|them) back\b", ZH.ASK["pay"]),
+    "share_code": Dual(r"\b(?:repl(?:y|ying)|send(?:ing)?|read|shar(?:e|ing)|giv(?:e|ing)|forward|tell|submit(?:ting)?|provid(?:e|ing)|enter(?:ing)?)\b[^.!?\n]{0,25}\b(?:code|otp|pin)\b|\bread (?:it|them) (?:out )?to me\b", ZH.ASK["share_code"]),
+    "share_credentials": Dual(r"\b(?:enter|confirm|verify|provide|share|give|send|need|require|ask(?:ed)? for)\s+(?:only |just )?(?:us |me )?(?:your |the )?(?:password|pin|ssn|social security number|card number|medicare number|date of birth|bank details|login|(?:personal |bank |card |account |contact |full )?(?:details|info(?:rmation)?|id\b))", ZH.ASK["share_credentials"]),
+    "install": Dual(r"\binstall\b|\bdownload (?:the |this )?(?:app|software)\b", ZH.ASK["install"]),
+    "click": Dual(r"\b(?:click|tap|open)\b[^.!?\n]{0,15}\b(?:link|here)\b", ZH.ASK["click"]),
+    "call": Dual(r"\bcall\b", ZH.ASK["call"]),
+    "reply": Dual(r"\breply\b|\brespond\b", ZH.ASK["reply"]),
 }
-NEGATION = re.compile(r"\b(?:never|don'?t|do not|won'?t|will not)\b[^.!?]{0,25}$", re.I)
-RELATIONS = re.compile(r"\b(mum|mom|dad|grandma|grandpa|nan|nana|gran|son|daughter|grandson|granddaughter|it'?s me)\b", re.I)
-AUTHORITY = re.compile(r"\b(officer|detective|police|irs|hmrc|social security|court|tax office|government|cyber ?crime|fraud department|security team)\b", re.I)
-ORGANISATION = re.compile(r"\b((?:your|the) bank(?! (?:details|account|transfer|statement|holiday|balance))|bank (?:alert|notice|security|team|fraud)|\w+ bank(?! (?:details|account|transfer|statement|holiday))|microsoft|apple|amazon|paypal|netflix|your provider|support team|customer service)\b", re.I)
-OPENER = re.compile(
+NEGATION = Dual(r"\b(?:never|don'?t|do not|won'?t|will not)\b[^.!?]{0,25}$", ZH.NEGATION)
+RELATIONS = Dual(r"\b(mum|mom|dad|grandma|grandpa|nan|nana|gran|son|daughter|grandson|granddaughter|it'?s me)\b", ZH.RELATIONS)
+AUTHORITY = Dual(r"\b(officer|detective|police|irs|hmrc|social security|court|tax office|government|cyber ?crime|fraud department|security team)\b", ZH.AUTHORITY)
+ORGANISATION = Dual(r"\b((?:your|the) bank(?! (?:details|account|transfer|statement|holiday|balance))|bank (?:alert|notice|security|team|fraud)|\w+ bank(?! (?:details|account|transfer|statement|holiday))|microsoft|apple|amazon|paypal|netflix|your provider|support team|customer service)\b", ZH.ORGANISATION)
+OPENER = Dual(
     r"\b[Ii]s this [A-Z][a-z]+\s*\?|\bwrong (?:person|number)\b|\b(?:got|found|have) your (?:number|email|contact|details) (?:from|through|via|on)\b"
     r"|\b(?:gave|sent|passed|shared|given) (?:me|us) your (?:number|email|contact|details|address)\b|\bfriend of (?:your|a (?:friend|colleague))\b|\bmutual (?:friend|contact|acquaintance)\b"
     r"|\b(?:this is )?my (?:new|temporary|temp|other) (?:number|phone)\b|\bnew number\b|\btemporary number\b|\b(?:lost|dropped|broke|cracked|smashed) my phone\b|\bphone (?:broke|died|fell)\b"
     r"|\bcan you (?:check|confirm|see) (?:if )?you can (?:receive|get)\b|\bare you (?:available|at your desk)\b"
     r"|\b(?:add me on|message me on|find me on|move (?:to|this to)|continue (?:on|in)) (?:telegram|whatsapp|signal|wechat)\b"
     r"|\b(?:is (?:the|this) item|is it) still (?:available|for sale)\b|\bstill available\b"
-    r"|\b(?:saw|found|came across|noticed) your (?:profile|listing|ad|post|resume|cv)\b|\b(?:text|call|message) me (?:on|at) \+?[\d(]", re.I)
+    r"|\b(?:saw|found|came across|noticed) your (?:profile|listing|ad|post|resume|cv)\b|\b(?:text|call|message) me (?:on|at) \+?[\d(]", ZH.OPENER)
 
 PRESSURE_KINDS = {
     "deadline": PRESSURE_RE,
-    "threat": C(r"\b(?:arrest\w*|warrant|court|legal action|lawsuit|account (?:will be )?(?:closed|suspended|blocked|deactivated)|disconnect\w*|detain\w*|penalty|lose access)\b"),
-    "secrecy": C(r"\b(?:don'?t tell|do not tell|keep (?:this|it) (?:a )?secret|between us|do not (?:speak|talk) to|don'?t call|please don'?t call)\b"),
-    "emotional": C(r"\b(?:emergency|hospital|in trouble|stuck|please hurry|i love you|lonely|bail|accident)\b"),
+    "threat": Dual(r"\b(?:arrest\w*|warrant|court|legal action|lawsuit|account (?:will be )?(?:closed|suspended|blocked|deactivated)|disconnect\w*|detain\w*|penalty|lose access)\b", ZH.THREAT),
+    "secrecy": Dual(r"\b(?:don'?t tell|do not tell|keep (?:this|it) (?:a )?secret|between us|do not (?:speak|talk) to|don'?t call|please don'?t call)\b", ZH.SECRECY),
+    "emotional": Dual(r"\b(?:emergency|hospital|in trouble|stuck|please hurry|i love you|lonely|bail|accident)\b", ZH.EMOTIONAL),
 }
+_PAY_VERB = Dual(r"\b(?:buy|send|pay)\b", r"转|汇|付|买|购|支付|充值|缴")
+_NEW_NUMBER = Dual(r"\b(?:new (?:number|phone)|lost my|dropped my phone)\b", ZH.NEW_NUMBER)
 
 
 @dataclass
@@ -88,7 +92,7 @@ def _heuristic(ing: Ingested) -> Intent:
                 break
     if ing.entities.hosts:
         it.asks.add("click")
-    if ing.entities.rails and "pay" not in it.asks and re.search(r"\b(?:buy|send|pay)\b", ing.text, re.I):
+    if ing.entities.rails and "pay" not in it.asks and _PAY_VERB.search(ing.text):
         it.asks.add("pay")
     for kind, pat in PRESSURE_KINDS.items():
         if m := pat.search(ing.text):
@@ -99,6 +103,8 @@ def _heuristic(ing: Ingested) -> Intent:
         m = pat.search(ing.text)
         if m is None and kind == "organisation" and ing.entities.brands:
             m = re.search(re.escape(ing.entities.brands[0]), ing.text, re.I)
+            if m is None and ing.entities.brand_quotes:  # a Chinese brand name ("支付宝") rather than its Latin key
+                m = Z(re.escape(next(iter(ing.entities.brand_quotes.values())))).search(ing.text)
         if m:
             it.claimed, it.claimed_kind = m.group(0).lower(), kind
             it.evidence["identity"] = m.group(0)
@@ -128,7 +134,7 @@ def _mismatches(it: Intent, ing: Ingested) -> None:
         if "secrecy" in it.pressure_kinds:
             it.mismatches.append((f"Claims to be {who} but tells you to keep it secret", it.evidence.get("pressure:secrecy", ""), "authority-spoofing" if kind == "authority" else None))
     # A relative asking family for money is normal; what makes it a scam is a new number, secrecy, an emergency, a deadline or gift cards.
-    suspicious_context = bool(it.pressure_kinds or ing.entities.rails or re.search(r"\b(?:new (?:number|phone)|lost my|dropped my phone)\b", ing.text, re.I))
+    suspicious_context = bool(it.pressure_kinds or ing.entities.rails or _NEW_NUMBER.search(ing.text))
     if kind == "relation" and "pay" in it.asks and suspicious_context:
         it.mismatches.append(("Says it's family and asks for money, but gives you no way to check it's really them",
                               it.evidence.get("pay", ""), "emotional-manipulation"))
@@ -142,11 +148,12 @@ SCENARIO_PURPOSE = {
     "parcel-fee": "urgent-account-warning", "billing-update": "urgent-account-warning", "tech-support": "request-install-access",
     "family-emergency": "emotional-plea", "romance": "emotional-plea", "boss-gift-card": "emotional-plea",
     "subscription-renewal": "callback-request", "warranty-callback": "callback-request", "marketplace-code": "request-secret",
+    "government-rebate": "claim-prize-reward", **ZH.SCENARIO_PURPOSE,
 }
 
 
-ALARM = re.compile(r"\b(?:blocked|hacked|suspended|locked|compromised|unauthori[sz]ed|suspicious|fraudulent|deactivat\w+|disabled|limited|expir\w+|delayed|on hold|is full|storage (?:is )?full|storage limit|failed login|violation)\b", re.I)
-ACTION = re.compile(r"\b(?:verify|verifying|reactivate|re-?activate|secure (?:it|your)|change (?:your )?password|open the app|click|tap|log ?in|sign in|renew now|track now|update (?:your )?(?:details|info|account)|confirm (?:your|identity)|act now|claim|call (?:us|now)|respond)\b", re.I)
+ALARM = Dual(r"\b(?:blocked|hacked|suspended|locked|compromised|unauthori[sz]ed|suspicious|fraudulent|deactivat\w+|disabled|limited|expir\w+|delayed|on hold|is full|storage (?:is )?full|storage limit|failed login|violation)\b", ZH.ALARM)
+ACTION = Dual(r"\b(?:verify|verifying|reactivate|re-?activate|secure (?:it|your)|change (?:your )?password|open the app|click|tap|log ?in|sign in|renew now|track now|update (?:your )?(?:details|info|account)|confirm (?:your|identity)|act now|claim|call (?:us|now)|respond)\b", ZH.ACTION)
 
 
 def classify_purpose(ing: Ingested, it: Intent) -> str:
@@ -200,11 +207,11 @@ def _supported(ask: str, ing: Ingested) -> bool:
     if ask == "click":
         return bool(ing.entities.hosts)
     if ask == "call":
-        return bool(re.search(r"\bcall\b|\d{3}[\s.-]?\d{3,}", ing.text, re.I))
+        return bool(re.search(r"\bcall\b|\d{3}[\s.-]?\d{3,}", ing.text, re.I) or (CJK.search(ing.text) and Z(ZH.CALL_POSSIBLE).search(ing.text)))
     return True
 
 
-CONSEQUENCE = re.compile(r"\b(?:or|unless|otherwise|else|before)\b[^.!?]{0,70}\b(?:will|be|lose|cancel\w*|clos\w+|suspend\w*|block\w*|disconnect\w*|fine|penalt\w*|return\w*|delet\w+|arrest\w*|expire)\b", re.I)
+CONSEQUENCE = Dual(r"\b(?:or|unless|otherwise|else|before)\b[^.!?]{0,70}\b(?:will|be|lose|cancel\w*|clos\w+|suspend\w*|block\w*|disconnect\w*|fine|penalt\w*|return\w*|delet\w+|arrest\w*|expire)\b", ZH.CONSEQUENCE)
 
 
 def _pressure_supported(kind: str, ing: Ingested) -> bool:
@@ -228,7 +235,8 @@ def diagnose(ing: Ingested) -> Intent:
             it.pressure_kinds |= {k for k in kinds if k in PRESSURE_KINDS and _pressure_supported(k, ing)}
             ident = out.get("claimed_identity")
             name = str((ident.get("name") if isinstance(ident, dict) else ident) or "")[:60]
-            if name and (not it.claimed or it.claimed in name.lower()) and any(w in ing.text.lower() for w in re.findall(r"[a-z]{3,}", name.lower())):
+            if name and (not it.claimed or it.claimed in name.lower()) and (any(w in ing.text.lower() for w in re.findall(r"[a-z]{3,}", name.lower()))
+                                                                          or (CJK.search(name) and canon(name) in canon(ing.text))):
                 it.claimed = name.lower()  # only accepted if its words really appear in the message
                 k = str(ident.get("kind", "")) if isinstance(ident, dict) else ""
                 it.claimed_kind = k if k in ("authority", "organisation", "relation") else (it.claimed_kind or "organisation")

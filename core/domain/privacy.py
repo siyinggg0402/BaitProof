@@ -4,7 +4,8 @@ from __future__ import annotations
 import re
 from urllib.parse import urlparse
 
-URL_RE = re.compile(r"(?:https?://|www\.)[^\s]+|\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|net|org|xyz|top|click|info|icu|co|io|me|ly|shop|site|online)(?:/[^\s]*)?", re.I)
+_NOT_URL = r"\s\u2e80-\u9fff\u3000-\u303f\uff00-\uffef"  # whitespace, Chinese characters and full-width punctuation end a link (Chinese is written without spaces)
+URL_RE = re.compile(rf"(?:https?://|www\.)[^{_NOT_URL}]+|(?<![a-z0-9-])[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|net|org|xyz|top|click|info|icu|co|io|me|ly|shop|site|online|cn|cc|tw|hk|vip|my|sg|link|club|live|pro|biz|app|tk|ink|work|buzz|store|cyou|today)(?![a-z0-9-])(?:/[^{_NOT_URL}]*)?", re.I)
 EMAIL_RE = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
 PHONE_RE = re.compile(r"\+?\d[\d\s().-]{6,}\d")
 LONG_DIGITS_RE = re.compile(r"\d{9,}")  # account / card style numbers
