@@ -16,8 +16,8 @@ ASKS = ("pay", "share_code", "share_credentials", "install", "click", "call", "r
 HIGH_RISK_ASKS = {"pay", "share_code", "share_credentials", "install"}
 
 ASK_RULES = {
-    "pay": C(r"\b(?:pay|send|transfer|wire|deposit|top up|buy|move)\b[^.!?\n]{0,40}(?:[$€£]|\d+ ?(?:dollars|usd|eur)|\bfee\b|\btax\b|gift ?cards?|bitcoin|crypto|usdt|voucher|balance|savings|money|cash)|\bpag(?:ue|ar)\b|\b(?:send|return|refund|pay|transfer) (?:it|that|the money|the funds|them) back\b"),
-    "share_code": C(r"\b(?:reply|send|read|share|give|forward|tell)\b[^.!?\n]{0,25}\b(?:code|otp|pin)\b|\bread (?:it|them) (?:out )?to me\b"),
+    "pay": C(r"\b(?:txt|text|sms|send|reply)\b[^.!?\n]{0,70}\b(?:to|2)\s*\d{4,6}\b|\b(?:pay|send|transfer|wire|deposit|top up|buy|move)\b[^.!?\n]{0,40}(?:[$€£]|\d+ ?(?:dollars|usd|eur)|\bfee\b|\btax\b|gift ?cards?|bitcoin|crypto|usdt|voucher|balance|savings|money|cash)|\bpag(?:ue|ar)\b|\b(?:send|return|refund|pay|transfer) (?:it|that|the money|the funds|them) back\b"),
+    "share_code": C(r"\b(?:repl(?:y|ying)|send(?:ing)?|read|shar(?:e|ing)|giv(?:e|ing)|forward|tell|submit(?:ting)?|provid(?:e|ing)|enter(?:ing)?)\b[^.!?\n]{0,25}\b(?:code|otp|pin)\b|\bread (?:it|them) (?:out )?to me\b"),
     "share_credentials": C(r"\b(?:enter|confirm|verify|provide|share|give|send|need|require|ask(?:ed)? for)\s+(?:only |just )?(?:us |me )?(?:your |the )?(?:password|pin|ssn|social security number|card number|medicare number|date of birth|bank details|login)"),
     "install": C(r"\binstall\b|\bdownload (?:the |this )?(?:app|software)\b"),
     "click": C(r"\b(?:click|tap|open)\b[^.!?\n]{0,15}\b(?:link|here)\b"),
@@ -27,7 +27,7 @@ ASK_RULES = {
 NEGATION = re.compile(r"\b(?:never|don'?t|do not|won'?t|will not)\b[^.!?]{0,25}$", re.I)
 RELATIONS = re.compile(r"\b(mum|mom|dad|grandma|grandpa|nan|nana|gran|son|daughter|grandson|granddaughter|it'?s me)\b", re.I)
 AUTHORITY = re.compile(r"\b(officer|detective|police|irs|hmrc|social security|court|tax office|government|cyber ?crime|fraud department|security team)\b", re.I)
-ORGANISATION = re.compile(r"\b(your bank|the bank|bank (?:alert|notice|security|team|fraud)|\w+ bank(?! (?:details|account|transfer|statement|holiday))|microsoft|apple|amazon|paypal|netflix|your provider|support team|customer service)\b", re.I)
+ORGANISATION = re.compile(r"\b((?:your|the) bank(?! (?:details|account|transfer|statement|holiday|balance))|bank (?:alert|notice|security|team|fraud)|\w+ bank(?! (?:details|account|transfer|statement|holiday))|microsoft|apple|amazon|paypal|netflix|your provider|support team|customer service)\b", re.I)
 OPENER = re.compile(
     r"\b[Ii]s this [A-Z][a-z]+\s*\?|\bwrong (?:person|number)\b|\b(?:got|found|have) your (?:number|email|contact|details) (?:from|through|via|on)\b"
     r"|\b(?:this is )?my (?:new|temporary|temp|other) (?:number|phone)\b|\bnew number\b|\btemporary number\b|\b(?:lost|dropped|broke|cracked|smashed) my phone\b|\bphone (?:broke|died|fell)\b"

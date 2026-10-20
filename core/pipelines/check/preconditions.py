@@ -34,7 +34,7 @@ _windfall = _rx(r"\b(?:won|winner|prize|reward|selected|free|guaranteed|profit|r
 def _lookalike(ing, it, f): return bool(ing.entities.hosts) and not f.all_links_official()
 def _rail(ing, it, f): return bool(ing.entities.rails) or _money_rail(ing.text)
 def _otp(ing, it, f): return bool(it.asks & {"share_code", "share_credentials"}) or _secret_ask(ing.text)
-def _fee_ask(ing, it, f): return "pay" in it.asks or _fee(ing.text)
+def _fee_ask(ing, it, f): return "pay" in it.asks  # an actual request to pay ("Sent advance payment" asks for nothing)
 def _auth(ing, it, f): return it.claimed_kind == "authority" or _authority(ing.text)
 def _imperson(ing, it, f): return it.claimed_kind in ("authority", "organisation") or bool(ing.entities.brands)
 def _emo(ing, it, f): return bool(it.pressure_kinds & {"secrecy", "emotional", "threat"}) or it.claimed_kind == "relation" or _emotional(ing.text)
@@ -49,7 +49,7 @@ PRECONDITIONS: dict[str, tuple[Callable[[Ingested, Intent, Findings], bool], str
     "otp-credential-phish": (_otp, "nothing asks you for a code or personal detail"),
     "job-task-scam": (lambda i, n, f: _job(i.text), "it isn't about work or earning"),
     "investment-crypto": (lambda i, n, f: _invest(i.text), "it isn't about investing"),
-    "advance-fee": (_fee_ask, "no payment or fee is involved"),
+    "advance-fee": (_fee_ask, "the message doesn't ask you to pay"),
     "authority-spoofing": (_auth, "no official body is mentioned"),
     "impersonation-official": (_imperson, "the sender doesn't claim to be an organisation"),
     "emotional-manipulation": (_emo, "there is no emotional pressure or secrecy"),

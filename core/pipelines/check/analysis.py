@@ -2,6 +2,8 @@
 Every tactic carries a QUOTE so the grounding gate can verify it."""
 from __future__ import annotations
 
+import re
+
 from core.ai import llm
 from core.ai.prompts import CHECK_SYSTEM, CRITIC_SYSTEM
 from core.domain.schemas import TacticHit, Verdict
@@ -11,10 +13,12 @@ from . import scenarios
 from .evidence import Ledger
 from .ingest import Ingested
 from .intent import Intent
-from .knowledge import RULES
+from .intent import CONSEQUENCE
+from .knowledge import PREMIUM_RE, RULES
 from .tools import Findings, registered_domain as tools_registered
 
 
+STRONG_URGENCY = re.compile(r"\bwithin \d+ ?(?:hours?|hrs?|minutes?|mins?)|\bimmediately\b|\bact now\b|\bfinal (?:notice|demand|warning)\b|\blast (?:chance|warning)\b|\btoday (?:at|by)\b|\bby tonight\b|\bbefore midnight\b|\bright now\b", re.I)
 STRONG_RULE_TACTICS = {"remote-access-request"}  # a pattern hit that is near-conclusive on its own
 
 
@@ -24,7 +28,10 @@ def rule_evidence(ing: Ingested, intent: Intent, f: Findings, ledger: Ledger) ->
         for p in pats:
             if m := p.search(ing.text):
                 q = m.group(0)[:80]
-                ledger.add("rule", "pattern", "scam", "strong" if tid in STRONG_RULE_TACTICS else "medium",
+                strength = "strong" if tid in STRONG_RULE_TACTICS else "medium"
+                if tid == "urgency-pressure" and not STRONG_URGENCY.search(ing.text):
+                    strength = "weak"  # a lone "urgent" is how friends write too; deadlines with consequences are what scams use
+                ledger.add("rule", "pattern", "scam", strength,
                            f"“{q}” is a known scam phrase ({TACTICS[tid]['label'].lower()})", q, tid)
                 break
     for host, why in f.hard_hosts.items():
@@ -67,8 +74,13 @@ def rule_evidence(ing: Ingested, intent: Intent, f: Findings, ledger: Ledger) ->
         ledger.add("intent", "ask:share_code", "scam", "strong", "Asks you to hand over a code that is the key to your account",
                    intent.evidence["share_code"], "otp-credential-phish")
     if "pay" in intent.asks and intent.pressure:
-        ledger.add("intent", "ask:pay+pressure", "scam", "strong", "Asks you to pay while rushing you",
+        # A plain bill reminder ("pay to avoid a late fee") is not a scam. It becomes hard evidence with an ultimatum, a threat, secrecy,
+        # or somewhere unfamiliar to pay (a link, a phone number, an irreversible payment method).
+        ultimatum = bool(CONSEQUENCE.search(ing.text)) or bool(intent.pressure_kinds & {"threat", "secrecy"}) or bool(ing.entities.hosts or ing.entities.phones or ing.entities.rails)
+        ledger.add("intent", "ask:pay+pressure", "scam", "strong" if ultimatum else "medium", "Asks you to pay while rushing you",
                    intent.evidence.get("pressure", ""), None)
+    if m := PREMIUM_RE.search(ing.text):
+        ledger.add("rule", "premium-rate", "scam", "medium", "It advertises a premium-rate service (a short code, or a price per message or minute)", m.group(0)[:60], None)
     if intent.scenario:
         sc = scenarios.SCENARIOS[intent.scenario]
         ledger.add("intent", f"scenario:{sc.id}", "scam", "medium",

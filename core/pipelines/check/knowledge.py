@@ -14,6 +14,9 @@ INJECTION_RE = C(r"ignore (?:all |the |any )?(?:previous|above|prior) (?:instruc
 
 PRESSURE_RE = C(r"\bwithin \d+ ?(?:hours?|hrs?|minutes?|mins?)|\bimmediately\b|\bright now\b|\burgent(?:ly)?\b|\btoday (?:at|by)\b|\bby tonight\b|\blast (?:chance|warning)\b|\bact now\b|\bfinal (?:notice|demand|warning)\b|\b(?:offer|deal) ends\b|\babout to expire\b|\bbefore midnight\b|\bat once\b|\blimited spots?\b|\b(?:closes?|ends?|expires?|expiring|deadline)\b[^.!?]{0,20}\b(?:tonight|today|midnight)\b|\bor (?:your|the) .{0,30}(?:will be|is) (?:cut|closed|suspended|blocked|returned|arrested|frozen)")
 
+PREMIUM_RE = C(r"\b\d+(?:\.\d+)?\s?p\s?(?:per|/)\s?(?:min|msg|message|text|week|wk)\b|\bppm\b|\b[£$€]\s?\d+(?:\.\d{2})?\s?(?:/|per)\s?(?:msg|min|text|wk|week|month)\b"
+               r"|\bcosts?\s+[£$€]\s?\d+(?:\.\d+)?|\bcosts?\s+\d+(?:\.\d+)?\s?(?:p|ppm|pence)\b|\b(?:txt|text|sms|send|reply)\b[^.!?\n]{0,70}\b(?:to|2)\s*\d{4,6}\b|\b\d{3,}p\b[^.!?\n]{0,20}\b(?:msg|message|text)")
+
 RAILS = {  # irreversible payment rails
     "gift-card": C(r"\bgift ?cards?\b|\b(?:google play|itunes|steam|apple|amazon|prepaid) cards?\b"),
     "crypto": C(r"\bbitcoin\b|\bcrypto(?:currency)?\b|\busdt\b|\busdc\b|\bbtc\b|\beth(?:ereum)?\b|\bsolana\b|\bdogecoin\b"),
@@ -23,7 +26,7 @@ RAILS = {  # irreversible payment rails
 
 RULES: dict[str, list[re.Pattern]] = {k: [C(p) for p in v] for k, v in {
     "urgency-pressure": [PRESSURE_RE.pattern],
-    "authority-spoofing": [r"\bofficers?\b", r"\bfraud department\b", r"\bdo not speak to\b", r"\bcyber ?crime\b", r"\bsecurity team\b", r"\bdo not tell (?:your|anyone)", r"\bwarrant\b", r"\bfraud (?:case|department)\b"],
+    "authority-spoofing": [r"\b(?:this is|i am|i'm|from the|my name is)\b[^.!?]{0,30}\bofficer\b|\bofficer (?-i:[A-Z][a-z]+)\b|\bpolice officers?\b|\bofficers (?:will|are|have|were)\b", r"\bfraud department\b", r"\bdo not speak to\b", r"\bcyber ?crime\b", r"\bsecurity team\b", r"\bdo not tell (?:your|anyone)", r"\bwarrant\b", r"\bfraud (?:case|department)\b"],
     "otp-credential-phish": [r"\b(?:6|4|six|four)[- ]digit code\b", r"\bverification code\b.*\b(?:reply|send|read)\b", r"\bconfirm your password\b", r"\bone[- ]time (?:code|password)\b"],
     "too-good-to-be-true": [r"\b\d[\d.,]* ?million\b", r"\bcongratulations\b[^.!?]{0,60}\b(?:won|winner|selected|prize|reward|gift|free|claim|lucky)\b", r"\byou(?:'ve| have) (?:been selected|won)\b", r"\bguaranteed returns?\b", r"\bno risk\b", r"\bno experience\b", r"\bearn \$?\d+ (?:a|per) day\b"],
     "emotional-manipulation": [r"\b(?:accidentally|mistakenly|by mistake)\b.{0,30}\b(?:sent|transferred|paid|deposited)\b", r"\b(?:new (?:phone|number)|lost my phone|phone (?:broke|died|fell))\b", r"\bemergency\b", r"\b(?:mum|mom|grandma|grandpa|dad)\b.*\b(?:trouble|stuck|lost|broke|stolen|hospital|jail)\b", r"\bdon'?t (?:tell|call)\b", r"\bplease don'?t call\b", r"\bi love you\b.*\$", r"\bcustoms\b"],

@@ -43,18 +43,19 @@ def arbitrate(ledger: Ledger, intent: Intent, f: Findings, model_verdict: Verdic
     """Asymmetric by design: evidence can escalate freely; 'safe' must be earned and any disagreement downgrades it.
     Reads the ledger, so every verdict can name the evidence it rests on."""
     m_scam = model_verdict in (Verdict.SCAM, Verdict.LIKELY_SCAM)
+    w, h = ledger.weight_independent("scam"), ledger.weight_independent("safe")  # stacked evidence, scam vs reassuring
     # Red-flag types from independent sources always count. Types only the model raised count only while the model is consistently
     # saying 'scam': a model that contradicts itself (or says safe/unsure) doesn't get to add flags.
-    ind_ids = {e.tactic for e in ledger.independent_scam() if e.tactic}
+    ind_ids = {e.tactic for e in ledger.independent_scam() if e.tactic and e.strength != "weak"}  # weak evidence adds weight, never a flag by itself
     model_only = [t for t in ledger.tactic_ids() if t not in ind_ids]
-    flags = len(ind_ids) + (len(model_only) if m_scam else 0) + (1 if ledger.has_script_match() else 0)  # a known scam script is itself a flag
+    ind_flag = bool(ind_ids) or w >= 2  # independent evidence of at least medium weight counts as a red flag even without a named trick
+    flags = (len(ind_ids) or (1 if w >= 2 else 0)) + (len(model_only) if m_scam else 0) + (1 if ledger.has_script_match() else 0)  # a known scam script is itself a flag
     m_safe = model_verdict == Verdict.SAFE
     strong = ledger.strong_independent_scam()
-    w, h = ledger.weight_independent("scam"), ledger.weight_independent("safe")  # stacked evidence, scam vs reassuring
 
     if strong:  # hard evidence from independent sources: the model can't talk us out of it
         d = Decision(Verdict.SCAM, "medium" if m_safe else "high", ["hard evidence: " + "; ".join(e.claim for e in strong[:2])], model_dependent=m_safe)
-    elif not ind_ids and not ledger.has_script_match() and (m_scam or model_only) and (h > 0 or not (intent.asks - {"reply"})):
+    elif not ind_flag and not ledger.has_script_match() and (m_scam or model_only) and (h > 0 or not intent.asks):
         # Every red flag is the model's alone, and either independent checks found reassuring facts or the message asks for nothing
         # (nothing to steal): that is a doubt, not a verdict.
         why = "independent checks look reassuring" if h > 0 else "the message asks for nothing"
@@ -64,7 +65,7 @@ def arbitrate(ledger: Ledger, intent: Intent, f: Findings, model_verdict: Verdic
         d = Decision(Verdict.SCAM if not m_safe else Verdict.LIKELY_SCAM, conf,
                      [f"{flags} separate red flags" if flags >= 2 else f"evidence adds up ({w:g} points against {h:g} reassuring)"],
                      model_dependent=m_safe or bool(model_only))
-    elif not ind_ids and not ledger.has_script_match() and model_only and scam_votes < 2:
+    elif not ind_flag and not ledger.has_script_match() and model_only and scam_votes < 2:
         # A red flag only the model raised, seen once: not enough for 'likely scam'. A second consistent look (the loop's job) is.
         d = Decision(Verdict.UNSURE, "low", ["only the AI raised a red flag, and only once so far"], model_dependent=True)
     elif flags == 1:

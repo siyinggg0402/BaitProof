@@ -88,9 +88,14 @@ def main() -> int:
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--show", type=int, default=12, help="how many mistakes of the full pipeline to print")
+    ap.add_argument("--exclude-seed", type=int, default=None, help="drop every message that --seed N sampled (n=--n), for a disjoint fresh test")
     a = ap.parse_args()
     for src in a.sources.split(","):
-        rows = sample(load(src), a.n, a.seed)
+        pool = load(src)
+        if a.exclude_seed is not None:
+            used = {t for _, t in sample(pool, a.n, a.exclude_seed)}
+            pool = [r for r in pool if r[1] not in used]
+        rows = sample(pool, a.n, a.seed)
         print(f"\n===== {src}: {sum(r[0] for r in rows)} scams + {sum(not r[0] for r in rows)} genuine (seed {a.seed}) =====")
         print(f"{'system':7} {'caught':>9} {'unsure':>7} {'FALSE-SAFE':>11} | {'cleared':>9} {'unsure':>7} {'FALSE-ALARM':>12} | {'secs':>6}")
         res = {}

@@ -102,7 +102,7 @@ def phone_check(number: str) -> dict:
     kind = "unknown"
     if npa in CARIBBEAN:
         kind = "caribbean"
-    elif d.startswith(("1900", "190", "449", "09")) or npa == "900":
+    elif d.startswith(("1900", "190", "449", "09", "0870", "0871", "0872", "0873")) or npa == "900":
         kind = "premium"
     elif npa in TOLLFREE:
         kind = "tollfree"
