@@ -1,6 +1,6 @@
 # External evaluation data (downloaded, not committed)
 
-`python -m scripts.fetch_real_data` downloads these into this folder. They are real messages collected by other researchers;
+`python -m scripts.data.fetch` downloads these into this folder. They are real messages collected by other researchers;
 none of them were used to write rules, prompts or tests, so they are an independent check on the checker.
 
 | Folder | Source | What | Licence |

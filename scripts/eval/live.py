@@ -1,15 +1,14 @@
 """Run the held-out sets through the LIVE model, with a hard token budget so the credit is protected.
-Usage: python -m scripts.eval_live [--n 12] [--max-tokens 100000] [--set 1|2]
+Usage: python -m scripts.eval.live [--n 12] [--max-tokens 100000] [--set 1|2]
 Prints verdicts next to the offline-rules verdict so you can see what the model adds. Never prints the key."""
 import argparse
 import random
 
 import core  # noqa: F401
 from core.ai import llm
+from core.obs.metrics import cost_usd
 from core.pipelines.check import check_message
-from tests.data import heldout_1 as heldout, heldout_2 as heldout2
-
-PRICE_IN, PRICE_OUT = 0.06, 0.24  # $/1M tokens, third-party listing for Nemotron 3 Nano: verify with Nebius
+from tests.data.en import heldout_1 as heldout, heldout_2 as heldout2
 
 
 def main() -> int:
@@ -24,7 +23,7 @@ def main() -> int:
     scams = [t[0] if isinstance(t, tuple) else t for t in ds.SCAMS]
     legit = list(ds.LEGIT)
     random.Random(1).shuffle(scams); random.Random(1).shuffle(legit)
-    rows, live_safe_scam, live_alarm = [], 0, 0
+    live_safe_scam, live_alarm = 0, 0
     for label, items in (("SCAM", scams[: a.n]), ("LEGIT", legit[: a.n])):
         for text in items:
             if llm.USAGE["prompt_tokens"] + llm.USAGE["completion_tokens"] > a.max_tokens:
@@ -40,9 +39,8 @@ def main() -> int:
             if label == "LEGIT" and r.verdict.value in ("scam", "likely_scam"): live_alarm += 1
             if "critic" in steps and steps["critic"].status == "flag": print(f"        critic: {steps['critic'].detail}")
     u = llm.USAGE
-    cost = (u["prompt_tokens"] * PRICE_IN + u["completion_tokens"] * PRICE_OUT) / 1e6
     print(f"\nFALSE-SAFE scams: {live_safe_scam} (must be 0)   false alarms on legit: {live_alarm}")
-    print(f"calls={u['calls']} tokens in={u['prompt_tokens']} out={u['completion_tokens']}  est. cost ≈ ${cost:.4f} (price unverified)")
+    print(f"calls={u['calls']} tokens in={u['prompt_tokens']} out={u['completion_tokens']}  est. cost ≈ ${cost_usd(u['prompt_tokens'], u['completion_tokens']):.4f} (BAITPROOF_PRICE_IN/OUT set the price)")
     return 1 if live_safe_scam else 0
 
 

@@ -1,0 +1,8 @@
+# Everything to develop, test and evaluate: pip install -r requirements-dev.txt
+-r requirements.txt
+pytest>=8.0
+httpx>=0.27          # FastAPI's test client
+playwright>=1.40     # the real-browser end-to-end test (tests/e2e), which drives your installed Chrome
+ruff>=0.4            # lint: ruff check
+pyarrow>=15          # only for `python -m scripts.data.fetch --multilingual`
+python-telegram-bot>=21  # only to run the Telegram bot (python -m bot.telegram_bot)

@@ -1,5 +1,5 @@
 """Phase 5: put the DB in a believable mid-training state for the demo video.
-This is real state (honestly a seeded account), not fake behaviour. Usage: python -m scripts.seed_demo"""
+This is real state (honestly a seeded account), not fake behaviour. Usage: python -m scripts.data.seed_demo"""
 from datetime import timedelta
 
 from core.pipelines import check

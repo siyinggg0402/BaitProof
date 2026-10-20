@@ -1,5 +1,5 @@
 """Phase 0 gate: confirm the real Nemotron model id, base URL and Tavily params.
-Usage: python -m scripts.verify_setup [--list]
+Usage: python -m scripts.ops.verify_setup [--list]
 Never prints the API key. If NEBIUS_BASE_URL is blank it tries Nebius's known endpoints and tells you which one works."""
 import os
 import sys

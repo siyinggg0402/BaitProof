@@ -1,5 +1,5 @@
 """Is it running OK? Reads logs/events.jsonl (no message text is ever stored there).
-Usage: python -m scripts.logs_report [--hours 24] [--tail 20] [--errors]"""
+Usage: python -m scripts.ops.logs_report [--hours 24] [--tail 20] [--errors]"""
 import argparse
 import time
 

@@ -1,6 +1,6 @@
 # 🛡️ Baitproof
 
-**A personal scam-defense coach for your family.** Forward a suspicious message and Baitproof tells you if it's a scam, points at the *one giveaway*, and adds that trick to your training. It learns which tricks *you* fall for, drills those, turns them into a game, and lets you send a "can you spot the scam?" challenge to your parents.
+**A personal scam-defense coach for your family.** Forward a suspicious message and Baitproof tells you if it's a scam, points at the *one giveaway*, and adds that trick to your training. It learns which tricks *you* fall for, drills those, turns them into a game, and lets you send a "can you spot the scam?" challenge to your parents. It reads **English, Chinese (简体, 繁體 and mixed with English), Malay and Indonesian** with its own rules, and any other language through the model; the website, Telegram bot, practice and game speak English, 简体中文 and 繁體中文.
 
 *Hoxhunt for protecting your parents, not your payroll.*
 
@@ -14,6 +14,7 @@ Built for the Nebius x NVIDIA Global AI Hackathon 2026, track **Personal AI**.
 | **Game** | Inbox Rush, Daily Challenge, Spot the Tell, Boss fights (one per trick) and *Your Inbox*, built from scams you actually received. XP, levels, combo, lives, streaks, badges. |
 | **Records** | Everything you checked on the website **and in Telegram**, in one place, with the verdict and the giveaway. Link Telegram with a one-time code. Delete one record or all of them. |
 | **Challenge family** | Send a link; your parent plays a few rounds with no account and you see how they did. Shareable result card. |
+| **Your language** | A language switcher (English / 简体中文 / 繁體中文) on the website, `/lang` in Telegram. The explanation comes back in the language **you** read, whatever language the scam is in. |
 
 ## Why not a detector / ChatGPT / Hoxhunt?
 - **Detectors** tell you once and forget you. Baitproof makes you harder to fool next time.
@@ -46,13 +47,23 @@ The model proposes; deterministic gates decide.
 - **Flywheel gate.** Only confident scams with independent evidence enter the training library, and only as tactics plus an abstracted, scrubbed example.
 
 ### Observability
-Every check writes one JSON line to `logs/` (stages, tools, latency, tokens, cost; **no message text**, only a salted hash and length). `/admin` (set `BAITPROOF_ADMIN_TOKEN`) shows health, metrics, recent checks and user feedback ("was this right?"). `python -m scripts.logs_report` does the same in the terminal. A crash guard turns any internal error into a cautious "not sure". The Check page streams the stages live.
+Every check writes one JSON line to `logs/` (stages, tools, latency, tokens, cost; **no message text**, only a salted hash and length). `/admin` (set `BAITPROOF_ADMIN_TOKEN`) shows health, metrics, recent checks and user feedback ("was this right?"). `python -m scripts.ops.logs_report` does the same in the terminal. A crash guard turns any internal error into a cautious "not sure". The Check page streams the stages live.
 
 ### Optional: few-shot retrieval
-`core/ai/fewshot.py` can put the four most similar labelled examples from `data/fewshot_bank.json` into the prompt (`BAITPROOF_FEWSHOT=1`). Off by default; see Evaluation for what it did.
+`core/ai/fewshot.py` can put the four most similar labelled examples from `data/fewshot/bank.json` into the prompt (`BAITPROOF_FEWSHOT=1`). Off by default; see Evaluation for what it did.
+
+## Languages
+| Message language | How it is checked |
+|---|---|
+| English | The full pipeline: rules, intent diagnosis, tools, evidence ledger, model, gates. |
+| Chinese: Simplified, Traditional, or mixed with English | The same pipeline with a Chinese rule pack (`core/domain/zh.py`): deadlines and threats, claimed authorities, asks (pay, share a code, install, scan), 17 scam scripts (parcel fee, bank freeze, impersonated police, brush-order jobs, romance to investment, fake customer-service refund, boss and family emergencies, prizes, loans, social security, traffic fines, tickets, rentals ...), Chinese brands and official domains, links found inside unspaced Chinese text, and warnings such as "请勿泄露验证码" or public anti-fraud notices that must not be read as scams. Each rule is written once in Simplified and also matches Traditional. |
+| Malay and Indonesian | The same, with a Malay/Indonesian pack (`core/domain/ms.py`): PDRM, LHDN, Kastam, SPRM, JPJ and bank impersonation, TAC/OTP read-outs, parcel and customs fees, "new number" family emergencies, task jobs and investment promises. |
+| Anything else (Japanese, Korean, Hindi, Arabic, Spanish, French ...) | The model alone, inside the same gates. Because no independent rule can check these, Baitproof **never says "looks safe"** for them, only "not sure" (measured below: without this, 1 to 2 scams in 40 were called safe). |
+
+**You choose the language of the answer**, not the message: a Chinese-speaking relative can check an English phishing email and read the explanation in Chinese, and the other way round. The website remembers it (cookie, else the browser's language), Telegram uses `/lang en|zh|zh-Hant` (else Telegram's language). Verdict, giveaway, next step, every piece of evidence and the "How I decided" trace are translated; Traditional is derived from the Simplified text with OpenCC's character table (see [NOTICE](NOTICE)) plus a few Taiwan-style words, so wording is correct but not hand-polished. The practice, game and challenge messages for Chinese come from their own bank of 47 hand-written messages.
 
 ## Evaluation
-`python -m scripts.eval_offline` (rules, free, false-SAFE must be 0), `eval_live` (live model, token-capped), `compare`, `prompt_lab`, and `eval_real` (real datasets, see `data/external/README.md`; the data is downloaded by `fetch_real_data`, never committed).
+`python -m scripts.eval.offline` (rules, free, false-SAFE must be 0), `scripts.eval.live` (live model, token-capped), `compare` (the hard sets against a plain model call), `prompt_lab`, `real` (real datasets, see `data/external/README.md`) and `multilingual`; the data is downloaded by `scripts.data.fetch`, never committed. [scripts/README.md](scripts/README.md) lists every script and what it costs.
 
 **What we optimise for:** never tell someone a scam is safe, and don't cry wolf on genuine messages. When unsure, the honest answer is "not sure, check with someone you trust". We compare against the obvious baseline, *one plain call to the same model* ("is this a scam?").
 
@@ -87,46 +98,50 @@ pip install "python-telegram-bot>=21"
 # .env: TELEGRAM_BOT_TOKEN, TELEGRAM_BOT_USERNAME, BAITPROOF_URL
 python -m bot.telegram_bot
 ```
-Paste or forward a message to the bot for the same gated verdict. Commands: `/start`, `/link CODE`, `/unlink`, `/history`, `/score`, `/help`.
+Paste or forward a message to the bot for the same gated verdict. Commands: `/start`, `/link CODE`, `/unlink`, `/history`, `/score`, `/lang en|zh|zh-Hant`, `/help`.
 **Link it to the web:** open **Records**, press *Connect Telegram*, and send the 6-character code (valid once, 10 minutes) to the bot. From then on every check made in Telegram appears in your web Records and trains the same profile. Anything you check in Telegram is saved to Records and the bot tells you so. The logic is in `bot/handlers.py` (no Telegram import, unit-tested); only the thin connector `bot/telegram_bot.py` needs a token to run.
 
 ## Game mode
-`core/game/` is the engine, `web/game.py` the API. Answers are graded **on the server** (so the page cannot be used to peek): *scam*, *looks fine* or *check first*, with partial credit for "check first". Spot the Tell asks you to highlight the giveaway and scores recall and precision (selecting the whole message does not count). Rounds update the same per-trick mastery model that drives Practice. The pool is the curated seed bank plus the authored bank plus scams you have checked yourself.
+`core/game/` is the engine, `web/routes/game.py` the API. Answers are graded **on the server** (so the page cannot be used to peek): *scam*, *looks fine* or *check first*, with partial credit for "check first". Spot the Tell asks you to highlight the giveaway and scores recall and precision (selecting the whole message does not count). Rounds update the same per-trick mastery model that drives Practice. The pool is the curated seed bank plus the authored bank plus scams you have checked yourself.
 
 ## Setup
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt     # requirements.txt is the runtime only
 cp .env.example .env                    # fill NEBIUS_API_KEY (never commit it; .env is gitignored)
-python -m scripts.verify_setup --list   # confirm the Nemotron model id and base URL
+python -m scripts.ops.verify_setup --list   # confirm the Nemotron model id and base URL
 uvicorn web.main:app --reload           # http://localhost:8000
 pytest                                   # offline, deterministic, never calls the API
 python -m tests.e2e.browser              # real-browser click-through (needs Chrome + playwright)
-python -m scripts.seed_demo              # optional: believable mid-training state for the demo
+python -m scripts.data.seed_demo              # optional: believable mid-training state for the demo
 ```
+The share card renders Chinese when a CJK font is installed (`fonts-noto-cjk` on Linux, which `deploy/setup_vm.sh` installs) and falls back to the English card otherwise.
 All settings are listed, with defaults, in [.env.example](.env.example).
 
 ## Safety & privacy
 - Cautious verdicts: "looks safe" always carries "…but verify via an official channel"; any red flag downgrades a safe verdict.
 - "I already paid" messages get victim support, not analysis, and are never stored.
-- We store **tactics and an abstracted example**, not messages. Emails, phone numbers and link paths are scrubbed deterministically before anything is stored or sent to a model; with the AI configured the example is also rewritten without names. In offline mode names in free text can survive scrubbing (limitation).
+- We store **tactics and an abstracted example**, not messages. Emails, phone numbers (including mainland-China mobiles), resident ID numbers, card numbers and link paths are scrubbed deterministically before anything is stored or sent to a model; with the AI configured the example is also rewritten without names. In offline mode names in free text can survive scrubbing (limitation).
 - **Records** keep the verdict and giveaway; the 120-character preview of the message is redacted, optional (`BAITPROOF_STORE_PREVIEW`, switchable per profile) and deletable per record or all at once.
 - Logs contain no message text. No telemetry. Third-party datasets are never committed.
 - Encouraging tone: a miss is always "here's the tell you missed". Content is victim-facing only.
 
 ## Repository layout
 ```
-core/domain/     tactics.py (12-tactic vocabulary), intents.py (19-purpose catalogue), schemas.py, privacy.py
+core/domain/     tactics.py (12-tactic vocabulary), intents.py (19-purpose catalogue), schemas.py, privacy.py,
+                 lang.py (language detection, Simplified/Traditional-agnostic patterns), zh.py + ms.py (Chinese and Malay/Indonesian rule packs),
+                 i18n.py + i18n_ui.py + i18n_bot.py (English text -> Simplified, Traditional derived), zh_t2s.json / zh_s2t.json (OpenCC characters)
 core/storage/    db.py, library.py, model.py (personal model + score), history.py (records), links.py (Telegram link codes)
 core/ai/         llm.py (Nebius client), prompts.py, verify.py (Tavily), fewshot.py
 core/pipelines/  train.py, challenge.py, check/ (the gated pipeline: engine, gates, evidence, intent, scenarios, tools, planner, preconditions)
 core/game/       pool.py, state.py (XP, levels, badges), engine.py (rounds, grading)
 core/obs/        run, logger (JSONL), metrics, health
-web/             main.py (routes), game.py, admin.py, deps.py (profiles, rate limit, headers), templates/, static/{css,js,img}
+web/             main.py (app setup), pages.py (templates), ui.py (translation helpers), deps.py (profiles, rate limit, headers),
+                 routes/ (check, records, practice, game, language, admin), templates/, static/{css,js,img}
 bot/             Telegram front-end (handlers.py is the tested logic)
-data/            seed scams + legitimate examples, few-shot bank, external/ (downloaded, ignored)
-scripts/         verify_setup, eval_offline, eval_live, eval_real, compare, prompt_lab, fetch_real_data, logs_report, seed_demo
-tests/           core/ web/ bot/ (pytest), data/ (labelled sets), e2e/ (real-browser)
+data/            seeds/ (curated scams + genuine messages, en and zh), fewshot/ (reference bank), external/ (downloaded, ignored)
+scripts/         eval/ (offline, live, compare, real, multilingual, prompt_lab), data/ (fetch, seed_demo), ops/ (verify_setup, logs_report), common.py
+tests/           core/ (by area: check, lang, game, pipelines, storage, obs, ai), web/, bot/ (pytest); data/{en,zh,ms}/ (labelled sets); e2e/ (real-browser)
 deploy/          Nebius VM: setup script, systemd unit, Caddyfile
 ```
 
@@ -136,14 +151,16 @@ Public mode (`BAITPROOF_MULTIUSER=1`, set by the unit) gives every visitor their
 (cookie, no accounts) so strangers never see each other's training or records; challenges and Telegram link codes are shared so the person you send
 one to can open it. There is no CORS middleware (same origin only), a strict CSP, a per-IP rate limit on the
 routes that cost model calls (`BAITPROOF_RATE`, default 30/min) and a login rate limit on `/admin`. Inference still runs on Token Factory.
-For the demo video, run locally without `BAITPROOF_MULTIUSER` and seed with `python -m scripts.seed_demo`.
+For the demo video, run locally without `BAITPROOF_MULTIUSER` and seed with `python -m scripts.data.seed_demo`.
 
 ## Limitations
 - The deploy files have not been exercised on a real VM yet.
 - The Telegram connector has only been tested through its handlers, not against the live Telegram API.
 - Short or context-free messages ("Hi, is this Amy?") are honestly answered "not sure"; the pipeline prefers that to guessing.
 - Public datasets are older, mostly UK/Singapore/India SMS and English financial notices; "spam" is not always "scam". Tavily review checks are untested without a key.
-- Future: family dashboards, WhatsApp, voice and screenshot input, more languages.
+- The Chinese and Malay/Indonesian test sets and seed messages are hand-written by us from common real scam scripts, not captured messages, and the only large multilingual dataset we found is machine-translated SMS. Treat those numbers as a development signal, not a benchmark.
+- Malay/Indonesian are explained in English or Chinese (the interface languages). Traditional Chinese text is auto-converted from Simplified, so some wording is mainland-style.
+- Future: family dashboards, WhatsApp, voice and screenshot input, a Malay/Tamil interface, more rule packs (Japanese, Korean, Hindi).
 
 ## License
 MIT

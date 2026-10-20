@@ -1,6 +1,6 @@
 """Download the independent evaluation datasets listed in data/external/README.md. Files are untrusted: they are only ever read as text.
-Usage: python -m scripts.fetch_real_data                 (English datasets)
-       python -m scripts.fetch_real_data --multilingual  (the machine-translated SMS set, 13 languages; needs pyarrow)"""
+Usage: python -m scripts.data.fetch                 (English datasets)
+       python -m scripts.data.fetch --multilingual  (the machine-translated SMS set, 13 languages; needs pyarrow)"""
 import sys
 import hashlib
 import json

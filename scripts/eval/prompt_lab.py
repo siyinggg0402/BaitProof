@@ -1,5 +1,5 @@
 """Measure the MODEL's verdict (one call, no pipeline) for prompt variants on real samples. Tune on --seed A, confirm on a disjoint --seed B.
-Usage: python -m scripts.prompt_lab --variants current,decisive --n 80 --seed 7 [--exclude-seed 7]"""
+Usage: python -m scripts.eval.prompt_lab --variants current,decisive --n 80 --seed 7 [--exclude-seed 7]"""
 import argparse
 import collections
 from concurrent.futures import ThreadPoolExecutor
@@ -7,8 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 import core  # noqa: F401
 from core.ai import llm
 from core.ai.prompts import CHECK_SYSTEM
-from core.domain.privacy import redact
-from scripts import eval_real
+from scripts.eval import real as eval_real
 
 LEGACY_REV = "4ce172c"  # the patchwork prompt from before the catalogue rewrite
 

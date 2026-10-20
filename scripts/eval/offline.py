@@ -1,4 +1,4 @@
-"""python -m scripts.eval_offline   (rules only, free). For the live model use scripts.eval_live."""
+"""python -m scripts.eval.offline   (rules only, free). For the live model use scripts.eval.live."""
 import os
 
 os.environ["NEBIUS_API_KEY"] = ""  # force rules-only so this never spends model credit (dotenv won't override a set var)

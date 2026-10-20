@@ -1,0 +1,7 @@
+# Tool settings only (the app is not packaged). Run the checks with:  ruff check   and   pytest
+[tool.ruff]
+line-length = 200            # the pattern tables are long on purpose
+extend-exclude = ["data"]
+
+[tool.ruff.lint]
+select = ["F"]               # pyflakes: unused imports and variables, undefined names
