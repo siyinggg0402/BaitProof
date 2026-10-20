@@ -1,4 +1,5 @@
-"""HARD set #3: a CLEAN holdout. Written after the fixes were designed, never used to tune anything. Run once; report as-is."""
+"""HARD set #3: written after the fixes for sets #1 and #2 were designed, as a holdout. It was clean on its first run; that run exposed one gap (a stranger
+claiming a mutual acquaintance), which was then fixed, so treat it as a development set now."""
 
 SCAMS = [
     ("rapport-opener", "Hi, I'm Daniel, a friend of your cousin Mike. He gave me your number. I'm moving to your city next month and wondered if you know any good rental agents?"),

@@ -1,10 +1,8 @@
 import pytest
 
-from core import obs
 from core.ai import llm
 from core.domain.schemas import Verdict as V
 from core.pipelines.check import check_message, engine, gates, tools
-from core.pipelines.check.evidence import Ledger
 from core.storage import library
 
 LINK_MSG = "Your statement is ready, open quiet-bill-notice.top"  # one weak flag (odd ending) + a link nobody can vouch for

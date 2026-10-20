@@ -1,10 +1,7 @@
-import json
 import sqlite3
 
-import pytest
 
 from core.domain.schemas import CheckResult, TacticHit, Verdict
-from core.pipelines.check import check_message
 from core.storage import db, history, links
 
 

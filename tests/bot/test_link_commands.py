@@ -1,4 +1,3 @@
-import pytest
 
 from bot import handlers
 from core.storage import links

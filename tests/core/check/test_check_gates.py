@@ -3,10 +3,9 @@ import pytest
 from core.ai import llm
 from core.domain.schemas import TacticHit, Verdict as V
 from core.pipelines.check import evaluate
-from core.pipelines.check import analysis, gates, intent, tools
+from core.pipelines.check import gates, intent, tools
 from core.pipelines.check import check_message
 from core.pipelines.check.ingest import ingest
-from core.pipelines.check.trace import Trace
 from core.storage import library
 
 

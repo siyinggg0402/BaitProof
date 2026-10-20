@@ -12,7 +12,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 
-BANK_PATH = Path(__file__).resolve().parents[2] / "data" / "fewshot_bank.json"
+BANK_PATH = Path(__file__).resolve().parents[2] / "data" / "fewshot" / "bank.json"
 SCAMMY = ("scam", "likely_scam")
 MIN_SIM = 0.08
 URL = re.compile(r"(?:https?://|www\.)?[a-z0-9-]+(?:\.[a-z0-9-]+)*\.([a-z]{2,10})(?:/\S*)?", re.I)

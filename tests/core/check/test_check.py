@@ -4,7 +4,7 @@ from core.domain.schemas import Verdict as V
 from core.pipelines import check, train
 from core.pipelines.check import check_message
 from core.storage import library
-from tests.data import smoke as M
+from tests.data.en import smoke as M
 
 
 @pytest.mark.parametrize("text,ok,tactic", M.SCAMS)

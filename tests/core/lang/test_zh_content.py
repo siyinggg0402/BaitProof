@@ -7,7 +7,7 @@ from core.domain.tactics import valid
 from core.game import pool as gp
 from core.pipelines.check import check_message
 from core.storage import library
-from tests.data import zh_holdout, zh_set
+from tests.data.zh import dev as zh_set, holdout as zh_holdout
 
 
 def test_chinese_seed_bank_is_well_formed():

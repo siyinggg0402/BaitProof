@@ -1,6 +1,6 @@
 from core.domain.schemas import Verdict as V
 from core.pipelines.check import check_message
-from tests.data import heldout_1, heldout_2
+from tests.data.en import heldout_1, heldout_2
 
 
 def _verdicts(items):

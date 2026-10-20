@@ -1,4 +1,4 @@
-"""Held-out labeled messages, written independently of data/seed_examples.json (different wording and tricks).
+"""Held-out labeled messages, written independently of data/seeds/en.json (different wording and tricks).
 SCAMS must never come back SAFE. LEGIT must never come back SCAM/LIKELY (a false alarm); UNSURE is acceptable."""
 
 SCAMS = [

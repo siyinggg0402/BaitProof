@@ -1,10 +1,10 @@
 """Chinese rules (no model): scams are caught, genuine messages are not flagged, nothing is called safe that shouldn't be.
-Sets are authored (tests/data/zh_set.py, zh_holdout.py); see their docstrings."""
+Sets are authored (tests/data/zh/dev.py, holdout.py); see their docstrings."""
 import pytest
 
 from core.domain.schemas import Verdict as V
 from core.pipelines.check import check_message
-from tests.data import zh_holdout, zh_set
+from tests.data.zh import dev as zh_set, holdout as zh_holdout
 
 FLAGGED = (V.SCAM, V.LIKELY_SCAM)
 

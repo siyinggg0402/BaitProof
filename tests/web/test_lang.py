@@ -268,8 +268,8 @@ def test_every_python_side_ui_string_has_a_chinese_version():
     need += [t for pair in state.BADGES.values() for t in pair if "“" not in t and "boss" not in t]
     need += ["Master of “{label}”", "Beat the {label} boss", "high confidence", "medium confidence", "low confidence", "{k} days ago", "{k} hours ago", "{k} minutes ago", "just now",
              "I spotted {right} of {total} scam messages.", "Can you beat me?", "What is the safest thing to do?", "Nice catch! {tell}"]
-    for p in ("core/game/engine.py", "web/main.py", "web/deps.py", "web/game.py"):
-        for node in ast.walk(ast.parse((ROOT / p).read_text())):
+    for path in [ROOT / "core/game/engine.py", ROOT / "web/deps.py", ROOT / "web/main.py", *sorted(f for f in (ROOT / "web/routes").glob("*.py") if f.name != "admin.py")]:  # the operator pages stay in English
+        for node in ast.walk(ast.parse(path.read_text())):
             if isinstance(node, ast.Call) and getattr(node.func, "id", getattr(node.func, "attr", "")) in ("GameError", "HTTPException"):
                 need += [a.value for a in node.args if isinstance(a, ast.Constant) and isinstance(a.value, str)]
     missing = [k for k in need if k not in i18n.ZH]

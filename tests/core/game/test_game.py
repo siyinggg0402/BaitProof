@@ -1,4 +1,3 @@
-import random
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -6,7 +5,7 @@ import pytest
 from core.domain.tactics import TACTICS
 from core.game import engine, pool, state
 from core.pipelines.check import check_message
-from core.storage import db, library, model
+from core.storage import db, model
 
 SCAM, SAFE, UNSURE = "scam", "safe", "unsure"
 

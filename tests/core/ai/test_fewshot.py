@@ -7,7 +7,7 @@ from core.pipelines.check import analysis, intent as intent_stage
 from core.pipelines.check.ingest import ingest
 from core.pipelines.check.tools import Findings
 from core.storage import library
-from tests.data import hard_set, hard_set_2, hard_set_3, heldout_1, heldout_2
+from tests.data.en import hard_1, hard_2, hard_3, heldout_1, heldout_2
 
 
 def _norm(t):
@@ -31,7 +31,7 @@ def test_bank_texts_do_not_leak_from_any_evaluation_set():
     evalset = {_norm(e["text"]) for e in library.seed_examples()}
     for ds in (heldout_1, heldout_2):
         evalset |= {_norm(t[0] if isinstance(t, tuple) else t) for t in ds.SCAMS + ds.LEGIT}
-    for ds in (hard_set, hard_set_2, hard_set_3):
+    for ds in (hard_1, hard_2, hard_3):
         evalset |= {_norm(t[1]) for t in ds.SCAMS + ds.LEGIT}
     overlap = [e.id for e in fewshot.load_authored() if _norm(e.text) in evalset]
     assert not overlap, overlap

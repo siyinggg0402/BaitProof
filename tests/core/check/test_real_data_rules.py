@@ -7,7 +7,7 @@ from core.domain.schemas import Verdict as V
 from core.pipelines.check import check_message, intent as intent_stage
 from core.pipelines.check.ingest import ingest
 from core.storage import library
-from tests.data import hard_set, hard_set_2, hard_set_3, heldout_1, heldout_2
+from tests.data.en import hard_1, hard_2, hard_3, heldout_1, heldout_2
 
 
 def test_the_crash_guard_never_fires_on_any_message_we_have():
@@ -15,7 +15,7 @@ def test_the_crash_guard_never_fires_on_any_message_we_have():
     texts = [e["text"] for e in library.seed_examples()]
     for ds in (heldout_1, heldout_2):
         texts += [t[0] if isinstance(t, tuple) else t for t in ds.SCAMS + ds.LEGIT]
-    for ds in (hard_set, hard_set_2, hard_set_3):
+    for ds in (hard_1, hard_2, hard_3):
         texts += [t[1] for t in ds.SCAMS + ds.LEGIT]
     assert len(texts) > 200
     bad = [t[:50] for t in texts if any(s.stage == "guard" for s in check_message(t, store=False, log=False).trace)]
@@ -28,7 +28,7 @@ def test_the_guard_also_never_fires_with_a_model_in_the_loop(monkeypatch):
         {"asks": ["pay"], "pressure": ["deadline"], "claimed_identity": {"name": "bank", "kind": "organisation"}, "scenario": "bank-security"}
         if "diagnose what a message wants" in system else {"concern": True, "reason": "x"} if "second reviewer" in system else
         {"calls": []} if "investigator" in system else {"verdict": "likely_scam", "tactics": [{"id": "advance-fee", "quote": "fee", "why": "w"}], "the_tell": "t", "action": "a"}))
-    for t in [t[1] for t in hard_set.SCAMS + hard_set.LEGIT]:
+    for t in [t[1] for t in hard_1.SCAMS + hard_1.LEGIT]:
         assert not any(s.stage == "guard" for s in check_message(t, store=False, log=False).trace), t[:50]
 
 

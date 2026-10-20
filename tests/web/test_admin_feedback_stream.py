@@ -5,7 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from core.obs import logger
-from web import admin, deps, results
+from web import deps, results
 from web.main import app
 
 SECRET = "zebra-unicorn-4242"
@@ -149,8 +149,8 @@ def test_results_are_private_to_each_visitor(monkeypatch):
 
 
 def test_stream_internal_error_is_reported_not_hung(client, monkeypatch):
-    from web import main
-    monkeypatch.setattr(main.check, "check_message", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("x")))
+    from core.pipelines import check as check_pipeline
+    monkeypatch.setattr(check_pipeline, "check_message", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("x")))
     ev = _stream(client, "hello there")
     assert ev[-1] == {"type": "error", "data": "RuntimeError"}
 

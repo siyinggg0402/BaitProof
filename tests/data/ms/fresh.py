@@ -1,4 +1,4 @@
-"""Malay and Indonesian FRESH set: written by hand AFTER the Malay/Indonesian rules existed, with different scams and wording from ms_holdout.py
+"""Malay and Indonesian FRESH set: written by hand AFTER the Malay/Indonesian rules existed, with different scams and wording from ms/holdout.py
 (whose rules were written with those messages in view, so that set is a development set). Authored, not captured. Measured once; see the README."""
 
 SCAMS = [

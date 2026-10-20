@@ -4,7 +4,6 @@ import pytest
 from fastapi.testclient import TestClient
 
 from bot import handlers
-from core.storage import db, history, links
 from web import deps
 from web.main import app
 

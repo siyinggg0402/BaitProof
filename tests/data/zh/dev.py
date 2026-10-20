@@ -1,5 +1,5 @@
 """Chinese DEVELOPMENT set: the first probe messages used while building the Chinese rules (Simplified and Traditional). Authored by hand, not captured.
-Use tests/data/zh_holdout.py for the less-tuned reading."""
+Use tests/data/zh/holdout.py for the less-tuned reading."""
 
 SCAMS = [
     ("zh-1", '【顺丰速运】您的快递因地址不详无法派送，请于24小时内点击 http://sf-express-cn.top/addr 补全信息，逾期将退回。'),

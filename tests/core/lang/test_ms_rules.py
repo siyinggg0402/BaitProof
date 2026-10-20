@@ -1,11 +1,11 @@
-"""Malay and Indonesian rules (no model). The two sets are authored (see their docstrings): ms_holdout was a first reading, ms_fresh was written after
+"""Malay and Indonesian rules (no model). The two sets are authored (see their docstrings): ms/holdout.py was a first reading, ms/fresh.py was written after
 the rules existed and was then used to fix the gaps it exposed, so both now count as development sets."""
 import pytest
 
 from core.domain.lang import CURRENT, Dual, detect
 from core.domain.schemas import Verdict as V
 from core.pipelines.check import check_message
-from tests.data import ms_fresh, ms_holdout
+from tests.data.ms import fresh as ms_fresh, holdout as ms_holdout
 
 FLAGGED = (V.SCAM, V.LIKELY_SCAM)
 
