@@ -10,7 +10,7 @@ from functools import lru_cache
 
 from PIL import Image, ImageDraw, ImageFont
 
-from core.domain.i18n import norm, tr
+from core.lang.i18n import norm, tr
 
 BG, FG, ACCENT, MUTED = (16, 20, 27), (242, 245, 250), (108, 156, 255), (180, 189, 204)
 

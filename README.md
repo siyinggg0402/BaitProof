@@ -56,8 +56,8 @@ Every check writes one JSON line to `logs/` (stages, tools, latency, tokens, cos
 | Message language | How it is checked |
 |---|---|
 | English | The full pipeline: rules, intent diagnosis, tools, evidence ledger, model, gates. |
-| Chinese: Simplified, Traditional, or mixed with English | The same pipeline with a Chinese rule pack (`core/domain/zh.py`): deadlines and threats, claimed authorities, asks (pay, share a code, install, scan), 17 scam scripts (parcel fee, bank freeze, impersonated police, brush-order jobs, romance to investment, fake customer-service refund, boss and family emergencies, prizes, loans, social security, traffic fines, tickets, rentals ...), Chinese brands and official domains, links found inside unspaced Chinese text, and warnings such as "请勿泄露验证码" or public anti-fraud notices that must not be read as scams. Each rule is written once in Simplified and also matches Traditional. |
-| Malay and Indonesian | The same, with a Malay/Indonesian pack (`core/domain/ms.py`): PDRM, LHDN, Kastam, SPRM, JPJ and bank impersonation, TAC/OTP read-outs, parcel and customs fees, "new number" family emergencies, task jobs and investment promises. |
+| Chinese: Simplified, Traditional, or mixed with English | The same pipeline with a Chinese rule pack (`core/lang/zh.py`): deadlines and threats, claimed authorities, asks (pay, share a code, install, scan), 17 scam scripts (parcel fee, bank freeze, impersonated police, brush-order jobs, romance to investment, fake customer-service refund, boss and family emergencies, prizes, loans, social security, traffic fines, tickets, rentals ...), Chinese brands and official domains, links found inside unspaced Chinese text, and warnings such as "请勿泄露验证码" or public anti-fraud notices that must not be read as scams. Each rule is written once in Simplified and also matches Traditional. |
+| Malay and Indonesian | The same, with a Malay/Indonesian pack (`core/lang/ms.py`): PDRM, LHDN, Kastam, SPRM, JPJ and bank impersonation, TAC/OTP read-outs, parcel and customs fees, "new number" family emergencies, task jobs and investment promises. |
 | Anything else (Japanese, Korean, Hindi, Arabic, Spanish, French ...) | The model alone, inside the same gates. Because no independent rule can check these, Baitproof **never says "looks safe"** for them, only "not sure" (measured below: without this, 1 to 2 scams in 40 were called safe). |
 
 **You choose the language of the answer**, not the message: a Chinese-speaking relative can check an English phishing email and read the explanation in Chinese, and the other way round. The website remembers it (cookie, else the browser's language), Telegram uses `/lang en|zh|zh-Hant` (else Telegram's language). Verdict, giveaway, next step, every piece of evidence and the "How I decided" trace are translated; Traditional is derived from the Simplified text with OpenCC's character table (see [NOTICE](NOTICE)) plus a few Taiwan-style words, so wording is correct but not hand-polished. The practice, game and challenge messages for Chinese come from their own bank of 47 hand-written messages.
@@ -128,9 +128,9 @@ All settings are listed, with defaults, in [.env.example](.env.example).
 
 ## Repository layout
 ```
-core/domain/     tactics.py (12-tactic vocabulary), intents.py (19-purpose catalogue), schemas.py, privacy.py,
-                 lang.py (language detection, Simplified/Traditional-agnostic patterns), zh.py + ms.py (Chinese and Malay/Indonesian rule packs),
-                 i18n.py + i18n_ui.py + i18n_bot.py (English text -> Simplified, Traditional derived), zh_t2s.json / zh_s2t.json (OpenCC characters)
+core/domain/     tactics.py (12-tactic vocabulary), intents.py (19-purpose catalogue), schemas.py, privacy.py
+core/lang/       text.py (language detection, Simplified/Traditional-agnostic patterns), zh.py + ms.py (Chinese and Malay/Indonesian rule packs),
+                 i18n.py + i18n_ui.py + i18n_bot.py (English text -> Simplified; Traditional is derived), data/ (OpenCC character tables)
 core/storage/    db.py, library.py, model.py (personal model + score), history.py (records), links.py (Telegram link codes)
 core/ai/         llm.py (Nebius client), prompts.py, verify.py (Tavily), fewshot.py
 core/pipelines/  train.py, challenge.py, check/ (the gated pipeline: engine, gates, evidence, intent, scenarios, tools, planner, preconditions)

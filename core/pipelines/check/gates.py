@@ -4,8 +4,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from core.domain import intents
-from core.domain.i18n import tr
-from core.domain.lang import Dual, canon
+from core.lang.i18n import tr
+from core.lang.text import Dual, canon
 from core.domain.schemas import TacticHit, Verdict
 
 from .evidence import Ledger

@@ -4,7 +4,7 @@ from __future__ import annotations
 from datetime import timedelta
 
 from core.storage import db
-from core.domain.i18n import norm, tactic_text, tr
+from core.lang.i18n import norm, tactic_text, tr
 from core.domain.schemas import Level
 from core.domain.tactics import TACTICS, valid
 

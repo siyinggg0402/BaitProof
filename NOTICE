@@ -1,8 +1,8 @@
 Baitproof third-party notices
 
-core/domain/zh_t2s.json is derived from TSCharacters.txt of the OpenCC project (https://github.com/BYVoid/OpenCC), as packaged in
+core/lang/data/zh_t2s.json is derived from TSCharacters.txt of the OpenCC project (https://github.com/BYVoid/OpenCC), as packaged in
 opencc-python-reimplemented 0.1.7, licensed under the Apache License 2.0 (http://www.apache.org/licenses/LICENSE-2.0). It was reduced to
 one-to-one common Traditional-to-Simplified character pairs, and one variant (帐 to 账) was added.
 
-core/domain/zh_s2t.json is derived from STCharacters.txt and TWVariants.txt of the same project and package (Apache License 2.0), reduced to
+core/lang/data/zh_s2t.json is derived from STCharacters.txt and TWVariants.txt of the same project and package (Apache License 2.0), reduced to
 one-to-one common characters.

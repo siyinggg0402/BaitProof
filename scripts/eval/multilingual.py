@@ -11,7 +11,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from core.ai import llm
-from core.domain.lang import detect
+from core.lang.text import detect
 from scripts import common
 
 ROWS = Path(__file__).resolve().parents[2] / "data" / "external" / "multilingual_sms" / "rows.jsonl"

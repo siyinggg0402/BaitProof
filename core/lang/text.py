@@ -12,7 +12,7 @@ import unicodedata
 from functools import lru_cache
 from pathlib import Path
 
-_T2S: dict[str, str] = json.loads(Path(__file__).with_name("zh_t2s.json").read_text(encoding="utf-8"))
+_T2S: dict[str, str] = json.loads((Path(__file__).parent / "data" / "zh_t2s.json").read_text(encoding="utf-8"))
 _S2T: dict[str, str] = {}
 for _t, _s in _T2S.items():
     _S2T[_s] = _S2T.get(_s, "") + _t

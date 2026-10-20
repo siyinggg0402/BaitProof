@@ -11,8 +11,8 @@ from core.storage import library
 from core.ai import llm
 from core.storage import model
 from core.ai.prompts import grade_system, wwyd_system
-from core.domain.i18n import norm, tactic_text, to_traditional, tr
-from core.domain.lang import CJK, Z, to_simplified
+from core.lang.i18n import norm, tactic_text, to_traditional, tr
+from core.lang.text import CJK, Z, to_simplified
 from core.domain.schemas import Drill, Grade
 from core.domain.tactics import TACTICS
 

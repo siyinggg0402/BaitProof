@@ -1,4 +1,4 @@
-"""Chinese (Simplified) text for the Telegram bot: English text -> Simplified Chinese. Merged into core.domain.i18n.ZH."""
+"""Chinese (Simplified) text for the Telegram bot: English text -> Simplified Chinese. Merged into core.lang.i18n.ZH."""
 
 BOT_ZH: dict[str, str] = {
     "Hi! I'm Baitproof 🛡️\n\nForward or paste any message you're unsure about and I'll tell you if it's a scam, show you the one giveaway, and add that trick to your practice.\n\n"

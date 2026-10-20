@@ -5,7 +5,7 @@ import json
 import math
 from datetime import timedelta
 
-from core.domain.i18n import norm, tactic_text, tr
+from core.lang.i18n import norm, tactic_text, tr
 from core.domain.tactics import TACTICS
 from core.storage import db
 

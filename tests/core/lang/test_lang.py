@@ -1,7 +1,7 @@
 """Language detection, script-agnostic Chinese patterns, and link detection inside Chinese text."""
 import pytest
 
-from core.domain.lang import Dual, Z, canon, detect, to_simplified
+from core.lang.text import Dual, Z, canon, detect, to_simplified
 from core.pipelines.check.ingest import ingest
 
 

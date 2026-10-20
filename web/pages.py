@@ -9,7 +9,7 @@ from fastapi import Request
 from fastapi.templating import Jinja2Templates
 
 from core.ai import llm
-from core.domain import i18n
+from core.lang import i18n
 from core.storage import model
 from web import ui
 from web.deps import request_lang

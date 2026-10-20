@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from core.domain import i18n
+from core.lang import i18n
 from core.domain.tactics import TACTICS
 from web import cardimg, deps, ui
 from web.main import app
@@ -277,14 +277,14 @@ def test_every_python_side_ui_string_has_a_chinese_version():
 
 
 def test_chinese_entries_keep_their_placeholders():
-    from core.domain.i18n_ui import UI_ZH
+    from core.lang.i18n_ui import UI_ZH
 
     for k, v in UI_ZH.items():
         assert set(re.findall(r"\{(\w+)", k)) == set(re.findall(r"\{(\w+)", v)), (k, v)
 
 
 def test_the_whole_dictionary_converts_to_traditional_cleanly():
-    from core.domain.i18n_ui import UI_ZH
+    from core.lang.i18n_ui import UI_ZH
 
     for k, v in UI_ZH.items():
         t = ui.tr(k, "zh-Hant", **{n: "x" for n in re.findall(r"\{(\w+)", k)})

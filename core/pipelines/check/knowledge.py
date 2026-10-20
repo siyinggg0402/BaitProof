@@ -3,9 +3,9 @@ from __future__ import annotations
 
 import re
 
-from core.domain import ms as MS
-from core.domain import zh as ZH
-from core.domain.lang import Dual
+from core.lang import ms as MS
+from core.lang import zh as ZH
+from core.lang.text import Dual
 
 C = lambda p: re.compile(p, re.I | re.S)  # noqa: E731
 

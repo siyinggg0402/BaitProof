@@ -1,4 +1,4 @@
-"""Chinese (Simplified) text for the website, the game and practice: English text -> Simplified Chinese. Merged into core.domain.i18n.ZH.
+"""Chinese (Simplified) text for the website, the game and practice: English text -> Simplified Chinese. Merged into core.lang.i18n.ZH.
 Keep one entry per English string, with the same {placeholders}. Traditional is derived automatically from these, so write Simplified only.
 Wording: plain, warm, short sentences for older adults; "你" throughout; 骗局 (scam), 套路 (trick), 破绽 (giveaway), 核实 (verify), 练习, 记录, 挑战."""
 

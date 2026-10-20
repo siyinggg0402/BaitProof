@@ -26,7 +26,7 @@ def test_a_chinese_practice_session_is_entirely_in_chinese():
 
 
 def i18n_label(tid, lang):
-    from core.domain.i18n import tactic_text
+    from core.lang.i18n import tactic_text
 
     return tactic_text(tid, "label", lang, TACTICS)
 
@@ -100,7 +100,7 @@ def test_the_models_prompts_name_the_language_and_english_is_byte_identical(monk
 
 
 def test_the_vetted_wrong_answers_are_all_translated():
-    from core.domain.i18n import tr
+    from core.lang.i18n import tr
 
     for a in train.BAD_ACTIONS:
         assert CJK.search(tr(a, "zh")) and not train.SAFE_SOUNDING_ZH.search(tr(a, "zh")) and not train.GOOD_ZH.search(tr(a, "zh")), a

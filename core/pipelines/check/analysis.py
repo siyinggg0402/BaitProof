@@ -6,10 +6,10 @@ from __future__ import annotations
 from core.ai import fewshot, llm
 from core.ai.prompts import CHECK_SYSTEM, CRITIC_SYSTEM
 from core.domain import intents
-from core.domain import ms as MS
-from core.domain import zh as ZH
-from core.domain.i18n import PROMPT_NAMES, tactic_text, tr, why as why_text
-from core.domain.lang import Dual
+from core.lang import ms as MS
+from core.lang import zh as ZH
+from core.lang.i18n import PROMPT_NAMES, tactic_text, tr, why as why_text
+from core.lang.text import Dual
 from core.domain.schemas import TacticHit, Verdict
 from core.domain.tactics import TACTICS, valid
 

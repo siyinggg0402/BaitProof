@@ -1,4 +1,4 @@
-"""Chinese scam knowledge: pattern strings only, written in Simplified (core.domain.lang.Z / zpat expand them to Traditional).
+"""Chinese scam knowledge: pattern strings only, written in Simplified (core.lang.text.Z / zpat expand them to Traditional).
 
 Chinese has no word boundaries, so nothing here uses \\b. Sentence breaks are 。！？ and newlines. Each block mirrors an English one in
 core/pipelines/check, and is OR-ed into it, so a mixed Chinese/English message is read by both."""

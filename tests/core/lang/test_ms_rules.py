@@ -2,7 +2,7 @@
 the rules existed and was then used to fix the gaps it exposed, so both now count as development sets."""
 import pytest
 
-from core.domain.lang import CURRENT, Dual, detect
+from core.lang.text import CURRENT, Dual, detect
 from core.domain.schemas import Verdict as V
 from core.pipelines.check import check_message
 from tests.data.ms import fresh as ms_fresh, holdout as ms_holdout
@@ -54,3 +54,8 @@ def test_the_malay_twin_never_runs_on_english_or_chinese_text():
 def test_a_typical_malay_scam_is_hard_evidence_when_it_asks_for_a_code_and_claims_to_be_the_bank():
     r = check_message("Kami dari bank anda. Ada transaksi mencurigakan RM5,600 ke luar negara. Untuk batalkan, sebut kod TAC yang baru anda terima.", store=False, log=False)
     assert r.verdict in FLAGGED and any(e.tactic == "otp-credential-phish" for e in r.evidence)
+
+
+def test_an_indonesian_verification_code_notice_is_recognised_as_a_normal_login_code():
+    r = check_message("Kode verifikasi Shopee Anda: 3921. Jangan beri kode ini ke siapa pun, termasuk pihak Shopee.", store=False, log=False)
+    assert any(e.source == "purpose:one-time-code" and e.supports == "safe" for e in r.evidence)  # "verifikasi" here is the noun, not a request to verify

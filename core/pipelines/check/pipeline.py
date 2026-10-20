@@ -6,9 +6,9 @@ import os
 
 from core import obs
 from core.ai import llm
-from core.domain import i18n
-from core.domain.i18n import tactic_text, tr
-from core.domain.lang import detect
+from core.lang import i18n
+from core.lang.i18n import tactic_text, tr
+from core.lang.text import detect
 from core.domain.schemas import CheckResult, Verdict
 from core.domain.tactics import TACTICS
 from core.obs.logger import fingerprint

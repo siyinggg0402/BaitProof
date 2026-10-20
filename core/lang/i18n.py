@@ -40,7 +40,7 @@ def from_accept_language(header: str | None) -> str:
 
 # ---------------------------------------------------------------------------------------------------- Simplified -> Traditional
 # zh_s2t.json: OpenCC's one-to-one Simplified-to-Traditional characters (STCharacters.txt), moved to the Taiwan-standard form (TWVariants.txt).
-_S2T_CHARS: dict[str, str] = json.loads(Path(__file__).with_name("zh_s2t.json").read_text(encoding="utf-8"))
+_S2T_CHARS: dict[str, str] = json.loads((Path(__file__).parent / "data" / "zh_s2t.json").read_text(encoding="utf-8"))
 _PREF = {"复": "複", "干": "幹", "里": "裡"}  # where the table's first choice is the less common reading for our texts
 _PHRASES = (  # words that differ between Simplified and Traditional usage, or whose character depends on the word
     ("回复", "回覆"), ("联系", "聯繫"), ("关系", "關係"), ("短信", "簡訊"), ("软件", "軟體"), ("网络", "網路"), ("信息", "資訊"), ("视频", "影片"), ("链接", "連結"),
@@ -188,8 +188,8 @@ ZH: dict[str, str] = {
     "Fake loan or credit-limit offer": "假贷款/提额", "Friendship that turns into an investment pitch": "交友变投资推销",
 }
 
-from core.domain.i18n_bot import BOT_ZH  # noqa: E402  (website, game and bot strings live in their own files)
-from core.domain.i18n_ui import UI_ZH  # noqa: E402
+from core.lang.i18n_bot import BOT_ZH  # noqa: E402  (website, game and bot strings live in their own files)
+from core.lang.i18n_ui import UI_ZH  # noqa: E402
 
 ZH.update(UI_ZH)
 ZH.update(BOT_ZH)

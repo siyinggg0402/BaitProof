@@ -4,11 +4,11 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-from core.domain import lang as L
+from core.lang import text as L
 from core.domain import privacy
-from core.domain import ms as MS
-from core.domain import zh as ZH
-from core.domain.lang import Dual
+from core.lang import ms as MS
+from core.lang import zh as ZH
+from core.lang.text import Dual
 from core.storage import library
 
 from .knowledge import AMBIGUOUS_BRANDS, BRANDS, INJECTION_RE, RAILS, VICTIM_RE, ZH_BRAND_NAMES
@@ -46,7 +46,7 @@ class Ingested:
     injection: bool
     victim: bool
     english: bool  # True when our rules understand the language (English or Chinese); otherwise rules alone can't clear anything
-    lang: str = "en"  # en | zh | zh-Hant | ms | ja | ko | ... | other (see core.domain.lang)
+    lang: str = "en"  # en | zh | zh-Hant | ms | ja | ko | ... | other (see core.lang.text)
     reply: str = "en"  # the language the ANSWER is written in (en | zh | zh-Hant): the user's choice, set by the pipeline
 
 

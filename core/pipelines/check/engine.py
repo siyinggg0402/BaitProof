@@ -8,8 +8,8 @@ import time
 from dataclasses import dataclass, field
 
 from core.ai import llm
-from core.domain.i18n import tactic_text
-from core.domain.i18n import tr as _t  # `tr` is the Trace in several places below
+from core.lang.i18n import tactic_text
+from core.lang.i18n import tr as _t  # `tr` is the Trace in several places below
 from core.domain.schemas import Verdict
 from core.domain.tactics import TACTICS
 

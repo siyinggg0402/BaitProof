@@ -1,8 +1,8 @@
 """Answers in the user's language: reply language selection, fallbacks, Simplified/Traditional output, and that English is untouched."""
 import pytest
 
-from core.domain import i18n
-from core.domain.i18n import from_accept_language, norm, to_traditional, tr
+from core.lang import i18n
+from core.lang.i18n import from_accept_language, norm, to_traditional, tr
 from core.domain.schemas import Verdict as V
 from core.domain.tactics import TACTICS
 from core.pipelines.check import check_message

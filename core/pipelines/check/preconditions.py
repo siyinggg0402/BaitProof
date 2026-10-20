@@ -6,9 +6,9 @@ from __future__ import annotations
 import re
 from typing import Callable
 
-from core.domain import ms as MS
-from core.domain import zh as ZH
-from core.domain.lang import Dual
+from core.lang import ms as MS
+from core.lang import zh as ZH
+from core.lang.text import Dual
 from core.domain.schemas import TacticHit
 
 from .ingest import Ingested

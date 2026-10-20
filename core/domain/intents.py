@@ -9,9 +9,9 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from core.domain import ms as MS
-from core.domain import zh as ZH
-from core.domain.lang import Dual
+from core.lang import ms as MS
+from core.lang import zh as ZH
+from core.lang.text import Dual
 
 
 @dataclass(frozen=True)

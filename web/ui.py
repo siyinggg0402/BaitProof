@@ -1,6 +1,6 @@
 """Language support for the pages: the helpers templates call (`_`, `_h`), the strings the browser's JavaScript needs, and the language switcher.
 
-English text is the key (see core.domain.i18n). A page in English carries no dictionary at all; a Chinese page embeds only the strings its own
+English text is the key (see core.lang.i18n). A page in English carries no dictionary at all; a Chinese page embeds only the strings its own
 scripts ask for (`t("...")` in web/static/js), so it stays small."""
 from __future__ import annotations
 
@@ -12,8 +12,8 @@ from pathlib import Path
 from jinja2 import pass_context
 from markupsafe import Markup
 
-from core.domain import i18n
-from core.domain.lang import to_simplified
+from core.lang import i18n
+from core.lang.text import to_simplified
 from core.domain.tactics import TACTICS
 
 JS_DIR = Path(__file__).parent / "static" / "js"

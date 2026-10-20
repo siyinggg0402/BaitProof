@@ -7,8 +7,8 @@ import re
 from dataclasses import dataclass, field
 
 from core.ai import fewshot
-from core.domain import i18n
-from core.domain.lang import CJK
+from core.lang import i18n
+from core.lang.text import CJK
 from core.domain.tactics import TACTICS
 from core.storage import library
 

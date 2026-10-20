@@ -9,7 +9,7 @@ from urllib.parse import urlsplit
 
 from fastapi import FastAPI, HTTPException, Request
 
-from core.domain import i18n
+from core.lang import i18n
 from core.storage import db
 
 LANG_COOKIE = "lang"

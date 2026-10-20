@@ -7,10 +7,10 @@ from dataclasses import dataclass, field
 
 from core.ai import llm
 from core.domain import intents
-from core.domain import ms as MS
-from core.domain import zh as ZH
-from core.domain.i18n import tr
-from core.domain.lang import CJK, CURRENT, Dual, Z, canon
+from core.lang import ms as MS
+from core.lang import zh as ZH
+from core.lang.i18n import tr
+from core.lang.text import CJK, CURRENT, Dual, Z, canon
 from core.ai.prompts import INTENT_SYSTEM
 
 from .ingest import Ingested

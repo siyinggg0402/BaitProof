@@ -64,7 +64,7 @@ Return ONLY JSON: {"result": "correct" | "partial" | "incorrect", "note": "<one 
 
 def _in_language(system: str, what: str, lang: str) -> str:
     """The same prompt, plus (for Chinese) a line saying which language to write in. English is returned unchanged, byte for byte."""
-    from core.domain.i18n import PROMPT_NAMES, norm
+    from core.lang.i18n import PROMPT_NAMES, norm
 
     lang = norm(lang)
     if lang == "en":

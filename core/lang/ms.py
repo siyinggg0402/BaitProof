@@ -1,5 +1,5 @@
 """Malay and Indonesian scam knowledge: pattern strings only (case-insensitive, with word boundaries). The two languages share most of the vocabulary
-that scams use, so one pack serves both. These patterns run only when the message is detected as 'ms' (see core.domain.lang.Dual).
+that scams use, so one pack serves both. These patterns run only when the message is detected as 'ms' (see core.lang.text.Dual).
 Each block mirrors an English one in core/pipelines/check and a Chinese one in zh.py."""
 from __future__ import annotations
 
@@ -159,7 +159,7 @@ PURPOSE_CUES = {
 }
 STATUS = r"\b(?:telah|sudah|akan|sedang)\b[^.!?]{0,20}\b(?:dihantar|dikirim|tiba|sampai|diterima|dalam perjalanan|tersedia)\b|\bkode pengambilan\b|\btitik pengambilan\b|\bkode (?:ambil|pengambilan)\b"
 NEGATIVE = r"\b(?:yuran|bayar|bayaran|biaya|klik|pautan|link|balas|hubungi|telefon|segera|sekarang|kemaskini|sahkan|verifikasi|menang|hadiah|tuntut|tertahan|gagal|dikembalikan|disekat)\b"
-CODE_REQ = r"\b(?:balas|beritahu|berikan|beri|kongsi|hantar|sebut|masukkan|klik|hubungi|verifikasi)\b"
+CODE_REQ = r"\b(?:balas|beritahu|berikan|beri|kongsi|hantar|sebut|masukkan|klik|hubungi)\b"  # not "verifikasi": in "kode verifikasi" it is the noun
 APPT = r"\b(?:temu janji|janji temu|jadwal|jadual|konsultasi|tempahan|reservasi)\b"
 TIME = r"\b\d{1,2}[:.]\d{2}\b|\b(?:pukul|jam) \d{1,2}\b|\b(?:esok|besok|hari ini|malam ini|isnin|selasa|rabu|khamis|jumaat|sabtu|ahad|senin|kamis|jumat|minggu)\b"
 APPT_NEGATIVE = r"\b(?:yuran|deposit|bayar|menang|percuma|segera|klik|pautan)\b"

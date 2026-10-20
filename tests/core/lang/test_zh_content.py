@@ -1,7 +1,7 @@
 """The Chinese seed bank, the language-aware game pool, and clause-level spot-the-tell."""
 import pytest
 
-from core.domain.lang import detect
+from core.lang.text import detect
 from core.domain.schemas import Verdict as V
 from core.domain.tactics import valid
 from core.game import pool as gp

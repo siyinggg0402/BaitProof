@@ -8,7 +8,7 @@ import uuid
 from collections import OrderedDict
 from dataclasses import dataclass, field
 
-from core.domain.i18n import norm, tactic_text
+from core.lang.i18n import norm, tactic_text
 from core.domain.tactics import TACTICS
 from core.game import pool as gp
 from core.game import state as gs

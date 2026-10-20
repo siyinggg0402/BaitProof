@@ -4,7 +4,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from core.domain import i18n, privacy
+from core.domain import privacy
+from core.lang import i18n
 from core.domain.tactics import valid
 from core.storage import db
 
