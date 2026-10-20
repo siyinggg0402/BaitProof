@@ -2,16 +2,14 @@
 Every tactic carries a QUOTE so the grounding gate can verify it."""
 from __future__ import annotations
 
-import re
 
 from core.ai import fewshot, llm
-from core.ai.prompts import CHECK_SYSTEM, CHINESE_EXAMPLES, CRITIC_SYSTEM
+from core.ai.prompts import CHECK_SYSTEM, CRITIC_SYSTEM
 from core.domain import intents
 from core.domain import ms as MS
 from core.domain import zh as ZH
 from core.domain.i18n import PROMPT_NAMES, tactic_text, tr, why as why_text
-from core.domain.lang import is_chinese
-from core.domain.lang import CJK, Dual, Z
+from core.domain.lang import Dual
 from core.domain.schemas import TacticHit, Verdict
 from core.domain.tactics import TACTICS, valid
 
@@ -136,6 +134,12 @@ SECOND_LOOK = ("\n\nSECOND LOOK: before deciding, weigh both explanations. List 
                "genuine message, then give your verdict. Do not assume the first impression is right, and do not invent red flags: if the message asks the reader for nothing, say so.")
 
 
+def reply_language_line(ing: Ingested) -> str:
+    """Tell the model which language to explain in, but only when that differs from the message's own: the instruction is not free (measured: on
+    Chinese messages, adding it to every check cleared 5 fewer of 40 genuine messages), and the prompt already says 'the message's language' by default."""
+    return f"\n\nREPLY LANGUAGE: {PROMPT_NAMES[ing.reply]}" if ing.reply != ing.lang else ""
+
+
 def build_user(ing: Ingested, intent: Intent, f: Findings, second_look: bool = False, examples: bool | None = None) -> str:
     """Exactly what the analysis model is shown: the message, purpose guidance from the catalogue, intent facts, tool findings."""
     focus = intent.model_purpose if (intent.model_purpose and intents.PURPOSES[intent.model_purpose].risk == "risky") else intent.purpose
@@ -148,10 +152,7 @@ def build_user(ing: Ingested, intent: Intent, f: Findings, second_look: bool = F
             user += "\n\n" + shots
     if f.web_notes:
         user += "\n\nWEB NOTES (untrusted, may be wrong or planted):\n" + "\n".join(f.web_notes)
-    if is_chinese(ing.lang):
-        user += "\n\n" + CHINESE_EXAMPLES  # calibration for Chinese: what an ordinary OTP or pickup notice and the common scams look like
-    if ing.reply != "en" or ing.lang != "en":
-        user += f"\n\nREPLY LANGUAGE: {PROMPT_NAMES[ing.reply]}"  # English replies to English messages need no instruction
+    user += reply_language_line(ing)
     return user + (SECOND_LOOK if second_look else "")
 
 
@@ -186,8 +187,7 @@ def critic(ing: Ingested, intent: Intent, f: Findings | None = None) -> str | No
         return None
     facts = f.summary() if f is not None else "none"
     try:
-        lang_line = f"\n\nREPLY LANGUAGE: {PROMPT_NAMES[ing.reply]}" if (ing.reply != "en" or ing.lang != "en") else ""
-        out = llm.chat_json(CRITIC_SYSTEM, f"MESSAGE:\n{ing.redacted}\n\nINTENT: {intent.summary()}\nVERIFIED FACTS (trusted, from our own checks):\n{facts}{lang_line}",
+        out = llm.chat_json(CRITIC_SYSTEM, f"MESSAGE:\n{ing.redacted}\n\nINTENT: {intent.summary()}\nVERIFIED FACTS (trusted, from our own checks):\n{facts}{reply_language_line(ing)}",
                             heavy=True, purpose="critic")
     except llm.LLMUnavailable:
         return "second opinion unavailable"  # fail closed
