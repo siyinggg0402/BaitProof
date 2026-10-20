@@ -58,7 +58,7 @@ def test_prompt_injection_cannot_buy_a_safe_verdict():
 def _fake_llm(monkeypatch, analysis_out, critic_out=None, intent_out=None):
     monkeypatch.setattr(llm, "available", lambda: True)
 
-    def fake(system, user, heavy=True, retries=1):
+    def fake(system, user, heavy=True, retries=1, **kw):
         if "diagnose what a message wants" in system:
             return intent_out or {"asks": [], "pressure": False}
         if "second reviewer" in system:

@@ -14,7 +14,7 @@ CHROME = os.getenv("CHROME_PATH", "/Applications/Google Chrome.app/Contents/MacO
 
 def main() -> int:
     # NEBIUS_API_KEY="" forces offline rules: the e2e test must never spend model credit (dotenv does not override set vars)
-    env = {**os.environ, "BAITPROOF_DB": tempfile.mkdtemp() + "/e2e.sqlite", "NEBIUS_API_KEY": ""}
+    env = {**os.environ, "BAITPROOF_DB": tempfile.mkdtemp() + "/e2e.sqlite", "BAITPROOF_LOG_DIR": tempfile.mkdtemp(), "NEBIUS_API_KEY": ""}
     srv = subprocess.Popen([sys.executable, "-m", "uvicorn", "web.main:app", "--port", str(PORT)], env=env,
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     time.sleep(2.5)

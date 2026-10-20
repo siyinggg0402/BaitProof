@@ -4,6 +4,9 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
+
+from core.obs import record_llm
 
 
 # Running totals so spend is visible and a budget can be enforced (scripts/eval_live.py).
@@ -27,7 +30,8 @@ def available() -> bool:
 def _client():
     from openai import OpenAI
 
-    return OpenAI(base_url=os.environ["NEBIUS_BASE_URL"], api_key=os.environ["NEBIUS_API_KEY"], timeout=45)
+    # Bounded worst case: 30s per attempt, one SDK retry (a cold start once took 47s on the first call; see warmup()).
+    return OpenAI(base_url=os.environ["NEBIUS_BASE_URL"], api_key=os.environ["NEBIUS_API_KEY"], timeout=30, max_retries=1)
 
 
 def parse_json(raw: str) -> dict:
@@ -39,13 +43,14 @@ def parse_json(raw: str) -> dict:
     return json.loads(raw[start : end + 1])
 
 
-def chat_json(system: str, user: str, heavy: bool = True, retries: int = 1) -> dict:
+def chat_json(system: str, user: str, heavy: bool = True, retries: int = 1, purpose: str = "") -> dict:
     if not available():
         raise LLMUnavailable("Nebius not configured")
     model = os.environ["NEBIUS_MODEL"] if heavy else os.getenv("NEBIUS_MODEL_LIGHT") or os.environ["NEBIUS_MODEL"]
     global _flag_supported
     last: Exception | None = None
     for _ in range(retries + 1):
+        t0 = time.perf_counter()
         try:
             extra = {} if _THINKING or not _flag_supported else {"extra_body": {"chat_template_kwargs": {"enable_thinking": False}}}
             try:
@@ -61,10 +66,35 @@ def chat_json(system: str, user: str, heavy: bool = True, retries: int = 1) -> d
                 else:
                     raise
             USAGE["calls"] += 1
+            tin = tout = 0
             if resp.usage:
-                USAGE["prompt_tokens"] += resp.usage.prompt_tokens or 0
-                USAGE["completion_tokens"] += resp.usage.completion_tokens or 0
-            return parse_json(resp.choices[0].message.content or "")
+                tin, tout = resp.usage.prompt_tokens or 0, resp.usage.completion_tokens or 0
+                USAGE["prompt_tokens"] += tin
+                USAGE["completion_tokens"] += tout
+            parsed = parse_json(resp.choices[0].message.content or "")
+            record_llm(purpose=purpose, model=model, ms=int((time.perf_counter() - t0) * 1000), tokens_in=tin, tokens_out=tout, ok=True)
+            return parsed
         except Exception as e:  # network, auth, bad JSON: all degrade the same way
             last = e
+            record_llm(purpose=purpose, model=model, ms=int((time.perf_counter() - t0) * 1000), ok=False,
+                       error=f"{type(e).__name__} {getattr(e, 'status_code', '')}".strip())
     raise LLMUnavailable(str(last))
+
+
+def warmup() -> None:
+    """Fire one tiny call in the background so the first real user doesn't eat the model's cold start. Logged."""
+    import threading
+
+    from core.obs import emit
+
+    def go():
+        t0 = time.perf_counter()
+        ok = True
+        try:
+            chat_json("Return ONLY JSON.", 'Return {"ok": true}', heavy=False, purpose="warmup")
+        except LLMUnavailable:
+            ok = False
+        emit({"kind": "system", "event": "llm_warmup", "ok": ok, "ms": int((time.perf_counter() - t0) * 1000)})
+
+    if available():
+        threading.Thread(target=go, daemon=True).start()

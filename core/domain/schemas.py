@@ -30,6 +30,7 @@ class TraceStep(BaseModel):
     stage: str
     status: str  # pass | flag | skip | block
     detail: str
+    ms: int = 0  # time since the previous step
 
 
 class CheckResult(BaseModel):
@@ -43,6 +44,7 @@ class CheckResult(BaseModel):
     used_ai: bool = False
     confidence: str = "medium"
     trace: list[TraceStep] = Field(default_factory=list)
+    check_id: str = ""
 
 
 class Drill(BaseModel):

@@ -2,8 +2,14 @@
 -> critic -> compose -> flywheel gate. Each gate writes to the trace."""
 from __future__ import annotations
 
+import os
+
+from core import obs
+from core.ai import llm
 from core.domain.schemas import CheckResult, TacticHit, Verdict
 from core.domain.tactics import TACTICS
+from core.obs.logger import fingerprint
+from core.obs.metrics import cost_usd
 from core.storage import library, model
 
 from . import analysis, gates, intent as intent_stage, tools
@@ -21,9 +27,40 @@ HEADLINES = {
 }
 
 
-def check_message(text: str, store: bool = True) -> CheckResult:
-    tr = Trace()
+def check_message(text: str, store: bool = True, on_event=None, log: bool = True) -> CheckResult:
+    """Run one check. Never crashes on internal errors (returns a cautious 'not sure'), always logs one structured event."""
+    run = obs.start()
+    tr = Trace(on_event)
+    try:
+        result = _check(text, store, tr, run)
+    except ValueError:
+        raise  # invalid input (empty message): the caller reports it
+    except Exception as e:
+        obs.emit({"kind": "error", "where": "check", "type": type(e).__name__, "id": run.id})
+        tr.add("guard", "block", "internal error: returning a cautious answer")
+        result = CheckResult(verdict=Verdict.UNSURE, headline=HEADLINES[Verdict.UNSURE], confidence="low",
+                             tell="I couldn't finish checking this message.", action=CAVEAT.replace("This looks okay, but I", "I"), trace=tr.steps)
+    result.check_id = run.id
+    if log:
+        _log(text, result, run)
+    return result
+
+
+def _log(text: str, r: CheckResult, run: obs.Run) -> None:
+    tot = run.llm_totals()
+    obs.emit({
+        "kind": "check", "id": run.id, "verdict": r.verdict.value, "confidence": r.confidence, "rounds": run.rounds,
+        "latency_ms": run.elapsed_ms, "ai_configured": llm.available(), "used_ai": r.used_ai, "model": os.getenv("NEBIUS_MODEL", ""),
+        "msg": {"fp": fingerprint(text), "len": len(text), **run.meta},
+        "stages": [{"stage": s.stage, "status": s.status, "ms": s.ms} for s in r.trace],
+        "tools": run.tools, "llm": run.llm, "llm_calls": tot["calls"], "tokens_in": tot["tokens_in"], "tokens_out": tot["tokens_out"],
+        "cost_usd": round(cost_usd(tot["tokens_in"], tot["tokens_out"]), 6), "flywheel": bool(r.added_to_training),
+    })
+
+
+def _check(text: str, store: bool, tr: Trace, run: obs.Run) -> CheckResult:
     ing = ingest(text)
+    run.meta["english"] = ing.english
     tr.add("ingest", "flag" if ing.injection else "pass",
            "message tries to give the checker instructions" if ing.injection else f"{len(ing.entities.hosts)} link(s), {len(ing.entities.rails)} payment method(s) found")
 

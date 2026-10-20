@@ -77,7 +77,7 @@ def diagnose(ing: Ingested) -> Intent:
     it = _heuristic(ing)
     if llm.available():
         try:
-            out = llm.chat_json(INTENT_SYSTEM, "MESSAGE:\n" + ing.redacted, heavy=False)
+            out = llm.chat_json(INTENT_SYSTEM, "MESSAGE:\n" + ing.redacted, heavy=False, purpose="intent")
             # Union, never replace: a model can only ADD suspicion, not remove what the rules saw.
             it.asks |= {a for a in out.get("asks", []) if a in ASKS and _supported(a, ing)}
             it.pressure = it.pressure or bool(out.get("pressure"))

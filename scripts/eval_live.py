@@ -29,7 +29,7 @@ def main() -> int:
         for text in items:
             if llm.USAGE["prompt_tokens"] + llm.USAGE["completion_tokens"] > a.max_tokens:
                 print(f"\n⛔ token budget {a.max_tokens} reached, stopping early."); break
-            r = check_message(text, store=False)
+            r = check_message(text, store=False, log=False)
             steps = {s.stage: s for s in r.trace}
             ai = "AI" if r.used_ai else "rules-only"
             print(f"{label:5} {r.verdict.value:12} {r.confidence:6} {ai:10} {text[:58]!r}")

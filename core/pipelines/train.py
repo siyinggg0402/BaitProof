@@ -74,7 +74,7 @@ def _wrong_options(ex: dict, tactic: str) -> tuple[str, list[str]]:
     q = "What is the safest thing to do?"
     if llm.available():
         try:
-            out = llm.chat_json(WWYD_SYSTEM, f"MESSAGE: {ex['text']}\nSAFE ACTION: {ex['action']}", heavy=True)
+            out = llm.chat_json(WWYD_SYSTEM, f"MESSAGE: {ex['text']}\nSAFE ACTION: {ex['action']}", heavy=True, purpose="quiz-options")
             wrong = [str(o)[:140] for o in out.get("wrong_options", []) if o]
             wrong = [w for w in wrong if not SAFE_SOUNDING.search(w)][:3]
             if len(wrong) >= 2:  # keep the model's good options, top up from vetted templates if one was unfair
@@ -148,7 +148,7 @@ def grade(drill: Drill, choice: int | None = None, text: str = "", record: bool 
 def _grade_free(drill: Drill, text: str) -> Grade:
     if llm.available():
         try:
-            out = llm.chat_json(GRADE_SYSTEM, f"SCAM MESSAGE: {drill.scenario}\nLEARNER REPLY: {text}", heavy=True)
+            out = llm.chat_json(GRADE_SYSTEM, f"SCAM MESSAGE: {drill.scenario}\nLEARNER REPLY: {text}", heavy=True, purpose="grade")
             if out.get("result") in ("correct", "partial", "incorrect"):
                 return Grade(result=out["result"], note=str(out.get("note", ""))[:300] or drill.explanation)
         except llm.LLMUnavailable:

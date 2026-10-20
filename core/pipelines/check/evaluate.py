@@ -10,8 +10,8 @@ from .pipeline import check_message
 def run() -> dict:
     scams = [e for e in library.seed_examples() if e["is_scam"]]
     legit = [e for e in library.seed_examples() if not e["is_scam"]]
-    r_scam = [check_message(e["text"], store=False).verdict for e in scams]
-    r_legit = [check_message(e["text"], store=False).verdict for e in legit]
+    r_scam = [check_message(e["text"], store=False, log=False).verdict for e in scams]
+    r_legit = [check_message(e["text"], store=False, log=False).verdict for e in legit]
     flagged = (Verdict.SCAM, Verdict.LIKELY_SCAM)
     return {
         "scams": len(scams), "false_safe": sum(v == Verdict.SAFE for v in r_scam),

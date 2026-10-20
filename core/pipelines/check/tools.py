@@ -3,7 +3,10 @@ message (never model-invented); calls are budgeted; web results are untrusted an
 from __future__ import annotations
 
 import re
+import time
 from dataclasses import dataclass, field
+
+from core import obs
 
 from core.ai import verify
 from core.storage import library
@@ -90,9 +93,13 @@ class ToolGate:
             self.trace.add("tools", "block", f"{name}: tool budget ({self.budget}) used up")
             return None
         self.used += 1
+        t0 = time.perf_counter()
         try:
-            return TOOLS[name](arg)
-        except Exception:
+            out = TOOLS[name](arg)
+            obs.record_tool(tool=name, ok=True, ms=int((time.perf_counter() - t0) * 1000))
+            return out
+        except Exception as e:
+            obs.record_tool(tool=name, ok=False, ms=int((time.perf_counter() - t0) * 1000), error=type(e).__name__)
             self.trace.add("tools", "skip", f"{name} failed; continuing without it")
             return None
 

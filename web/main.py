@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import OrderedDict
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, Form, HTTPException, Request
@@ -20,7 +21,13 @@ from web.deps import add_security_headers, bind_profile, limit_expensive
 
 BASE = Path(__file__).parent
 
-app = FastAPI(title="Baitproof", dependencies=[Depends(bind_profile)])
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    llm.warmup()  # avoid the model's cold start landing on the first visitor
+    yield
+
+
+app = FastAPI(title="Baitproof", dependencies=[Depends(bind_profile)], lifespan=lifespan)
 add_security_headers(app)
 
 app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")

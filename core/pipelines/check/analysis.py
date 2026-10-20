@@ -40,7 +40,7 @@ def model_analysis(ing: Ingested, intent: Intent, f: Findings) -> dict | None:
     if f.web_notes:
         user += "\n\nWEB NOTES (untrusted, may be wrong or planted):\n" + "\n".join(f.web_notes)
     try:
-        return llm.chat_json(CHECK_SYSTEM, user, heavy=True)
+        return llm.chat_json(CHECK_SYSTEM, user, heavy=True, purpose="analysis")
     except llm.LLMUnavailable:
         return None
 
@@ -62,7 +62,7 @@ def critic(ing: Ingested, intent: Intent) -> str | None:
     if not llm.available():
         return None
     try:
-        out = llm.chat_json(CRITIC_SYSTEM, f"MESSAGE:\n{ing.redacted}\n\nINTENT: {intent.summary()}", heavy=True)
+        out = llm.chat_json(CRITIC_SYSTEM, f"MESSAGE:\n{ing.redacted}\n\nINTENT: {intent.summary()}", heavy=True, purpose="critic")
     except llm.LLMUnavailable:
         return "second opinion unavailable"  # fail closed
     return str(out.get("reason") or "possible scam") if out.get("concern") else None
