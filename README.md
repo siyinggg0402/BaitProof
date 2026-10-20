@@ -12,7 +12,7 @@ Built for the Nebius x NVIDIA Global AI Hackathon 2026, track **Personal AI**. S
 - **ChatGPT** has no persistent model of you. Baitproof keeps a per-tactic mastery model and a Baitproof score.
 
 ## Stack
-- **Inference:** Nebius Token Factory (OpenAI-compatible) with **NVIDIA Nemotron**. Model id: *to be confirmed in Phase 0* (`python -m scripts.verify_setup --list`); this README must name the verified id before submission.
+- **Inference:** Nebius Token Factory (OpenAI-compatible, `https://api.tokenfactory.nebius.com/v1/`) with **NVIDIA Nemotron** `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B`, confirmed present in the live `/models` list and called successfully. Thinking mode is turned off (`BAITPROOF_THINKING=1` to re-enable) because it cost ~10x the tokens without improving verdicts.
 - **Verification (optional):** Tavily. **State:** SQLite. **Web:** FastAPI + Jinja + vanilla JS (large type, high contrast, read-aloud).
 - Without keys the app runs in **offline mode** using built-in rule checks, so it never crashes or gives a bare all-clear.
 
@@ -49,12 +49,13 @@ invented red flag with no matching words is dropped, "safe" needs a clean intent
 and a low-confidence verdict never becomes a training example. The UI shows the trace ("How I decided").
 `python -m scripts.eval_offline` reports the false-SAFE rate (must be 0); `python -m scripts.eval_live` does the same against the live model with a hard token budget.
 
-### Measured accuracy (offline rules; the live model is not yet tuned)
+### Measured accuracy (rules offline; live model on the last row)
 | Set | Scams | Missed as "safe" | Flagged | Legit false alarms |
 |---|---|---|---|---|
 | Seed bank (in-sample) | 36 | 0 | 36 | 0 / 6 |
 | Held-out #1 (first run, before tuning) | 24 | 3 | 20 | 0 / 12 |
 | Held-out #2 (first run, before tuning) | 20 | **2** | 14 (+4 "unsure") | 0 / 10 |
+| Held-out #2 with live Nemotron + gates (dev set) | 20 | 0 | 20 | 0 / 10 (1 "unsure": a message that asks you to pay) |
 
 First-run misses were novel phrasings (crypto presale, "send it back" overpayment). Fixes made afterwards mean sets #1 and #2
 are now dev sets, so the honest generalisation figure is the **first-run** row: roughly 1 in 10 novel scams slipped
@@ -90,7 +91,7 @@ python -m scripts.seed_demo              # optional: believable mid-training sta
 - Encouraging tone: a miss is always "here's the tell you missed". Content is victim-facing only.
 
 ## Status / limitations
-Done: check, tactic model, drills (spot-the-trick, find-the-tell, what-to-do, safe-reply), score, flywheel, challenge + share card. Not yet: live Phase 0 verification, Nebius VM deploy, Telegram bot (stretch). Future: family dashboards, WhatsApp, voice/screenshot input, more languages. The single-user model means one DB per deployment.
+Done: check, tactic model, drills (spot-the-trick, find-the-tell, what-to-do, safe-reply), score, flywheel, challenge + share card. Not yet: Nebius VM deploy, Tavily enrichment untested, Telegram bot (stretch). Future: family dashboards, WhatsApp, voice/screenshot input, more languages. The single-user model means one DB per deployment.
 
 ## License
 MIT
