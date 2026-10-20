@@ -23,6 +23,16 @@ CREATE TABLE IF NOT EXISTS history(
   outcome TEXT NOT NULL, score INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS challenges(
   id TEXT PRIMARY KEY, items TEXT NOT NULL, created TEXT NOT NULL);
+-- per-person record of checks from every channel. Stores the verdict, tricks and giveaway, plus (optionally) a short REDACTED preview; never the raw message.
+CREATE TABLE IF NOT EXISTS check_log(
+  id TEXT PRIMARY KEY, ts TEXT NOT NULL, channel TEXT NOT NULL, verdict TEXT NOT NULL, confidence TEXT NOT NULL,
+  headline TEXT NOT NULL DEFAULT '', tell TEXT NOT NULL DEFAULT '', action TEXT NOT NULL DEFAULT '',
+  tactics TEXT NOT NULL DEFAULT '[]', preview TEXT NOT NULL DEFAULT '', trained INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS game(key TEXT PRIMARY KEY, value TEXT NOT NULL);
+-- shared (global DB) only: linking a Telegram chat to a web profile with a short-lived one-time code
+CREATE TABLE IF NOT EXISTS link_codes(code TEXT PRIMARY KEY, profile TEXT NOT NULL, created REAL NOT NULL, used INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS telegram_links(chat_id TEXT PRIMARY KEY, profile TEXT NOT NULL, linked_at TEXT NOT NULL);
 """
 
 

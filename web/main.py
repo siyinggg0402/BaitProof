@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import contextvars
 import json
+import os
 import queue
 import re
 import threading
@@ -22,7 +23,7 @@ from core import obs
 from core.domain.schemas import Drill
 from core.domain.tactics import TACTICS
 from core.pipelines import challenge, check, train
-from core.storage import model
+from core.storage import history, links, model
 from web import cardimg
 from web import admin, results
 from web.deps import add_security_headers, bind_profile, limit_expensive
@@ -65,6 +66,7 @@ def do_check(request: Request, message: str = Form(...)):
     if not message.strip():
         raise HTTPException(400, "Paste a message to check.")
     result = check.check_message(message)
+    history.add(result, "web", message)
     return page(request, "index.html", result=result, text=message[:4000])
 
 
@@ -85,6 +87,7 @@ async def check_stream(body: StreamIn):
         try:
             r = ctx.run(check.check_message, text, True, lambda step: q.put(("step", step.model_dump())))
             ctx.run(results.put, r)
+            ctx.run(history.add, r, "web", text)
             q.put(("done", r.check_id))
         except Exception as e:
             q.put(("error", type(e).__name__))
@@ -133,6 +136,77 @@ def feedback(request: Request, body: FeedbackIn):
         FEEDBACK_SEEN.add(key)
         obs.emit({"kind": "feedback", "check_id": body.check_id, "rating": body.rating})
     return {"ok": True}
+
+
+# ---------------------------------------------------------------- records + Telegram link
+def _ago(ts: str) -> str:
+    from datetime import datetime, timezone
+
+    secs = int((datetime.now(timezone.utc) - datetime.fromisoformat(ts)).total_seconds())
+    for n, unit in ((86400, "day"), (3600, "hour"), (60, "minute")):
+        if secs >= n:
+            k = secs // n
+            return f"{k} {unit}{'s' if k != 1 else ''} ago"
+    return "just now"
+
+
+templates.env.filters["ago"] = _ago
+BOT_USERNAME = lambda: os.getenv("TELEGRAM_BOT_USERNAME", "").lstrip("@")  # noqa: E731
+
+
+@app.get("/records", response_class=HTMLResponse)
+def records_page(request: Request, channel: str = "", verdict: str = ""):
+    rows = history.list_checks(200, channel or None, verdict or None)
+    return page(request, "records.html", rows=rows, stats=history.stats(), channel=channel, verdict=verdict, linked=links.chats_for(links.current_profile()),
+                bot=BOT_USERNAME(), previews=history.preview_enabled())
+
+
+@app.post("/api/telegram/code", dependencies=[Depends(limit_expensive)])
+def telegram_code():
+    code = links.new_code(links.current_profile())
+    bot = BOT_USERNAME()
+    return {"code": code, "expires_in": int(links.TTL), "bot": bot, "deep_link": f"https://t.me/{bot}?start={code}" if bot else ""}
+
+
+@app.get("/api/telegram/status")
+def telegram_status():
+    return {"linked": links.chats_for(links.current_profile())}
+
+
+@app.post("/api/telegram/unlink")
+def telegram_unlink():
+    return {"unlinked": links.unlink_profile(links.current_profile())}
+
+
+class RecordIn(BaseModel):
+    id: str
+
+
+@app.post("/api/records/delete")
+def records_delete(body: RecordIn):
+    if not re.fullmatch(r"[0-9a-f]{12}", body.id):
+        raise HTTPException(422, "invalid id")
+    return {"deleted": history.delete(body.id)}
+
+
+@app.post("/api/records/clear")
+def records_clear():
+    return {"deleted": history.delete_all()}
+
+
+class PreviewIn(BaseModel):
+    on: bool
+
+
+@app.post("/api/settings/previews")
+def settings_previews(body: PreviewIn):
+    history.set_setting("store_preview", "1" if body.on else "0")
+    if not body.on:  # turning previews off also removes the ones already kept
+        from core.storage import db as _db
+
+        with _db.connect() as c:
+            c.execute("UPDATE check_log SET preview=''")
+    return {"previews": history.preview_enabled()}
 
 
 @app.get("/train", response_class=HTMLResponse)

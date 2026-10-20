@@ -144,6 +144,10 @@ SCENARIO_PURPOSE = {
 }
 
 
+ALARM = re.compile(r"\b(?:blocked|hacked|suspended|locked|compromised|unauthori[sz]ed|suspicious|fraudulent|deactivat\w+|disabled|limited|expir\w+|delayed|on hold|is full|storage (?:is )?full|storage limit|failed login|violation)\b", re.I)
+ACTION = re.compile(r"\b(?:verify|verifying|reactivate|re-?activate|secure (?:it|your)|change (?:your )?password|open the app|click|tap|log ?in|sign in|renew now|track now|update (?:your )?(?:details|info|account)|confirm (?:your|identity)|act now|claim|call (?:us|now)|respond)\b", re.I)
+
+
 def classify_purpose(ing: Ingested, it: Intent) -> str:
     """Rule-based purpose from the closed catalogue. Purposes that ask the reader to give something up are checked first, in priority order."""
     pur = intents.PURPOSES
@@ -153,7 +157,8 @@ def classify_purpose(ing: Ingested, it: Intent) -> str:
         "request-payment": "pay" in it.asks or SCENARIO_PURPOSE.get(it.scenario) == "request-payment",
         "claim-prize-reward": SCENARIO_PURPOSE.get(it.scenario) == "claim-prize-reward",
         "offer-job-or-investment": SCENARIO_PURPOSE.get(it.scenario) == "offer-job-or-investment",
-        "urgent-account-warning": SCENARIO_PURPOSE.get(it.scenario) == "urgent-account-warning" or bool(it.pressure_kinds & {"threat"} and pur["urgent-account-warning"].cues.search(ing.text)),
+        "urgent-account-warning": (SCENARIO_PURPOSE.get(it.scenario) == "urgent-account-warning" or bool(it.pressure_kinds & {"threat"} and pur["urgent-account-warning"].cues.search(ing.text))
+                                   or bool(ALARM.search(ing.text) and ACTION.search(ing.text))),  # the alarm form: a problem plus an instruction to act
         "emotional-plea": bool(it.pressure_kinds & {"emotional", "secrecy"}) or SCENARIO_PURPOSE.get(it.scenario) == "emotional-plea",
         "first-contact-opener": bool(it.opener),
         "callback-request": ("call" in it.asks and bool(ing.entities.phones)) or SCENARIO_PURPOSE.get(it.scenario) == "callback-request",

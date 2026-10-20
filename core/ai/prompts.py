@@ -14,13 +14,14 @@ YOU RECEIVE: MESSAGE; PURPOSE GUIDANCE (what a genuine and a scam version of thi
 
 DECIDE IN THIS ORDER
 1. Compare the message with the PURPOSE GUIDANCE. Does it look like the genuine form or the scam form?
-2. Does the message itself ASK the reader to do something (pay, send a code or personal detail, click, call, install, reply) or PRESSURE them (a deadline with a consequence, a threat, secrecy, emotion)? A message that only informs, and asks for nothing, is not a scam. A time window that is simply a fact ("expires in 10 minutes") is not pressure.
+2. Does the message itself ASK the reader to do something (pay, send a code or personal detail, click, call, install, reply, open an app, "verify", "secure", "reactivate", "claim", "renew", "track") or PRESSURE them (a deadline with a consequence, a threat, secrecy, emotion)? A message that purely informs a normal event (a code they requested, a receipt, a reminder) is not a scam. A time window that is simply a fact ("expires in 10 minutes") is not pressure.
+   THE ALARM FORM: a problem with the reader's OWN card, account, data or parcel (blocked, hacked, suspended, full, expiring, unauthorised, suspicious, delayed) PLUS an instruction to act is the scam form, even when there is no link and no explicit request. Real providers rarely text an alarm and demand action in the same message.
 3. Name a trick only if the message itself DOES it to the reader, and quote the exact words. Allowed tricks:
 {VOCAB}
 4. Verdict:
    "scam"        it asks for something AND matches the scam form (prize to claim, code or details requested, fee to receive money, fake link, premium-rate short code ...)
    "likely_scam" strong signs but one important piece is missing
-   "safe"        an ordinary purpose, asks for nothing risky, no tricks, and is not a first-contact opener
+   "safe"        an ordinary purpose, asks for nothing risky, is not an alarm, has no tricks, and is not a first-contact opener
    "unsure"      ONLY when an honest sender and a scammer could both plausibly have written it (a friend asking for money, a bill with bank details, a message with no context)
    Never "safe" if it asks for money, a code, a password, an install or a click, or rushes the reader. A first-contact opener with no verifiable context ("is this Margaret?", "this is my new number", "I saw your profile", "add me on Telegram") is "unsure" at the very best.
 
@@ -30,6 +31,9 @@ EXAMPLES (message -> verdict | purpose | tricks with quote)
 - "You have won 1000 pounds! Text CLAIM to 81010, 50p per msg" -> scam | claim-prize-reward | too-good-to-be-true "You have won 1000 pounds"
 - "Your parcel is on hold. Pay 1.45 at dpd-fee.top" -> scam | urgent-account-warning | lookalike-link "dpd-fee.top", advance-fee "Pay 1.45"
 - "Barclays: 18.40 paid to Tesco, card ending 2291. If you don't recognise it, call the number on the back of your card." -> safe | transaction-alert | none (no link, no number given, points to the card)
+- "Your debit card has been blocked. Reactivate by verifying your PIN." -> scam | transaction-alert | otp-credential-phish "verifying your PIN" (the alarm form: a problem plus an instruction, no link needed)
+- "Account hacked! Open the app now to secure it." -> likely_scam | account-notice | urgency-pressure "now" (the alarm form)
+- "Claim your cashback reward now! Limited time offer." -> likely_scam | claim-prize-reward | too-good-to-be-true "Claim your cashback reward"
 - "Hi, is this Margaret? I got your number from Linda at the book club." -> unsure | first-contact-opener | none (a standard first step, nothing to quote)
 - "Hey, could you lend me 20 until Friday? Forgot my wallet." -> unsure | request-payment | none (could be a friend, could be a hijacked account: tell them to phone the person)
 

@@ -13,7 +13,17 @@ def main() -> None:
     from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 
     async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
-        await update.message.reply_text(handlers.WELCOME)
+        # a deep link from the website (t.me/<bot>?start=CODE) arrives as /start CODE
+        await update.message.reply_text(await asyncio.to_thread(handlers.on_start, update.effective_chat.id, " ".join(ctx.args or [])))
+
+    async def link(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+        await update.message.reply_text(await asyncio.to_thread(handlers.on_link, update.effective_chat.id, " ".join(ctx.args or [])))
+
+    async def unlink(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+        await update.message.reply_text(await asyncio.to_thread(handlers.on_unlink, update.effective_chat.id))
+
+    async def history_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+        await update.message.reply_text(await asyncio.to_thread(handlers.on_history, update.effective_chat.id))
 
     async def score(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text(handlers.on_score(update.effective_chat.id))
@@ -26,6 +36,10 @@ def main() -> None:
     app = Application.builder().token(os.environ["TELEGRAM_BOT_TOKEN"]).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("score", score))
+    app.add_handler(CommandHandler("link", link))
+    app.add_handler(CommandHandler("unlink", unlink))
+    app.add_handler(CommandHandler("history", history_cmd))
+    app.add_handler(CommandHandler("help", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text))
     app.run_polling()
 

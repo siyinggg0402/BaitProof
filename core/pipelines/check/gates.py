@@ -4,6 +4,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
+from core.domain import intents
 from core.domain.schemas import TacticHit, Verdict
 
 from .evidence import Ledger
@@ -43,6 +44,9 @@ def arbitrate(ledger: Ledger, intent: Intent, f: Findings, model_verdict: Verdic
     """Asymmetric by design: evidence can escalate freely; 'safe' must be earned and any disagreement downgrades it.
     Reads the ledger, so every verdict can name the evidence it rests on."""
     m_scam = model_verdict in (Verdict.SCAM, Verdict.LIKELY_SCAM)
+    # A purpose that asks the reader to give something up (money, a code, a click-through to 'verify', a call), supported by the text, is
+    # never cleared on its own: a genuine one exists (a relative asking for a loan) but 'safe' is the wrong answer for it.
+    risky_purpose = any(intents.PURPOSES[p].risk == "risky" for p in (intent.purpose, intent.model_purpose) if p in intents.PURPOSES)
     w, h = ledger.weight_independent("scam"), ledger.weight_independent("safe")  # stacked evidence, scam vs reassuring
     # Red-flag types from independent sources always count. Types only the model raised count only while the model is consistently
     # saying 'scam': a model that contradicts itself (or says safe/unsure) doesn't get to add flags.
@@ -73,8 +77,8 @@ def arbitrate(ledger: Ledger, intent: Intent, f: Findings, model_verdict: Verdic
                      model_dependent=m_safe or bool(model_only))
     elif m_scam:
         d = Decision(Verdict.UNSURE, "low", ["model suspects a scam but gave no verifiable evidence"], model_dependent=True)
-    elif intent.high_risk or f.suspicious_hosts or intent.pressure or injection or intent.opener or model_verdict == Verdict.UNSURE:
-        only_model = not (intent.high_risk or f.suspicious_hosts or intent.pressure or injection or intent.opener)  # a second look can only help here
+    elif intent.high_risk or f.suspicious_hosts or intent.pressure or injection or intent.opener or risky_purpose or model_verdict == Verdict.UNSURE:
+        only_model = not (intent.high_risk or f.suspicious_hosts or intent.pressure or injection or intent.opener or risky_purpose)  # a second look can only help here
         d = Decision(Verdict.UNSURE, "low", ["the AI isn't sure and nothing else explains it" if only_model else "asks for something sensitive or is hard to judge"],
                      model_dependent=only_model)
     elif not english and not m_safe:

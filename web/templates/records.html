@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}My records · Baitproof{% endblock %}
+{% block content %}
+<span class="pill rise"><b>YOUR HISTORY</b> The website and Telegram, in one place</span>
+<h1 class="rise d1">My records</h1>
+<p class="lead rise d2">Every message you check, here or in Telegram, is saved to your profile with the verdict and the giveaway, and the tricks go straight into your practice and game.</p>
+
+<section class="card tg reveal" id="tg" data-bot="{{ bot }}" data-linked="{{ linked }}">
+  <div class="tg-head"><h2>Telegram</h2><span class="badge {{ 'ok' if linked else '' }}" id="tg-badge">{{ 'Connected' if linked else 'Not connected' }}</span></div>
+  <div id="tg-idle" {% if linked %}hidden{% endif %}>
+    <p>Forward suspicious messages to the Baitproof bot and they show up here automatically. Connect once with a short code.</p>
+    <button class="big" id="tg-connect" type="button">Connect Telegram</button>
+  </div>
+  <div id="tg-code" hidden>
+    <p>Open Telegram and send this code to the bot <b id="tg-botname"></b>:</p>
+    <p class="code" id="tg-codetext" aria-live="polite"></p>
+    <p><a class="btn big" id="tg-open" href="#" target="_blank" rel="noopener" hidden>Open Telegram</a></p>
+    <p class="muted" id="tg-howto"></p>
+    <p class="muted">The code works once and expires in <span id="tg-timer">10:00</span>.</p>
+  </div>
+  <div id="tg-done" {% if not linked %}hidden{% endif %}>
+    <p>✅ Checks you run in Telegram now appear below. In Telegram you can also send <code>/history</code> and <code>/score</code>.</p>
+    <button class="ghost" id="tg-unlink" type="button">Disconnect Telegram</button>
+  </div>
+</section>
+
+<div class="kpis reveal">
+  <div class="kpi"><b>{{ stats.total }}</b><span>messages checked</span></div>
+  <div class="kpi"><b>{{ stats.flagged }}</b><span>flagged as scams</span></div>
+  <div class="kpi"><b>{{ stats.by_channel.web }} · {{ stats.by_channel.telegram }}</b><span>website · Telegram</span></div>
+  <div class="kpi"><b>{{ labels[stats.top_tricks[0][0]] if stats.top_tricks else '—' }}</b><span>trick you meet most</span></div>
+</div>
+
+<nav class="windows" aria-label="Filter records">
+  <a href="/records" {% if not channel %}aria-current="page"{% endif %}>All</a>
+  <a href="/records?channel=web" {% if channel == 'web' %}aria-current="page"{% endif %}>Website</a>
+  <a href="/records?channel=telegram" {% if channel == 'telegram' %}aria-current="page"{% endif %}>Telegram</a>
+</nav>
+
+<ul class="records" id="records">
+{% for r in rows %}
+  <li class="rec v-{{ r.verdict }} reveal" data-id="{{ r.id }}">
+    <div class="rec-top"><span class="rec-v">{{ {'scam': 'Scam', 'likely_scam': 'Likely scam', 'safe': 'Looks safe', 'unsure': 'Not sure', 'victim_support': 'Support'}[r.verdict] }}</span>
+      <span class="rec-meta">{{ '✈️ Telegram' if r.channel == 'telegram' else '🌐 Website' }} · {{ r.ts|ago }}</span>
+      <button class="ghost rec-del" type="button" aria-label="Delete this record">Delete</button></div>
+    {% if r.preview %}<p class="rec-preview">“{{ r.preview }}”</p>{% endif %}
+    {% if r.tell %}<p class="rec-tell">{{ r.tell }}</p>{% endif %}
+    {% if r.tactics %}<ul class="chips">{% for t in r.tactics %}<li>{{ labels[t] }}</li>{% endfor %}</ul>{% endif %}
+    {% if r.trained %}<p class="added">Added to your practice</p>{% endif %}
+  </li>
+{% else %}
+  <li class="card empty">Nothing here yet. <a href="/">Check a message</a>{% if bot %} or forward one to the Telegram bot{% endif %}.</li>
+{% endfor %}
+</ul>
+
+<section class="card privacy reveal">
+  <h2>Your data</h2>
+  <p class="muted">We keep the verdict, the tricks and the giveaway, never the message itself. A short preview with phone numbers, emails and link paths removed helps you recognise a record.</p>
+  <label class="switch"><input type="checkbox" id="pv" {% if previews %}checked{% endif %}> Keep a short redacted preview</label>
+  <p><button class="ghost" id="clear" type="button" {% if not rows %}disabled{% endif %}>Delete all my records</button></p>
+</section>
+{% endblock %}
+{% block scripts %}<script src="/static/js/records.js"></script>{% endblock %}

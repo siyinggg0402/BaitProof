@@ -47,6 +47,9 @@ def test_guidance_names_the_genuine_and_the_scam_form():
     ("Reminder: dentist appointment tomorrow at 3pm.", "appointment-booking"),
     ("Please install AnyDesk so our technician can fix your computer", "request-install-access"),
     ("Hey, I'm outside!", "social-chat"),
+    ("Your debit card has been blocked. Reactivate by verifying your PIN.", "urgent-account-warning"),  # the alarm form, no link needed
+    ("Account hacked! Open the app now to secure it.", "urgent-account-warning"),
+    ("Your cloud storage is full. Please click to free up space.", "urgent-account-warning"),
 ])
 def test_rule_purpose(text, purpose):
     assert dx(text).purpose == purpose
@@ -119,3 +122,23 @@ def test_real_scams_that_mention_orders_and_deliveries_are_never_cleared(text):
 ])
 def test_clearable_purposes_are_not_cleared_when_anything_risky_is_present(text):
     assert check_message(text, store=False, log=False).verdict != V.SAFE
+
+
+
+@pytest.mark.parametrize("text", [
+    "Netflix: your payment method is expiring soon. You can update it in your account settings.",
+    "Your password was just changed. If you didn't do this, reset it from the sign-in page.",
+    "Apple: Your Apple ID was used to sign in on a new device. If this was you, no action is needed.",
+    "Your parcel has been delivered to your front porch at 2:41 PM.",
+])
+def test_ordinary_notices_are_not_read_as_the_alarm_form(text):
+    assert dx(text).purpose != "urgent-account-warning"
+
+
+def test_a_risky_purpose_is_never_cleared_as_safe_even_when_the_model_says_safe(monkeypatch):
+    monkeypatch.setattr(llm, "available", lambda: True)
+    monkeypatch.setattr(llm, "chat_json", lambda system, user, **k: ({"asks": [], "pressure": []} if "classify what a message is FOR" in system else
+                                                                      {"concern": False} if "second reviewer" in system else
+                                                                      {"verdict": "safe", "tactics": [], "the_tell": "", "action": ""}))
+    for text in ("Your debit card has been blocked. Reactivate by verifying your PIN.", "Account hacked! Open the app now to secure it."):
+        assert check_message(text, store=False, log=False).verdict != V.SAFE

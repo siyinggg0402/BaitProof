@@ -1,0 +1,836 @@
+[
+ {
+  "text": "Unusual sign-in detected. To keep your account, reply with the 6-digit code we just texted you.",
+  "verdict": "scam",
+  "purpose": "request-secret",
+  "tactics": [
+   "otp-credential-phish"
+  ],
+  "why": "asks you to hand over a login code",
+  "id": "fs001"
+ },
+ {
+  "text": "Your card has been frozen. Verify your PIN at once to unlock it.",
+  "verdict": "scam",
+  "purpose": "urgent-account-warning",
+  "tactics": [
+   "otp-credential-phish",
+   "urgency-pressure"
+  ],
+  "why": "an alarm about your card plus an instruction to give a PIN",
+  "id": "fs002"
+ },
+ {
+  "text": "Your mailbox is almost full. Click here to keep receiving email: mail-upgrade-now.top",
+  "verdict": "scam",
+  "purpose": "urgent-account-warning",
+  "tactics": [
+   "lookalike-link"
+  ],
+  "why": "a storage alarm with a throwaway link",
+  "id": "fs003"
+ },
+ {
+  "text": "WINNER! You have been picked to receive a 500 pound gift card. Text WIN to 80466 now. 50p per msg.",
+  "verdict": "scam",
+  "purpose": "claim-prize-reward",
+  "tactics": [
+   "too-good-to-be-true"
+  ],
+  "why": "a prize you never entered for, claimed through a paid short code",
+  "id": "fs004"
+ },
+ {
+  "text": "Lonely tonight? Text GIRL to 85022 and chat live. Calls 60p per minute.",
+  "verdict": "scam",
+  "purpose": "marketing-offer",
+  "tactics": [],
+  "why": "a premium-rate chat service that charges per message and per minute",
+  "id": "fs005"
+ },
+ {
+  "text": "Free ringtone! Reply MUSIC to 87121 to get your tone. Subscription 3 pounds a week, text STOP to cancel.",
+  "verdict": "likely_scam",
+  "purpose": "marketing-offer",
+  "tactics": [],
+  "why": "a paid subscription hidden behind a free offer",
+  "id": "fs006"
+ },
+ {
+  "text": "Your parcel is held at the depot. Pay a 1.20 fee to release it: parcel-release-fee.xyz",
+  "verdict": "scam",
+  "purpose": "urgent-account-warning",
+  "tactics": [
+   "lookalike-link",
+   "advance-fee"
+  ],
+  "why": "a small fee through a lookalike link",
+  "id": "fs007"
+ },
+ {
+  "text": "Hi Mum, I broke my phone and this is my new number. Can you transfer 400 to my friend's account today? Don't tell Dad.",
+  "verdict": "scam",
+  "purpose": "emotional-plea",
+  "tactics": [
+   "emotional-manipulation",
+   "urgency-pressure"
+  ],
+  "why": "new number, money, and secrecy",
+  "id": "fs008"
+ },
+ {
+  "text": "This is the tax office. You owe 1,420 in unpaid tax. Pay today by gift card or a warrant will be issued.",
+  "verdict": "scam",
+  "purpose": "request-payment",
+  "tactics": [
+   "impersonation-official",
+   "irreversible-payment",
+   "urgency-pressure"
+  ],
+  "why": "no tax office takes gift cards or threatens arrest by text",
+  "id": "fs009"
+ },
+ {
+  "text": "Microsoft Support: your PC has a virus. Call 0800 555 0123 and let our engineer connect to your computer.",
+  "verdict": "scam",
+  "purpose": "request-install-access",
+  "tactics": [
+   "remote-access-request",
+   "impersonation-official"
+  ],
+  "why": "real support never contacts you first and asks for remote access",
+  "id": "fs010"
+ },
+ {
+  "text": "Congratulations! Your loan of 8,000 is approved. Send a 150 insurance fee to receive the funds today.",
+  "verdict": "scam",
+  "purpose": "offer-job-or-investment",
+  "tactics": [
+   "advance-fee"
+  ],
+  "why": "a fee before any money arrives",
+  "id": "fs011"
+ },
+ {
+  "text": "Earn 300 a day liking videos. No experience needed. Message me on Telegram to start.",
+  "verdict": "scam",
+  "purpose": "offer-job-or-investment",
+  "tactics": [
+   "job-task-scam",
+   "too-good-to-be-true"
+  ],
+  "why": "easy money recruited through a chat app",
+  "id": "fs012"
+ },
+ {
+  "text": "Our trading group made 45% last week. Deposit USDT today to join the next round.",
+  "verdict": "scam",
+  "purpose": "offer-job-or-investment",
+  "tactics": [
+   "investment-crypto",
+   "too-good-to-be-true"
+  ],
+  "why": "huge returns and a push to deposit crypto",
+  "id": "fs013"
+ },
+ {
+  "text": "Hello dear, I am a soldier overseas and trust you. I need help moving my funds; please send your bank details.",
+  "verdict": "scam",
+  "purpose": "emotional-plea",
+  "tactics": [
+   "emotional-manipulation",
+   "advance-fee"
+  ],
+  "why": "a stranger asking for trust and bank details",
+  "id": "fs014"
+ },
+ {
+  "text": "Your subscription renews today for 399. To cancel and get a refund, call 1-800-555-0148 now.",
+  "verdict": "scam",
+  "purpose": "callback-request",
+  "tactics": [
+   "urgency-pressure"
+  ],
+  "why": "a charge you never made, with a number to call",
+  "id": "fs015"
+ },
+ {
+  "text": "Hi, I accidentally sent you 900. Please send it back to this account, it's an emergency.",
+  "verdict": "scam",
+  "purpose": "request-payment",
+  "tactics": [
+   "emotional-manipulation"
+  ],
+  "why": "the overpayment trick",
+  "id": "fs016"
+ },
+ {
+  "text": "Account hacked! Open the app now to secure it.",
+  "verdict": "likely_scam",
+  "purpose": "urgent-account-warning",
+  "tactics": [
+   "urgency-pressure"
+  ],
+  "why": "the alarm form: a problem plus an instruction to act",
+  "id": "fs017"
+ },
+ {
+  "text": "Claim your cashback reward now! Limited time offer.",
+  "verdict": "likely_scam",
+  "purpose": "claim-prize-reward",
+  "tactics": [
+   "too-good-to-be-true",
+   "urgency-pressure"
+  ],
+  "why": "a reward you did not ask for, with a deadline",
+  "id": "fs018"
+ },
+ {
+  "text": "Your gaming account has been compromised. Change your password immediately: gaming-secure-login.top",
+  "verdict": "scam",
+  "purpose": "urgent-account-warning",
+  "tactics": [
+   "lookalike-link",
+   "urgency-pressure"
+  ],
+  "why": "an alarm and a lookalike login link",
+  "id": "fs019"
+ },
+ {
+  "text": "A payment of 2,300 to CryptoVault was authorised from your account. If this wasn't you, call our security line on 0161 555 0199.",
+  "verdict": "likely_scam",
+  "purpose": "callback-request",
+  "tactics": [
+   "impersonation-official"
+  ],
+  "why": "a charge you do not recognise, with a number to call (not the one on your card)",
+  "id": "fs020"
+ },
+ {
+  "text": "Your insurance claim has been approved. Contact us to finalise.",
+  "verdict": "likely_scam",
+  "purpose": "claim-prize-reward",
+  "tactics": [
+   "advance-fee"
+  ],
+  "why": "an approval you never applied for",
+  "id": "fs021"
+ },
+ {
+  "text": "You have been selected for a government grant of 10,000. Contact our agent on WhatsApp to begin.",
+  "verdict": "scam",
+  "purpose": "claim-prize-reward",
+  "tactics": [
+   "too-good-to-be-true",
+   "impersonation-official"
+  ],
+  "why": "governments do not give grants through WhatsApp agents",
+  "id": "fs022"
+ },
+ {
+  "text": "I saw your profile and think you would be perfect for a remote role. Add me on Telegram @recruiter_anna.",
+  "verdict": "likely_scam",
+  "purpose": "first-contact-opener",
+  "tactics": [
+   "job-task-scam"
+  ],
+  "why": "out-of-the-blue recruiter moving to a chat app",
+  "id": "fs023"
+ },
+ {
+  "text": "Dear customer, your electricity will be cut off today unless you pay 75 now: power-bill-pay.click",
+  "verdict": "scam",
+  "purpose": "urgent-account-warning",
+  "tactics": [
+   "urgency-pressure",
+   "lookalike-link"
+  ],
+  "why": "a threat with a deadline and a lookalike payment link",
+  "id": "fs024"
+ },
+ {
+  "text": "Hi, I'm the landlord. Our bank details changed. Please send this month's rent to the new account: 12-34-56 87654321.",
+  "verdict": "likely_scam",
+  "purpose": "request-payment",
+  "tactics": [
+   "impersonation-official"
+  ],
+  "why": "changed bank details are the classic rent scam",
+  "id": "fs025"
+ },
+ {
+  "text": "This is the bank's fraud team. Move your savings to a safe account we will give you.",
+  "verdict": "scam",
+  "purpose": "request-payment",
+  "tactics": [
+   "authority-spoofing",
+   "irreversible-payment"
+  ],
+  "why": "banks never ask you to move money to a 'safe account'",
+  "id": "fs026"
+ },
+ {
+  "text": "I'm stuck abroad and lost my wallet. Please wire 300 by Western Union, I'll repay you.",
+  "verdict": "scam",
+  "purpose": "emotional-plea",
+  "tactics": [
+   "emotional-manipulation",
+   "irreversible-payment"
+  ],
+  "why": "an emergency paid through an untraceable method",
+  "id": "fs027"
+ },
+ {
+  "text": "Your Netflix payment failed. Update your card here: netflix-billing-help.top",
+  "verdict": "scam",
+  "purpose": "urgent-account-warning",
+  "tactics": [
+   "lookalike-link"
+  ],
+  "why": "the real address ends in netflix.com",
+  "id": "fs028"
+ },
+ {
+  "text": "We could not deliver your parcel. Reschedule here: royalmail-redelivery.top/track",
+  "verdict": "scam",
+  "purpose": "urgent-account-warning",
+  "tactics": [
+   "lookalike-link"
+  ],
+  "why": "the real address ends in royalmail.com",
+  "id": "fs029"
+ },
+ {
+  "text": "Boss here, I'm in a meeting. Buy 5 gift cards for a client and send me the codes.",
+  "verdict": "scam",
+  "purpose": "emotional-plea",
+  "tactics": [
+   "authority-spoofing",
+   "irreversible-payment"
+  ],
+  "why": "a boss who needs gift cards and cannot be called",
+  "id": "fs030"
+ },
+ {
+  "text": "Su cuenta ha sido bloqueada. Envíe el código de 6 dígitos que recibió para desbloquearla.",
+  "verdict": "scam",
+  "purpose": "request-secret",
+  "tactics": [
+   "otp-credential-phish"
+  ],
+  "why": "pide el código que recibió por SMS",
+  "id": "fs031"
+ },
+ {
+  "text": "Votre colis est en attente. Réglez 1,99 euros ici : colis-livraison.top",
+  "verdict": "scam",
+  "purpose": "urgent-account-warning",
+  "tactics": [
+   "lookalike-link",
+   "advance-fee"
+  ],
+  "why": "petit paiement via un lien suspect",
+  "id": "fs032"
+ },
+ {
+  "text": "Congratulations on your new phone! Complete a short survey to claim your free gift: surveys-gift.top",
+  "verdict": "scam",
+  "purpose": "claim-prize-reward",
+  "tactics": [
+   "too-good-to-be-true",
+   "lookalike-link"
+  ],
+  "why": "a survey-for-a-prize hook",
+  "id": "fs033"
+ },
+ {
+  "text": "Your Medicare card is ready. Confirm your card number at medicare-card-update.info",
+  "verdict": "scam",
+  "purpose": "request-secret",
+  "tactics": [
+   "impersonation-official",
+   "lookalike-link"
+  ],
+  "why": "government sites end in .gov, and never ask for card numbers by text",
+  "id": "fs034"
+ },
+ {
+  "text": "Final notice: your car warranty is about to expire. Press 1 to speak to an agent.",
+  "verdict": "likely_scam",
+  "purpose": "callback-request",
+  "tactics": [
+   "urgency-pressure"
+  ],
+  "why": "a robocall-style warranty hook",
+  "id": "fs035"
+ },
+ {
+  "text": "Your account will be closed in 2 hours. Verify now to keep your savings.",
+  "verdict": "scam",
+  "purpose": "urgent-account-warning",
+  "tactics": [
+   "urgency-pressure",
+   "impersonation-official"
+  ],
+  "why": "a deadline in hours and a demand to verify",
+  "id": "fs036"
+ },
+ {
+  "text": "Hi, I'm interested in the sofa you're selling. I'm sending you a code by text, please read it to me so I can verify you.",
+  "verdict": "scam",
+  "purpose": "request-secret",
+  "tactics": [
+   "otp-credential-phish"
+  ],
+  "why": "a buyer who wants a code is taking over your account",
+  "id": "fs037"
+ },
+ {
+  "text": "Hi, is this Daniel? I got your number from Sarah at yoga.",
+  "verdict": "unsure",
+  "purpose": "first-contact-opener",
+  "tactics": [],
+  "why": "a standard first step, but an honest person could write it too",
+  "id": "fs038"
+ },
+ {
+  "text": "Hey, could you lend me 30 until Friday? Forgot my wallet.",
+  "verdict": "unsure",
+  "purpose": "request-payment",
+  "tactics": [],
+  "why": "could be a friend or a hijacked account: phone them to check",
+  "id": "fs039"
+ },
+ {
+  "text": "Hi, this is Ben from the club. Can you send me the 25 fee by Friday? Bank details are the same as last year.",
+  "verdict": "unsure",
+  "purpose": "request-payment",
+  "tactics": [],
+  "why": "plausible, but confirm with Ben in person or by phone",
+  "id": "fs040"
+ },
+ {
+  "text": "Can you check if you can receive an important message? Reply when you see this.",
+  "verdict": "unsure",
+  "purpose": "first-contact-opener",
+  "tactics": [],
+  "why": "a typical opener for impersonation scams, but gives no detail",
+  "id": "fs041"
+ },
+ {
+  "text": "Invoice 2291 attached: 380 for the garden work. Bank details are on the invoice.",
+  "verdict": "unsure",
+  "purpose": "invoice-or-bill",
+  "tactics": [],
+  "why": "only pay if you recognise the work and the bank details match what you were given",
+  "id": "fs042"
+ },
+ {
+  "text": "Hi, I'm interested in your listing. Is it still available? Text me on 555 0142.",
+  "verdict": "unsure",
+  "purpose": "first-contact-opener",
+  "tactics": [],
+  "why": "a common marketplace opener",
+  "id": "fs043"
+ },
+ {
+  "text": "Please call us on 02 9555 0182 to book your follow-up appointment.",
+  "verdict": "unsure",
+  "purpose": "callback-request",
+  "tactics": [],
+  "why": "could be your clinic: use the number you already have",
+  "id": "fs044"
+ },
+ {
+  "text": "Hello, are you free tomorrow? I have a quick question for you.",
+  "verdict": "unsure",
+  "purpose": "first-contact-opener",
+  "tactics": [],
+  "why": "no context about who is writing",
+  "id": "fs045"
+ },
+ {
+  "text": "Your verification code is 482913. It expires in 10 minutes. Never share this code.",
+  "verdict": "safe",
+  "purpose": "one-time-code",
+  "tactics": [],
+  "why": "delivers a code and asks for nothing",
+  "id": "fs046"
+ },
+ {
+  "text": "Use code 553190 to reset your password. If you didn't ask for this, ignore this message.",
+  "verdict": "safe",
+  "purpose": "one-time-code",
+  "tactics": [],
+  "why": "a code message that tells you to ignore it if unexpected",
+  "id": "fs047"
+ },
+ {
+  "text": "Your order has shipped and will arrive Thursday. Track it in the app you ordered from.",
+  "verdict": "safe",
+  "purpose": "delivery-update",
+  "tactics": [],
+  "why": "a normal status that points to your own app",
+  "id": "fs048"
+ },
+ {
+  "text": "Your Uber is arriving in 2 minutes. Look for a grey Toyota.",
+  "verdict": "safe",
+  "purpose": "delivery-update",
+  "tactics": [],
+  "why": "an ordinary ride notice",
+  "id": "fs049"
+ },
+ {
+  "text": "Reminder: dentist appointment tomorrow at 3pm. Reply C to cancel.",
+  "verdict": "safe",
+  "purpose": "appointment-booking",
+  "tactics": [],
+  "why": "a routine reminder with an easy opt-out",
+  "id": "fs050"
+ },
+ {
+  "text": "Your table for 4 at Luigi's is booked for Friday at 7pm.",
+  "verdict": "safe",
+  "purpose": "appointment-booking",
+  "tactics": [],
+  "why": "a booking confirmation",
+  "id": "fs051"
+ },
+ {
+  "text": "Barclays: 18.40 paid to Tesco, card ending 2291. If you don't recognise it, call the number on the back of your card.",
+  "verdict": "safe",
+  "purpose": "transaction-alert",
+  "tactics": [],
+  "why": "no link, no number given, and it points to the number on your own card",
+  "id": "fs052"
+ },
+ {
+  "text": "Hey, are we still on for coffee at 10?",
+  "verdict": "safe",
+  "purpose": "social-chat",
+  "tactics": [],
+  "why": "ordinary talk between people who know each other",
+  "id": "fs053"
+ },
+ {
+  "text": "Mum, I've landed. Will call when I get to the hotel x",
+  "verdict": "safe",
+  "purpose": "social-chat",
+  "tactics": [],
+  "why": "a normal family check-in",
+  "id": "fs054"
+ },
+ {
+  "text": "Team standup moved to 10:30 today, same link as usual.",
+  "verdict": "safe",
+  "purpose": "work-logistics",
+  "tactics": [],
+  "why": "routine logistics from your own group",
+  "id": "fs055"
+ },
+ {
+  "text": "Reminder: the book fair order forms go home with the kids on Thursday.",
+  "verdict": "safe",
+  "purpose": "work-logistics",
+  "tactics": [],
+  "why": "a harmless school notice",
+  "id": "fs056"
+ },
+ {
+  "text": "Your gas bill of 84.20 is ready and will be debited on 3 November. View it in the app.",
+  "verdict": "safe",
+  "purpose": "invoice-or-bill",
+  "tactics": [],
+  "why": "a bill through your usual channel",
+  "id": "fs057"
+ },
+ {
+  "text": "Hi, the electrician is booked for Tuesday morning between 8 and 12. Someone needs to be in to let him in.",
+  "verdict": "safe",
+  "purpose": "appointment-booking",
+  "tactics": [],
+  "why": "a normal service visit",
+  "id": "fs058"
+ },
+ {
+  "text": "Thanks for your order! It has been dispatched and will arrive in 3 to 5 days.",
+  "verdict": "safe",
+  "purpose": "delivery-update",
+  "tactics": [],
+  "why": "an ordinary dispatch notice",
+  "id": "fs059"
+ },
+ {
+  "text": "Happy birthday! Dinner is on us tonight.",
+  "verdict": "safe",
+  "purpose": "social-chat",
+  "tactics": [],
+  "why": "friendly and harmless",
+  "id": "fs060"
+ },
+ {
+  "text": "Your flight BA245 is on time. Check-in is open at britishairways.com",
+  "verdict": "safe",
+  "purpose": "appointment-booking",
+  "tactics": [],
+  "why": "the real airline address, no request",
+  "id": "fs061"
+ },
+ {
+  "text": "Council tax: your payment of 132 is due on 1 November. Pay through your online account as usual.",
+  "verdict": "safe",
+  "purpose": "invoice-or-bill",
+  "tactics": [],
+  "why": "routine, and points to your usual account",
+  "id": "fs062"
+ },
+ {
+  "text": "Your prescription is ready to collect at the pharmacy. Open until 6pm.",
+  "verdict": "safe",
+  "purpose": "appointment-booking",
+  "tactics": [],
+  "why": "a normal pickup notice",
+  "id": "fs063"
+ },
+ {
+  "text": "Don't forget the school trip form is due Friday.",
+  "verdict": "safe",
+  "purpose": "work-logistics",
+  "tactics": [],
+  "why": "a normal reminder",
+  "id": "fs064"
+ },
+ {
+  "text": "Hi, the plumber will visit on Wednesday between 9 and 1. Please make sure someone is home.",
+  "verdict": "safe",
+  "purpose": "appointment-booking",
+  "tactics": [],
+  "why": "a normal service visit",
+  "id": "fs065"
+ },
+ {
+  "text": "Your Spotify payment of 12.99 was successful. Manage your plan in the app.",
+  "verdict": "safe",
+  "purpose": "account-notice",
+  "tactics": [],
+  "why": "a receipt that asks for nothing",
+  "id": "fs066"
+ },
+ {
+  "text": "Thank you for your donation of 25 pounds. Your Gift Aid receipt is attached.",
+  "verdict": "safe",
+  "purpose": "transaction-alert",
+  "tactics": [],
+  "why": "a receipt",
+  "id": "fs067"
+ },
+ {
+  "text": "Your package was delivered to your front porch at 2:41 PM.",
+  "verdict": "safe",
+  "purpose": "delivery-update",
+  "tactics": [],
+  "why": "a plain delivery confirmation",
+  "id": "fs068"
+ },
+ {
+  "text": "The quarterly water bill is ready. Settle it through the account you normally use before the end of the month.",
+  "verdict": "safe",
+  "purpose": "invoice-or-bill",
+  "tactics": [],
+  "why": "a bill through your usual channel",
+  "id": "fs069"
+ },
+ {
+  "text": "We have credited the deposit you made on Monday to your savings account.",
+  "verdict": "safe",
+  "purpose": "transaction-alert",
+  "tactics": [],
+  "why": "a receipt that asks for nothing",
+  "id": "fs070"
+ },
+ {
+  "text": "Card purchase at the bookshop confirmed. You can see the receipt in your banking app.",
+  "verdict": "safe",
+  "purpose": "transaction-alert",
+  "tactics": [],
+  "why": "a plain transaction receipt",
+  "id": "fs071"
+ },
+ {
+  "text": "This is the usual monthly notice that your mortgage payment leaves your account on the 1st.",
+  "verdict": "safe",
+  "purpose": "invoice-or-bill",
+  "tactics": [],
+  "why": "a routine reminder of an arrangement you already have",
+  "id": "fs072"
+ },
+ {
+  "text": "Your October pay has been paid into your account.",
+  "verdict": "safe",
+  "purpose": "transaction-alert",
+  "tactics": [],
+  "why": "a plain credit notice",
+  "id": "fs073"
+ },
+ {
+  "text": "Got your money for the camping trip, thanks! See you Saturday.",
+  "verdict": "safe",
+  "purpose": "social-chat",
+  "tactics": [],
+  "why": "someone you know confirming a payment you made",
+  "id": "fs074"
+ },
+ {
+  "text": "Please confirm the new supplier is on our approved list before the order goes out on Friday.",
+  "verdict": "safe",
+  "purpose": "work-logistics",
+  "tactics": [],
+  "why": "a colleague asking you to check your own account",
+  "id": "fs075"
+ },
+ {
+  "text": "Your mobile plan renews on the 20th at 9.99. No action is needed.",
+  "verdict": "safe",
+  "purpose": "account-notice",
+  "tactics": [],
+  "why": "informs and asks for nothing",
+  "id": "fs076"
+ },
+ {
+  "text": "We have received your application. A member of the team will contact you within 5 working days.",
+  "verdict": "safe",
+  "purpose": "account-notice",
+  "tactics": [],
+  "why": "an acknowledgement that asks for nothing",
+  "id": "fs077"
+ },
+ {
+  "text": "Your appointment with the bank advisor is confirmed for Monday at 10am at the High Street branch.",
+  "verdict": "safe",
+  "purpose": "appointment-booking",
+  "tactics": [],
+  "why": "a normal branch appointment",
+  "id": "fs078"
+ },
+ {
+  "text": "Statement alert: your card statement for October is now available in the app.",
+  "verdict": "safe",
+  "purpose": "transaction-alert",
+  "tactics": [],
+  "why": "points to the official app and asks for nothing",
+  "id": "fs079"
+ },
+ {
+  "text": "Reminder: please send the signed form back by Friday. Thanks!",
+  "verdict": "safe",
+  "purpose": "work-logistics",
+  "tactics": [],
+  "why": "a routine request from your own organisation",
+  "id": "fs080"
+ },
+ {
+  "text": "Sorry I missed your call, can I ring you back this evening?",
+  "verdict": "safe",
+  "purpose": "social-chat",
+  "tactics": [],
+  "why": "ordinary conversation",
+  "id": "fs081"
+ },
+ {
+  "text": "Running late, start without me.",
+  "verdict": "safe",
+  "purpose": "social-chat",
+  "tactics": [],
+  "why": "ordinary conversation",
+  "id": "fs082"
+ },
+ {
+  "text": "Happy to confirm your delivery slot: Thursday between 2 and 4pm.",
+  "verdict": "safe",
+  "purpose": "delivery-update",
+  "tactics": [],
+  "why": "a normal delivery slot",
+  "id": "fs083"
+ },
+ {
+  "text": "Thanks for paying invoice 118. A receipt is attached.",
+  "verdict": "safe",
+  "purpose": "invoice-or-bill",
+  "tactics": [],
+  "why": "a receipt",
+  "id": "fs084"
+ },
+ {
+  "text": "Your parking permit expires next month. You can renew it at the library or on the council website.",
+  "verdict": "safe",
+  "purpose": "account-notice",
+  "tactics": [],
+  "why": "a normal renewal reminder from a known body",
+  "id": "fs085"
+ },
+ {
+  "text": "Hi love, just checking you got home OK x",
+  "verdict": "safe",
+  "purpose": "social-chat",
+  "tactics": [],
+  "why": "a family check-in",
+  "id": "fs086"
+ },
+ {
+  "text": "Meeting at 3 in room 2. Bring the draft.",
+  "verdict": "safe",
+  "purpose": "work-logistics",
+  "tactics": [],
+  "why": "routine logistics",
+  "id": "fs087"
+ },
+ {
+  "text": "Your flight is delayed by 40 minutes. New departure 18:20. Updates are in the airline app.",
+  "verdict": "safe",
+  "purpose": "delivery-update",
+  "tactics": [],
+  "why": "an ordinary delay notice",
+  "id": "fs088"
+ },
+ {
+  "text": "Your tax return has been received. We will write to you if we need anything else.",
+  "verdict": "safe",
+  "purpose": "account-notice",
+  "tactics": [],
+  "why": "an acknowledgement",
+  "id": "fs089"
+ },
+ {
+  "text": "The garage says your car will be ready by 5pm. Total 214 payable on collection.",
+  "verdict": "safe",
+  "purpose": "invoice-or-bill",
+  "tactics": [],
+  "why": "a normal garage notice",
+  "id": "fs090"
+ },
+ {
+  "text": "Swimming lesson is cancelled today because of pool maintenance.",
+  "verdict": "safe",
+  "purpose": "work-logistics",
+  "tactics": [],
+  "why": "a harmless cancellation",
+  "id": "fs091"
+ },
+ {
+  "text": "Heads up: the monthly gym membership comes out of your account on the 1st, as usual.",
+  "verdict": "safe",
+  "purpose": "invoice-or-bill",
+  "tactics": [],
+  "why": "a routine reminder",
+  "id": "fs092"
+ },
+ {
+  "text": "Your cheque for 150 has been deposited and will clear in 2 working days.",
+  "verdict": "safe",
+  "purpose": "transaction-alert",
+  "tactics": [],
+  "why": "a plain deposit notice",
+  "id": "fs093"
+ }
+]

@@ -33,10 +33,13 @@ def user_text(system_name: str, text: str) -> str:
     f = Findings(hosts=list(ing.entities.hosts))
     if system_name == "legacy":
         return f"MESSAGE:\n{ing.redacted}\n\nINTENT (from rules): {it.summary()}\nTOOL FINDINGS (trusted):\nno deterministic findings"
-    return analysis.build_user(ing, it, f)
+    import os
+
+    os.environ["BAITPROOF_FEWSHOT_MODE"] = "knn" if system_name == "fewshot-knn" else "balanced"
+    return analysis.build_user(ing, it, f, examples=system_name.startswith("fewshot"))
 
 
-VARIANTS = {"current": CHECK_SYSTEM, "legacy": None}  # legacy loaded lazily from git
+VARIANTS = {"current": CHECK_SYSTEM, "fewshot": CHECK_SYSTEM, "fewshot-knn": CHECK_SYSTEM, "legacy": None}  # legacy loaded lazily from git; fewshot = current + retrieved examples
 
 
 def ask(name: str, text: str) -> str:

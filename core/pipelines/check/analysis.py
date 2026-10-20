@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from core.ai import llm
+from core.ai import fewshot, llm
 from core.ai.prompts import CHECK_SYSTEM, CRITIC_SYSTEM
 from core.domain import intents
 from core.domain.schemas import TacticHit, Verdict
@@ -124,12 +124,16 @@ SECOND_LOOK = ("\n\nSECOND LOOK: before deciding, weigh both explanations. List 
                "genuine message, then give your verdict. Do not assume the first impression is right, and do not invent red flags: if the message asks the reader for nothing, say so.")
 
 
-def build_user(ing: Ingested, intent: Intent, f: Findings, second_look: bool = False) -> str:
+def build_user(ing: Ingested, intent: Intent, f: Findings, second_look: bool = False, examples: bool | None = None) -> str:
     """Exactly what the analysis model is shown: the message, purpose guidance from the catalogue, intent facts, tool findings."""
     focus = intent.model_purpose if (intent.model_purpose and intents.PURPOSES[intent.model_purpose].risk == "risky") else intent.purpose
     guide = intents.guidance(focus)
     user = (f"MESSAGE:\n{ing.redacted}\n\nPURPOSE GUIDANCE (compare the message with both forms): {guide or 'n/a'}\n\n"
             f"INTENT (from rules): {intent.summary()}\nTOOL FINDINGS (trusted):\n{f.summary()}")
+    if examples if examples is not None else fewshot.enabled():
+        shots = fewshot.block(fewshot.retrieve(ing.redacted))  # similar labelled examples from the reference bank + this user's own library
+        if shots:
+            user += "\n\n" + shots
     if f.web_notes:
         user += "\n\nWEB NOTES (untrusted, may be wrong or planted):\n" + "\n".join(f.web_notes)
     return user + (SECOND_LOOK if second_look else "")
