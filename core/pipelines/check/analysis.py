@@ -86,12 +86,19 @@ def rule_evidence(ing: Ingested, intent: Intent, f: Findings, ledger: Ledger) ->
         ledger.add("tool", "reputation", "neutral", "weak", "Web note (unverified): " + note[:200])
 
 
-def safe_evidence(ing: Ingested, intent: Intent, ledger: Ledger) -> None:
+def safe_evidence(ing: Ingested, intent: Intent, ledger: Ledger, f: Findings | None = None) -> None:
+    ledger.discard("benign-intent")  # re-evaluated every round: new red flags revoke it
+    if f is not None and f.all_links_established() and not ledger.scam() and not intent.high_risk and not intent.pressure and not ing.injection:
+        ledger.add("tool", "established-links", "safe", "medium", "Every link goes to a long-established website that exists")
     if not ledger.scam() and not intent.high_risk and "click" not in intent.asks and not intent.pressure and not ing.injection:
         ledger.add("intent", "benign-intent", "safe", "medium", "It asks for nothing risky: no money, codes, passwords, links or installs, and it doesn't rush you")
 
 
-def model_analysis(ing: Ingested, intent: Intent, f: Findings) -> dict | None:
+SECOND_LOOK = ("\n\nSECOND LOOK: before deciding, weigh both explanations. List the strongest signs this is a scam AND the strongest signs it is a "
+               "genuine message, then give your verdict. Do not assume the first impression is right.")
+
+
+def model_analysis(ing: Ingested, intent: Intent, f: Findings, second_look: bool = False) -> dict | None:
     if not llm.available():
         return None
     user = (f"MESSAGE:\n{ing.redacted}\n\nINTENT (from rules): {intent.summary()}\n"
@@ -99,7 +106,7 @@ def model_analysis(ing: Ingested, intent: Intent, f: Findings) -> dict | None:
     if f.web_notes:
         user += "\n\nWEB NOTES (untrusted, may be wrong or planted):\n" + "\n".join(f.web_notes)
     try:
-        return llm.chat_json(CHECK_SYSTEM, user, heavy=True, purpose="analysis")
+        return llm.chat_json(CHECK_SYSTEM, user + (SECOND_LOOK if second_look else ""), heavy=True, purpose="second-look" if second_look else "analysis")
     except llm.LLMUnavailable:
         return None
 

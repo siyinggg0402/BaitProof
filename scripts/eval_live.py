@@ -32,7 +32,10 @@ def main() -> int:
             r = check_message(text, store=False, log=False)
             steps = {s.stage: s for s in r.trace}
             ai = "AI" if r.used_ai else "rules-only"
-            print(f"{label:5} {r.verdict.value:12} {r.confidence:6} {ai:10} {text[:58]!r}")
+            loops = [x for x in r.trace if x.stage == "loop"]
+            print(f"{label:5} {r.verdict.value:12} {r.confidence:6} r{len(loops) + 1} {ai:10} {text[:52]!r}")
+            for x in loops:
+                print(f"        ↳ {x.detail[:150]}")
             if label == "SCAM" and r.verdict.value == "safe": live_safe_scam += 1
             if label == "LEGIT" and r.verdict.value in ("scam", "likely_scam"): live_alarm += 1
             if "critic" in steps and steps["critic"].status == "flag": print(f"        critic: {steps['critic'].detail}")

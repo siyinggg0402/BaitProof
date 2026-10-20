@@ -120,14 +120,56 @@ def domain_age(host: str) -> dict:
     return {"host": host, "domain": dom, "age_days": max(0, (datetime.now(timezone.utc) - created).days)}
 
 
+FAKE_IP_NETS = [ipaddress.ip_network("198.18.0.0/15"), ipaddress.ip_network("100.64.0.0/10")]  # proxy "fake-ip" and carrier-grade NAT ranges
+_resolver_cache: dict = {"ok": None, "at": 0.0}
+
+
+def _internal(ip: str) -> bool:
+    a = ipaddress.ip_address(ip.split("%")[0])
+    return a.is_private or a.is_loopback or a.is_link_local
+
+
+def _fake(ip: str) -> bool:
+    a = ipaddress.ip_address(ip.split("%")[0])
+    return any(a in n for n in FAKE_IP_NETS)
+
+
+def resolver_trustworthy() -> bool:
+    """Self-calibration: a resolver that rewrites answers (VPN/proxy fake-IP mode, ISP wildcard pages) makes DNS evidence worse than
+    useless. Check a known-good name and a guaranteed-missing one; cache the verdict for 10 minutes."""
+    import secrets as _s
+
+    now = time.time()
+    if _resolver_cache["ok"] is not None and now - _resolver_cache["at"] < 600:
+        return _resolver_cache["ok"]
+    ok = True
+    try:
+        ips = {i[4][0] for i in socket.getaddrinfo("example.com", None)}
+        ok = not any(_internal(ip) or _fake(ip) for ip in ips)  # a real public site must not resolve to a private/fake address
+    except OSError:
+        ok = False  # cannot resolve a known-good domain: our network is the problem, not the site we're asked about
+    if ok:
+        try:
+            socket.getaddrinfo(f"bp-nx-{_s.token_hex(8)}.com", None)
+            ok = False  # a name that cannot exist resolved: the resolver invents answers
+        except socket.gaierror:
+            pass
+        except OSError:
+            ok = False
+    _resolver_cache.update(ok=ok, at=now)
+    return ok
+
+
 def dns_check(host: str) -> dict:
-    """Does the name exist, and does it point somewhere internal? A DNS question, not a visit to the site."""
+    """Does the name exist, and does it point somewhere internal? A DNS question, not a visit to the site.
+    Reports 'unreliable' (and so adds no evidence) when the local resolver can't be trusted."""
+    if not resolver_trustworthy():
+        return {"host": host, "status": "unreliable"}
     try:
         ips = {i[4][0] for i in socket.getaddrinfo(host, None)}
     except socket.gaierror:
         return {"host": host, "status": "nxdomain"}
-    internal = any((lambda a: a.is_private or a.is_loopback or a.is_link_local)(ipaddress.ip_address(ip.split("%")[0])) for ip in ips)
-    return {"host": host, "status": "private" if internal else "ok"}
+    return {"host": host, "status": "private" if any(_internal(ip) for ip in ips) else "ok"}
 
 
 def brand_lookup(org: str) -> dict:
@@ -181,6 +223,10 @@ class Findings:
 
     def all_links_official(self) -> bool:
         return bool(self.hosts) and all(h in self.official_hosts for h in self.hosts)
+
+    def all_links_established(self) -> bool:
+        """Every link is either a known real site, or an old, resolving domain (2+ years): a link we have positive reason to trust."""
+        return bool(self.hosts) and all(h in self.official_hosts or ((self.ages.get(h) or 0) >= 730 and self.dns.get(h) == "ok") for h in self.hosts)
 
     def apply(self, tool: str, arg: str, d: dict) -> None:
         self.done.add((tool, arg))

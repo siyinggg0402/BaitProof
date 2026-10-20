@@ -125,17 +125,55 @@ def test_domain_age_reads_the_registry_not_the_site(monkeypatch):
     assert tools.domain_age("x-y.xyz")["age_days"] is None
 
 
-def test_dns_check(monkeypatch):
+def _dns(monkeypatch, table, wildcard=False, calls=None):
+    """Fake resolver. 'bp-nx-*' are the self-check's guaranteed-missing names."""
+    tools._resolver_cache.update(ok=None, at=0.0)
+
     def gai(host, port):
-        return {"gone.xyz": None, "lan.xyz": [(0, 0, 0, "", ("192.168.1.9", 0))], "ok.xyz": [(0, 0, 0, "", ("93.184.216.34", 0))]}[host] or (_ for _ in ()).throw(tools.socket.gaierror())
+        if calls is not None:
+            calls.append(host)
+        if host in table:
+            return [(0, 0, 0, "", (ip, 0)) for ip in table[host]]
+        if host.startswith("bp-nx-") and wildcard:
+            return [(0, 0, 0, "", ("93.184.216.34", 0))]
+        raise tools.socket.gaierror()
     monkeypatch.setattr(tools.socket, "getaddrinfo", gai)
+
+
+GOOD = {"example.com": ["93.184.216.34"]}
+
+
+def test_dns_check(monkeypatch):
+    _dns(monkeypatch, {**GOOD, "lan.xyz": ["192.168.1.9"], "ok.xyz": ["93.184.216.35"]})
     assert tools.dns_check("gone.xyz")["status"] == "nxdomain"
     assert tools.dns_check("lan.xyz")["status"] == "private"
     assert tools.dns_check("ok.xyz")["status"] == "ok"
 
 
+@pytest.mark.parametrize("name,table,wildcard", [
+    ("proxy fake-ip mode rewrites every answer", {"example.com": ["198.18.0.38"]}, False),
+    ("carrier-grade NAT range", {"example.com": ["100.64.1.1"]}, False),
+    ("resolver invents answers for names that cannot exist", GOOD, True),
+    ("cannot resolve a known-good site (network down)", {}, False),
+])
+def test_unreliable_resolver_is_detected_and_adds_no_evidence(monkeypatch, name, table, wildcard):
+    _dns(monkeypatch, {**table, "zoom.us": ["198.18.0.9"]}, wildcard)
+    assert tools.dns_check("zoom.us")["status"] == "unreliable", name
+    L = ev(dns={"new-site.xyz": "unreliable"})
+    assert not [e for e in L.items if e.source == "dns_check"]  # no false 'internal address' alarm
+
+
+def test_resolver_self_check_is_cached(monkeypatch):
+    calls = []
+    _dns(monkeypatch, GOOD, calls=calls)
+    tools.dns_check("a.xyz")
+    n = len(calls)
+    tools.dns_check("b.xyz")
+    assert len(calls) == n + 1  # only the real lookup; controls were cached
+
+
 # ---------------------------------------------------------------- findings -> evidence
-def ev(**f):
+def ev(**f):  # noqa: E302
     ing = ingest("Call 1-876-555-0123 or visit new-site.xyz and amazon.com")
     it = SimpleNamespace(asks=set(), pressure=False, pressure_kinds=set(), scenario="", mismatches=[], model_scenario="", evidence={})
     L = Ledger()

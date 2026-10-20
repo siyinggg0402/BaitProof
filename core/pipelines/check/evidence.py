@@ -24,6 +24,19 @@ class Ledger:
         self.items.append(ev)
         return ev
 
+    def clear_model(self) -> None:
+        """Drop every model-produced fact. Used before a re-analysis with new information, so stale opinions don't linger."""
+        self.items = [e for e in self.items if e.kind != "model"]
+        self._seen = {k for k in self._seen if k[0] != "model"}
+        for i, e in enumerate(self.items, 1):
+            e.id = f"e{i}"
+
+    def discard(self, source: str) -> None:
+        self.items = [e for e in self.items if e.source != source]
+        self._seen = {k for k in self._seen if k[1] != source}
+        for i, e in enumerate(self.items, 1):
+            e.id = f"e{i}"
+
     # -- views ---------------------------------------------------------------------------------------------------
     def scam(self) -> list[Evidence]:
         return [e for e in self.items if e.supports == "scam"]
@@ -54,6 +67,10 @@ class Ledger:
 
     def weight(self, supports: str) -> float:
         return sum(POINTS[e.strength] * (MODEL_DISCOUNT if e.kind == "model" else 1.0) for e in self.items if e.supports == supports)
+
+    def weight_independent(self, supports: str) -> float:
+        """Total points of NON-model evidence. This is what stacks up as the loop gathers facts."""
+        return sum(POINTS[e.strength] for e in self.items if e.supports == supports and e.kind != "model")
 
     def has_independent_support(self) -> bool:
         """Flywheel requirement: at least one non-model scam fact of medium+ strength."""

@@ -39,6 +39,7 @@ def all_examples() -> list[dict]:
 def add_user_example(text: str, tactics: list[str], tell_phrase: str, tell: str, action: str) -> bool:
     """Stores an already-abstracted example. Returns False if empty/duplicate."""
     text = redact(text)[:500]
+    tell, action = redact(tell)[:400], redact(action)[:400]  # model-written text can echo names or numbers too
     tactics = [t for t in tactics if valid(t)]
     if not text or not tactics:
         return False
