@@ -76,7 +76,7 @@ def _check(text: str, store: bool, tr: Trace, run: obs.Run) -> CheckResult:
     it = intent_stage.diagnose(ing)
     tr.add("intent", "flag" if it.high_risk or it.pressure else "pass", it.summary())
 
-    f = tools.run_tools(ing, tr)
+    f, gate = tools.run_tools(ing, tr, it.claimed if it.claimed_kind in ("organisation", "authority") else "")
 
     ledger = Ledger()
     analysis.rule_evidence(ing, it, f, ledger)

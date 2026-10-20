@@ -19,3 +19,20 @@ def enrich(domains: list[str], limit: int = 2) -> list[str]:
         return notes
     except Exception:
         return []
+
+
+def official_sites(org: str, limit: int = 5) -> list[str]:
+    """Hostnames of the top web results for '<org> official website'. A weak signal (search ranking is not authority),
+    so callers weigh it lightly. Raises on any failure: the tool gate turns that into a skipped tool."""
+    from urllib.parse import urlparse
+
+    from tavily import TavilyClient
+
+    client = TavilyClient(api_key=os.environ["TAVILY_API_KEY"])
+    r = client.search(query=f"{org} official website", max_results=limit)
+    hosts = []
+    for item in r.get("results", []):
+        h = (urlparse(item.get("url", "")).hostname or "").lower().removeprefix("www.")
+        if h:
+            hosts.append(h)
+    return list(dict.fromkeys(hosts))

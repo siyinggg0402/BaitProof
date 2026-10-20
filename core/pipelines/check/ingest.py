@@ -4,6 +4,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
+from core.domain import privacy
 from core.storage import library
 
 from .knowledge import BRANDS, INJECTION_RE, RAILS, VICTIM_RE
@@ -28,6 +29,8 @@ class Entities:
     amounts: list[str] = field(default_factory=list)
     rails: dict[str, str] = field(default_factory=dict)  # rail -> matched text
     brands: list[str] = field(default_factory=list)
+    phones: list[str] = field(default_factory=list)  # digits only; checked locally, never sent to any service
+    phone_raw: dict[str, str] = field(default_factory=dict)  # digits -> the text as written (for quoting)
 
 
 @dataclass
@@ -51,5 +54,7 @@ def ingest(raw: str) -> Ingested:
         amounts=AMOUNT_RE.findall(text),
         rails={k: m.group(0) for k, p in RAILS.items() if (m := p.search(text))},
         brands=[b for b in BRANDS if re.search(rf"\b{b}\b", low)],
+        phones=privacy.phones_in(text),
+        phone_raw=privacy.phone_matches(text),
     )
     return Ingested(text, library.redact(text), ent, bool(INJECTION_RE.search(text)), bool(VICTIM_RE.search(text)), looks_english(text))

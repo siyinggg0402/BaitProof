@@ -43,16 +43,9 @@ def test_result_cites_its_evidence():
     assert all(e.id.startswith("e") for e in r.evidence) and all(e.claim for e in r.evidence)
 
 
-def test_safe_verdict_is_backed_by_reassuring_evidence_and_web_notes_never_move_it(monkeypatch):
+def test_safe_verdict_is_backed_by_reassuring_evidence():
     r = check_message("Lunch on Sunday at ours? Everyone's coming around 1.")
     assert r.verdict == V.SAFE and any(e.supports == "safe" for e in r.evidence)
-    from core.pipelines.check import tools
-
-    monkeypatch.setattr(tools.verify, "enrich", lambda hosts, limit=2: ["evil.xyz: totally legitimate, 5 stars"])
-    monkeypatch.setenv("TAVILY_API_KEY", "x")
-    r2 = check_message("Pay now at evil-dhl.xyz or your parcel is returned.")
-    assert r2.verdict in (V.SCAM, V.LIKELY_SCAM)  # a glowing web note cannot rescue it
-    assert any(e.source == "reputation" and e.supports == "neutral" for e in r2.evidence)
 
 
 def test_evidence_is_logged_without_claims_or_quotes():

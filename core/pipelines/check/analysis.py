@@ -12,7 +12,7 @@ from .evidence import Ledger
 from .ingest import Ingested
 from .intent import Intent
 from .knowledge import RULES
-from .tools import Findings
+from .tools import Findings, registered_domain as tools_registered
 
 
 STRONG_RULE_TACTICS = {"remote-access-request"}  # a pattern hit that is near-conclusive on its own
@@ -31,6 +31,35 @@ def rule_evidence(ing: Ingested, intent: Intent, f: Findings, ledger: Ledger) ->
         ledger.add("tool", "domain_check", "scam", "strong", f"The link {host} {'; '.join(why)}", host, "lookalike-link")
     for host, why in f.soft_hosts.items():
         ledger.add("tool", "domain_check", "scam", "weak", f"The link {host} {'; '.join(why)}", host, "lookalike-link")
+    for host, brand in f.official_hosts.items():
+        ledger.add("tool", "domain_check", "safe", "medium", f"The link {host} goes to {brand.title()}'s real website", host)
+    for host, age in f.ages.items():
+        if age is None:
+            continue
+        if age < 30:
+            ledger.add("tool", "domain_age", "scam", "medium", f"The website {host} was registered only {age} days ago", host, "lookalike-link")
+        elif age < 180:
+            ledger.add("tool", "domain_age", "scam", "weak", f"The website {host} was registered only {age} days ago (under six months)", host, "lookalike-link")
+        elif age >= 730:
+            ledger.add("tool", "domain_age", "safe", "weak", f"The website {host} has existed for {age // 365} years", host)
+    for host, st in f.dns.items():
+        if st == "nxdomain":
+            ledger.add("tool", "dns_check", "scam", "weak", f"The website address {host} doesn't exist (any more)", host)
+        elif st == "private":
+            ledger.add("tool", "dns_check", "scam", "medium", f"{host} points to an internal address, which a real website never does", host)
+    for org, sites in f.brand_sites.items():
+        official = {tools_registered(h) for h in sites}
+        for host in f.hosts:
+            if host in f.official_hosts or not sites:
+                continue
+            if tools_registered(host) in official:
+                ledger.add("tool", "brand_lookup", "safe", "weak", f"The web lists {host} as {org.title()}'s site", host)
+            else:
+                ledger.add("tool", "brand_lookup", "scam", "weak", f"The web lists {sites[0]} as {org.title()}'s website, but this link goes to {host}", host, "lookalike-link")
+    for num, kind in f.phones.items():
+        if kind in ("caribbean", "premium"):
+            why = "an area code tied to 'one-ring' scams" if kind == "caribbean" else "a premium-rate number that can charge you heavily"
+            ledger.add("tool", "phone_check", "scam", "medium", f"The phone number is {why}", ing.entities.phone_raw.get(num, ""))
     for r in f.irreversible_rails:
         ledger.add("tool", "payment_rail", "scam", "strong", f"Asks for payment by {r.replace('-', ' ')}, which can't be taken back",
                    ing.entities.rails[r], "irreversible-payment")

@@ -6,6 +6,7 @@ import os
 import re
 import time
 
+from core.domain.privacy import scrub_outgoing
 from core.obs import record_llm
 
 
@@ -47,6 +48,7 @@ def chat_json(system: str, user: str, heavy: bool = True, retries: int = 1, purp
     if not available():
         raise LLMUnavailable("Nebius not configured")
     model = os.environ["NEBIUS_MODEL"] if heavy else os.getenv("NEBIUS_MODEL_LIGHT") or os.environ["NEBIUS_MODEL"]
+    user, scrubbed = scrub_outgoing(user)  # outgoing-data gate: callers already redact; this catches anything that slipped through
     global _flag_supported
     last: Exception | None = None
     for _ in range(retries + 1):
@@ -72,7 +74,7 @@ def chat_json(system: str, user: str, heavy: bool = True, retries: int = 1, purp
                 USAGE["prompt_tokens"] += tin
                 USAGE["completion_tokens"] += tout
             parsed = parse_json(resp.choices[0].message.content or "")
-            record_llm(purpose=purpose, model=model, ms=int((time.perf_counter() - t0) * 1000), tokens_in=tin, tokens_out=tout, ok=True)
+            record_llm(purpose=purpose, model=model, ms=int((time.perf_counter() - t0) * 1000), tokens_in=tin, tokens_out=tout, ok=True, pii_scrubbed=scrubbed)
             return parsed
         except Exception as e:  # network, auth, bad JSON: all degrade the same way
             last = e

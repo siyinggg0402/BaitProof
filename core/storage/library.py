@@ -2,31 +2,17 @@
 from __future__ import annotations
 
 import json
-import re
 from pathlib import Path
-from urllib.parse import urlparse
 
-from core.storage import db
+from core.domain import privacy
 from core.domain.tactics import valid
+from core.storage import db
 
 SEED_PATH = Path(__file__).resolve().parents[2] / "data" / "seed_examples.json"
 
-URL_RE = re.compile(r"(?:https?://|www\.)[^\s]+|\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|net|org|xyz|top|click|info|icu|co|io|me|ly|shop|site|online)(?:/[^\s]*)?", re.I)
-EMAIL_RE = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
-PHONE_RE = re.compile(r"\+?\d[\d\s().-]{6,}\d")
-
-
-def host_of(url: str) -> str:
-    u = url if "//" in url else "//" + url
-    return (urlparse(u).hostname or url).lower().rstrip(".,)")
-
-
-def redact(text: str, links: bool = True) -> str:
-    """Deterministic PII scrub. URLs shrink to bare host (scam domains aren't personal; paths/tokens may be)."""
-    text = EMAIL_RE.sub("[email]", text)
-    text = URL_RE.sub(lambda m: host_of(m.group(0)), text)
-    text = PHONE_RE.sub("[number]", text)
-    return text.strip()
+# Re-exported so existing imports keep working; the implementation lives in core.domain.privacy.
+URL_RE, EMAIL_RE, PHONE_RE = privacy.URL_RE, privacy.EMAIL_RE, privacy.PHONE_RE
+host_of, redact = privacy.host_of, privacy.redact
 
 
 def seed_examples() -> list[dict]:

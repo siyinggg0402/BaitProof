@@ -59,7 +59,7 @@ def arbitrate(ledger: Ledger, intent: Intent, f: Findings, model_verdict: Verdic
         d = Decision(Verdict.UNSURE, "low", ["asks for something sensitive or is hard to judge"])
     elif not english and not m_safe:
         d = Decision(Verdict.UNSURE, "low", ["can't judge this language with built-in rules alone"])
-    elif "click" in intent.asks:
+    elif "click" in intent.asks and not f.all_links_official():
         d = Decision(Verdict.UNSURE, "low", ["contains a link that can't be verified"])
     else:
         d = Decision(Verdict.SAFE, "high" if m_safe else "medium", ["asks for nothing risky and no red flags found"])

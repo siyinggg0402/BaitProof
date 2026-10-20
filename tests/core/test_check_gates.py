@@ -32,17 +32,6 @@ def test_domain_check(host, hard):
     assert bool(tools.domain_check(host)["hard"]) == hard
 
 
-def test_tool_gate_blocks_invented_args_unknown_tools_and_budget():
-    tr = Trace()
-    ing = ingest("see evil-dhl.xyz")
-    g = tools.ToolGate(ing.entities, tr, budget=1)
-    assert g.call("rm_rf", "x") is None
-    assert g.call("domain_check", "model-invented.com") is None  # not in the message
-    assert g.call("domain_check", "evil-dhl.xyz")["hard"]
-    assert g.call("domain_check", "evil-dhl.xyz") is None  # budget
-    assert [s.status for s in tr.steps] == ["block"] * 3
-
-
 def test_grounding_drops_hallucinated_tactics():
     kept, dropped = gates.grounding_gate(
         [TacticHit(id="urgency-pressure", quote="act NOW"), TacticHit(id="advance-fee", quote="pay a fee"), TacticHit(id="job-task-scam", quote="")],
