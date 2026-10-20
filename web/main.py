@@ -25,7 +25,7 @@ from core.domain.tactics import TACTICS
 from core.pipelines import challenge, check, train
 from core.storage import history, links, model
 from web import cardimg
-from web import admin, results
+from web import admin, game, results
 from web.deps import add_security_headers, bind_profile, limit_expensive
 
 BASE = Path(__file__).parent
@@ -54,6 +54,9 @@ SESSIONS: "OrderedDict[str, dict[str, Drill]]" = OrderedDict()  # in-memory; ans
 
 def page(request: Request, name: str, **ctx):
     return templates.TemplateResponse(request, name, {"map": model.resilience_map(), "ai": llm.available(), "labels": {k: v["label"] for k, v in TACTICS.items()}, **ctx})
+
+
+app.include_router(game.mount(page))
 
 
 @app.get("/", response_class=HTMLResponse)

@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Game · Baitproof{% endblock %}
+{% block content %}
+<div id="game" class="game">
+  <noscript><p class="card">The game needs JavaScript. You can still <a href="/train">practise</a> without it.</p></noscript>
+  <p class="muted" id="game-loading">Loading your game…</p>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/js/game.js"></script>{% endblock %}

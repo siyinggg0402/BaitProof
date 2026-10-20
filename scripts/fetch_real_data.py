@@ -8,6 +8,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1] / "data" / "external"
 FILES = {
     "difraud_sms/test.jsonl": "https://huggingface.co/datasets/redasers/difraud/resolve/main/sms/test.jsonl",
+    "difraud_sms/train.jsonl": "https://huggingface.co/datasets/redasers/difraud/resolve/main/sms/train.jsonl",
+    "difraud_sms/validation.jsonl": "https://huggingface.co/datasets/redasers/difraud/resolve/main/sms/validation.jsonl",
     "difraud_sms/LICENSE.txt": "https://huggingface.co/datasets/redasers/difraud/resolve/main/LICENSE.txt",
     "mendeley_financial/financial_scams.csv": "https://data.mendeley.com/public-files/datasets/znsk27yk3h/files/d8cdbed5-0c31-4010-82e7-ed432c4bc313/file_downloaded",
 }

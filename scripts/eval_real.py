@@ -22,8 +22,9 @@ WS = re.compile(r"\s+")
 
 def load(source: str) -> list[tuple[bool, str]]:
     out = []
-    if source == "sms":
-        for line in open(EXT / "difraud_sms" / "test.jsonl", encoding="utf-8"):
+    if source in ("sms", "smstrain", "smsval"):  # disjoint random splits of the same SMS data: test (dev, studied), train (fresh), validation (fresh)
+        split = {"sms": "test", "smstrain": "train", "smsval": "validation"}[source]
+        for line in open(EXT / "difraud_sms" / f"{split}.jsonl", encoding="utf-8"):
             r = json.loads(line)
             out.append((r["label"] == 1, WS.sub(" ", r["text"]).strip()))
     elif source == "fin":

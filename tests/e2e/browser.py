@@ -6,7 +6,7 @@ import sys
 import tempfile
 import time
 
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import expect, sync_playwright
 
 PORT = 8771
 CHROME = os.getenv("CHROME_PATH", "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
@@ -131,6 +131,61 @@ def main() -> int:
             page.wait_for_selector(".bigpct")
             no_overflow("card")
             page.screenshot(path=os.path.join(tempfile.gettempdir(), "e2e_card.png"))
+
+            # ---- game: hub, Inbox Rush by keyboard, boss, spot-the-tell
+            page.goto(base + "/game")
+            page.wait_for_selector(".mode-card")
+            no_overflow("game-hub")
+            assert page.is_visible(".tabs") and not page.is_visible("nav .navlink"), "phone layout should use the bottom tab bar"
+            page.click(".mode-card:has-text('Inbox Rush')")
+            for i in range(8):
+                page.wait_for_selector(".choice")
+                if i == 0:
+                    no_overflow("game-play")
+                page.keyboard.press("s" if i % 2 == 0 else "f")
+                page.wait_for_selector(".reveal-card .banner-r")
+                if i == 0:
+                    no_overflow("game-reveal")
+                page.click("button.big:has-text('Next'), button.big:has-text('See results')")
+            page.wait_for_selector(".end h1")
+            no_overflow("game-end")
+            assert "XP" in page.inner_text(".end") and page.locator(".end .kpi").count() == 4
+            page.screenshot(path=os.path.join(tempfile.gettempdir(), "e2e_game_end.png"))
+            page.click("button:has-text('All games')")
+            page.wait_for_selector(".boss-grid .tile")
+            assert page.locator(".boss-grid .tile").count() == 12
+            assert "Level" in page.inner_text(".hud-card") and "XP" in page.inner_text(".hud-card")
+            page.click(".boss-grid .tile >> nth=0")
+            page.wait_for_selector(".hearts")
+            assert page.inner_text(".hearts").count("♥") == 3
+            page.click(".choice.c-unsure")
+            page.wait_for_selector(".reveal-card")
+            page.click("button.ghost.quit")
+            page.wait_for_selector(".mode-card")
+            page.click(".mode-card:has-text('Spot the Tell')")
+            page.wait_for_selector(".words .w")
+            page.click(".words .w >> nth=0")
+            page.click(".words .w >> nth=1")
+            assert page.locator(".words .w.sel").count() == 2
+            page.click("button.big:has-text('Check my answer')")
+            page.wait_for_selector(".reveal-card .banner-r")
+            assert page.locator(".reveal-card mark").count() == 1  # the real giveaway is highlighted
+            no_overflow("game-tell")
+
+            # ---- records: history from the checks above, Telegram connect, delete
+            page.goto(base + "/records")
+            page.wait_for_selector("#tg")
+            no_overflow("records")
+            assert page.locator(".rec").count() >= 1
+            assert page.is_visible(".tabs")
+            page.click("#tg-connect")
+            page.wait_for_selector("#tg-codetext:not(:empty)")
+            code = page.inner_text("#tg-codetext")
+            assert len(code) == 6 and code.isalnum() and "/link " + code in page.inner_text("#tg-howto")
+            no_overflow("records-code")
+            n = page.locator(".rec").count()
+            page.click(".rec-del >> nth=0")
+            expect(page.locator(".rec")).to_have_count(n - 1)  # (a string wait_for_function would need eval, which our CSP forbids)
             b.close()
     finally:
         srv.terminate()
