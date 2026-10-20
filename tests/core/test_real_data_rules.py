@@ -2,6 +2,7 @@
 import pytest
 
 from core.ai import llm
+from core.domain.intents import clearing_conditions_met
 from core.domain.schemas import Verdict as V
 from core.pipelines.check import check_message, intent as intent_stage
 from core.pipelines.check.ingest import ingest
@@ -137,3 +138,20 @@ def test_rules_alone_catch_most_real_world_premium_sms_spam_and_never_call_it_sa
     for t in spam:
         r = check_message(t, store=False, log=False)
         assert r.verdict in (V.SCAM, V.LIKELY_SCAM), t[:50]
+
+
+def test_a_premium_content_sms_dressed_as_an_order_update_is_never_cleared():
+    # real SMS (train split): "order is on the way" is the bait; the web address is split up so link detection misses it
+    t = "BangBabes Ur order is on the way. U SHOULD receive a Service Msg 2 download UR content. If U do not, GoTo wap. bangb. tv on UR mobile internet/service menu"
+    assert check_message(t, store=False, log=False).verdict is not V.SAFE
+    assert not clearing_conditions_met("delivery-update", t, set())
+    assert clearing_conditions_met("delivery-update", "Your parcel has been delivered to the front door.", set())
+
+
+@pytest.mark.parametrize("text", [
+    "Hi, I'm Daniel, a friend of your cousin Mike. He gave me your number. I'm moving to your city next month and wondered if you know any good rental agents?",
+    "Hello, your colleague Priya passed me your email. I'm a friend of your manager and need a quick favour.",
+    "Hey, we have a mutual friend, Sam. He shared your contact with me, hope you don't mind me writing.",
+])
+def test_a_stranger_who_claims_a_mutual_acquaintance_is_an_opener_and_is_never_cleared(text):
+    assert check_message(text, store=False, log=False).verdict is not V.SAFE

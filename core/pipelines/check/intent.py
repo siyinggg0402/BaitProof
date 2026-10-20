@@ -31,6 +31,7 @@ AUTHORITY = re.compile(r"\b(officer|detective|police|irs|hmrc|social security|co
 ORGANISATION = re.compile(r"\b((?:your|the) bank(?! (?:details|account|transfer|statement|holiday|balance))|bank (?:alert|notice|security|team|fraud)|\w+ bank(?! (?:details|account|transfer|statement|holiday))|microsoft|apple|amazon|paypal|netflix|your provider|support team|customer service)\b", re.I)
 OPENER = re.compile(
     r"\b[Ii]s this [A-Z][a-z]+\s*\?|\bwrong (?:person|number)\b|\b(?:got|found|have) your (?:number|email|contact|details) (?:from|through|via|on)\b"
+    r"|\b(?:gave|sent|passed|shared|given) (?:me|us) your (?:number|email|contact|details|address)\b|\bfriend of (?:your|a (?:friend|colleague))\b|\bmutual (?:friend|contact|acquaintance)\b"
     r"|\b(?:this is )?my (?:new|temporary|temp|other) (?:number|phone)\b|\bnew number\b|\btemporary number\b|\b(?:lost|dropped|broke|cracked|smashed) my phone\b|\bphone (?:broke|died|fell)\b"
     r"|\bcan you (?:check|confirm|see) (?:if )?you can (?:receive|get)\b|\bare you (?:available|at your desk)\b"
     r"|\b(?:add me on|message me on|find me on|move (?:to|this to)|continue (?:on|in)) (?:telegram|whatsapp|signal|wechat)\b"

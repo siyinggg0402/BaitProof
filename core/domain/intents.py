@@ -105,7 +105,9 @@ def guidance(pid: str) -> str:
 # ---- what a deterministic check must see before it may vouch for a message WITHOUT the model. Deliberately much stricter than `cues`:
 # the cues decide what a message is ABOUT; these decide whether it is plainly ordinary.
 _NEGATIVE = re.compile(r"\b(?:fee|pay|payment|claim|win|won|winner|prize|reward|free|delayed|held|on hold|failed|unpaid|track now|verify|confirm your|"
-                       r"update your|click|link|reply|send|text|txt|call|urgent|immediately|suspend\w*|locked|expire[sd]?)\b", re.I)
+                       r"update your|click|link|reply|send|text|txt|call|urgent|immediately|suspend\w*|locked|expire[sd]?|"
+                       r"go ?to|download\w*|subscri\w+|wap|service menu|mobile internet|content|ringtone|tones?)\b", re.I)
+_SPLIT_URL = re.compile(r"\b\w{2,}\.\s\w{1,}\.?\s?(?:tv|com|net|org|info|biz|mobi|xyz|co|uk|me)\b|\b\w+\.\s(?:tv|com|net|org|info|biz|mobi|xyz)\b", re.I)  # "wap. bangb. tv": a web address broken up to dodge link detection
 _STATUS = re.compile(r"\b(?:has|have|been|is|are|was|will be)\b[^.!?]{0,30}\b(?:shipped|dispatched|delivered|arriv\w+|out for delivery|on (?:its|the) way|ready (?:for|to) collect\w*)\b", re.I)
 _TIME = re.compile(r"\b\d{1,2}(?::\d{2})?\s?(?:am|pm)\b|\b(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|tomorrow|today|tonight|next week)\b", re.I)
 _APPT = re.compile(r"\b(?:appointment|booking|booked|reservation|table for|viewing)\b", re.I)
@@ -119,7 +121,7 @@ def clearing_conditions_met(pid: str, text: str, asks: set) -> bool:
         body = re.sub(r"[^.!?\n]*\b(?:never|do not|don'?t|not) share[^.!?\n]*[.!?]?", " ", text, flags=re.I)
         return not asks and not _CODE_REQ.search(body)
     if pid == "delivery-update":
-        return not asks and bool(_STATUS.search(text)) and not _NEGATIVE.search(text)
+        return not asks and bool(_STATUS.search(text)) and not _NEGATIVE.search(text) and not _SPLIT_URL.search(text)
     if pid == "appointment-booking":
         return not (asks - {"reply"}) and bool(_APPT.search(text)) and bool(_TIME.search(text)) and not re.search(r"\b(?:fee|deposit|pay|payment|claim|win|prize|free|urgent|immediately)\b", text, re.I)
     return False
