@@ -35,12 +35,22 @@ header{position:sticky;top:12px;z-index:10;padding-top:12px}
   background:color-mix(in srgb,var(--surface) 82%,transparent);-webkit-backdrop-filter:saturate(1.6) blur(14px);backdrop-filter:saturate(1.6) blur(14px);box-shadow:var(--shadow)}
 .brand{display:flex;align-items:center;gap:10px;font:700 1.05rem var(--sans);letter-spacing:-.01em;color:var(--ink);text-decoration:none}
 .brand svg{width:28px;height:28px}
-nav{display:flex;align-items:center;gap:2px}nav form{margin:0}
+nav{display:flex;align-items:center;gap:2px;margin-left:auto}nav form{margin:0}
 nav a,nav button{font:600 .88rem var(--sans);padding:0 14px;min-height:40px;display:inline-flex;align-items:center;border-radius:999px;border:0;background:none;color:var(--muted);text-decoration:none;cursor:pointer;transition:background .2s,color .2s}
 nav a:hover,nav button:hover{background:var(--brand-soft);color:var(--ink)}
 nav a[aria-current=page]{background:var(--brand-soft);color:var(--brand)}
 nav .cta .short{display:none}
 nav .cta{background:var(--ink);color:var(--bg);margin-left:4px}nav .cta:hover{background:var(--ink);color:var(--bg);opacity:.85}
+
+/* language switcher: a <details> menu, works without scripts */
+.lang{position:relative;flex:none}
+.lang summary{list-style:none;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 12px;border:1px solid var(--line-2);border-radius:999px;font:650 .82rem var(--sans);color:var(--ink);cursor:pointer;white-space:nowrap;transition:background .2s}
+.lang summary::-webkit-details-marker{display:none}
+.lang summary svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.lang summary:hover,.lang[open] summary{background:var(--brand-soft)}
+.lang ul{position:absolute;right:0;top:calc(100% + 10px);z-index:30;margin:0;padding:6px;list-style:none;min-width:10.5rem;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-up)}
+.lang a{display:flex;align-items:center;min-height:44px;padding:0 14px;border-radius:10px;color:var(--ink);text-decoration:none;font:600 .95rem var(--sans)}
+.lang a:hover{background:var(--brand-soft)}.lang a[aria-current]{color:var(--brand);background:var(--brand-soft)}
 
 main{padding-block:34px 56px}
 /* type */
@@ -265,3 +275,28 @@ html.js .reveal.in{opacity:1;transform:none}
 @media(max-width:820px){.hero{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}.mock-body{min-height:0}}
 @media(max-width:560px){nav .cta .full{display:none}nav .cta .short{display:inline}nav{gap:0}#textsize{margin-right:2px;padding:0 10px}.bar{padding-left:12px}.card.result{padding:0}nav a,nav button{white-space:nowrap;font-size:.82rem}body{font-size:17px}.map li{grid-template-columns:1fr auto}.lvl{grid-column:1/-1}.ring{width:100px;height:100px}nav a{padding:0 10px}.brand span{display:none}.card{padding:18px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}html.js .reveal{opacity:1;transform:none}}
+
+/* Chinese (Simplified and Traditional). The sizes above are tuned for Latin letters; Chinese characters are denser and square, so text gets a
+   Chinese font, more line height, no tight tracking and slightly larger small print. Placed last so it wins over the rules above. */
+:lang(zh){--sans:ui-sans-serif,-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC","Noto Sans SC","Source Han Sans SC","WenQuanYi Micro Hei",sans-serif}
+:lang(zh-Hant){--sans:ui-sans-serif,-apple-system,BlinkMacSystemFont,"PingFang TC","Hiragino Sans CNS","Microsoft JhengHei","Noto Sans CJK TC","Noto Sans TC","Source Han Sans TC",sans-serif}
+:lang(zh) body{line-height:1.7;word-break:normal;overflow-wrap:break-word}
+:lang(zh) h1{font-size:clamp(1.95rem,5vw,3rem);line-height:1.28;letter-spacing:0}
+:lang(zh) h2{line-height:1.4;letter-spacing:0}
+:lang(zh) .lead{font-size:1.08rem;line-height:1.75;max-width:34em}
+:lang(zh) .brand,:lang(zh) .result .banner,:lang(zh) .kpi b,:lang(zh) .ring strong,:lang(zh) .share .bigpct{letter-spacing:0}
+:lang(zh) .result .banner{line-height:1.45}
+:lang(zh) .muted,:lang(zh) .examples span,:lang(zh) .trust,:lang(zh) .mode-desc,:lang(zh) .tile-sub,:lang(zh) .hint,:lang(zh) .lvl,:lang(zh) .kpi span,:lang(zh) footer.wrap{font-size:.9rem}
+:lang(zh) .pill{font-size:.86rem}:lang(zh) .pill b,:lang(zh) .badge,:lang(zh) .mode-tag{font-size:.78rem;letter-spacing:.02em}
+:lang(zh) .panel b{font-size:.86rem;letter-spacing:.04em;text-transform:none}
+:lang(zh) .chips li,:lang(zh) .chip,:lang(zh) .badge-chip,:lang(zh) .filters button,:lang(zh) .mock-tags span{font-size:.88rem}
+:lang(zh) .ev-tag{font-size:.78rem;letter-spacing:.02em}:lang(zh) .ev small{font-size:.82rem}
+:lang(zh) .ev li,:lang(zh) .map li{line-height:1.55}
+:lang(zh) .trace{font-size:.92rem}:lang(zh) .live-steps small{font-size:.86rem}
+:lang(zh) .tabs a{font-size:.78rem}
+:lang(zh) nav a,:lang(zh) nav button,:lang(zh) .lang summary{font-size:.92rem}
+:lang(zh) .mode-title,:lang(zh) .tile-name{line-height:1.4}
+:lang(zh) .opt span,:lang(zh) .mode-desc,:lang(zh) .tile-name,:lang(zh) .badge-pop span,:lang(zh) .banner-r span,:lang(zh) .feedback,:lang(zh) .panel{overflow-wrap:anywhere}
+:lang(zh) .bubble,:lang(zh) .msg,:lang(zh) blockquote{line-height:1.75}
+:lang(zh) .code{letter-spacing:.2em}
+@media(max-width:560px){:lang(zh) h1{font-size:clamp(1.75rem,8vw,2.2rem)}:lang(zh) nav a,:lang(zh) nav button{font-size:.88rem}}

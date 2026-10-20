@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% block title %}Can you spot the scam?{% endblock %}
+{% block title %}{{ _("Can you spot the scam?") }}{% endblock %}
 {% block content %}
 <div class="narrow">
-  <span class="pill rise"><b>FAMILY</b> Challenge</span>
-  <h1 class="rise d1">Can you spot the scam?</h1>
-  <p class="lead rise d2">{{ items|length }} real-style messages. Decide which are scams and which are fine, then share your score.</p>
+  <span class="pill rise"><b>{{ _("FAMILY") }}</b> {{ _("Challenge") }}</span>
+  <h1 class="rise d1">{{ _("Can you spot the scam?") }}</h1>
+  <p class="lead rise d2">{{ _("{n} real-style messages. Decide which are scams and which are fine, then share your score.", n=items|length) }}</p>
 </div>
-<section class="card rise d3 narrow" id="stage" aria-live="polite" data-cid="{{ cid }}" data-items='{{ items|tojson|forceescape }}'><button class="big" id="start">Start the challenge</button></section>
+<section class="card rise d3 narrow" id="stage" aria-live="polite" data-cid="{{ cid }}" data-items='{{ items|tojson|forceescape }}'><button class="big" id="start">{{ _("Start the challenge") }}</button></section>
 {% endblock %}
 {% block scripts %}<script src="/static/js/challenge.js"></script>{% endblock %}

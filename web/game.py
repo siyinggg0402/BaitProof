@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from core.game import engine
 from core.storage import links
-from web.deps import limit_expensive
+from web.deps import limit_expensive, request_lang
 
 router = APIRouter()
 
@@ -42,25 +42,26 @@ def mount(page) -> APIRouter:
         return page(request, "game.html")
 
     @router.get("/api/game/state")
-    def state():
-        return engine.overview()
+    def state(request: Request):
+        return engine.overview(request_lang(request))
 
     @router.post("/api/game/start", dependencies=[Depends(limit_expensive)])
-    def start(body: StartIn):
+    def start(request: Request, body: StartIn):
+        lang = request_lang(request)
         try:
-            return engine.public(engine.start(body.mode, body.trick, owner=links.current_profile()))
+            return engine.public(engine.start(body.mode, body.trick, owner=links.current_profile(), lang=lang), lang)
         except engine.GameError as e:
             raise HTTPException(400, str(e))
 
     @router.post("/api/game/answer")
-    def answer(body: AnswerIn):
+    def answer(request: Request, body: AnswerIn):
         try:
-            return engine.answer(_round(body.round), body.item_id, body.choice, body.picked, body.fast)
+            return engine.answer(_round(body.round), body.item_id, body.choice, body.picked, body.fast, request_lang(request))
         except engine.GameError as e:
             raise HTTPException(400, str(e))
 
     @router.post("/api/game/finish")
-    def finish(body: FinishIn):
-        return engine.finish(_round(body.round))
+    def finish(request: Request, body: FinishIn):
+        return engine.finish(_round(body.round), request_lang(request))
 
     return router

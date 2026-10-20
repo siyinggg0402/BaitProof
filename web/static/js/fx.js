@@ -34,9 +34,9 @@ const bubble = document.getElementById("demo-bubble");
 if (bubble) {
   const tags = document.getElementById("demo-tags"), verdict = document.getElementById("demo-verdict"), label = document.getElementById("demo-label");
   const DEMOS = [
-    { text: "DHL: Your parcel is on hold. Pay the $1.99 fee within 24 hours. Pay now: dhl-fee-pay.xyz", tags: ["Rushing you", "Fake website address"], v: "Scam. Don't pay, don't tap the link.", ok: false },
-    { text: "Hi grandma, it's me. I'm in trouble. Please buy four gift cards and send me the numbers. Don't tell Mom.", tags: ["Playing on your feelings", "Gift cards"], v: "Scam. Call them on a number you know.", ok: false },
-    { text: "Reminder: your appointment is tomorrow at 10:30am. Call the number on your card to reschedule.", tags: [], v: "Looks fine, but verify first.", ok: true },
+    { text: t("DHL: Your parcel is on hold. Pay the $1.99 fee within 24 hours. Pay now: dhl-fee-pay.xyz"), tags: [t("Rushing you"), t("Fake website address")], v: t("Scam. Don't pay, don't tap the link."), ok: false },
+    { text: t("Hi grandma, it's me. I'm in trouble. Please buy four gift cards and send me the numbers. Don't tell Mom."), tags: [t("Playing on your feelings"), t("Gift cards")], v: t("Scam. Call them on a number you know."), ok: false },
+    { text: t("Reminder: your appointment is tomorrow at 10:30am. Call the number on your card to reschedule."), tags: [], v: t("Looks fine, but verify first."), ok: true },
   ];
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const show = (d) => { bubble.textContent = d.text; bubble.classList.remove("caret"); tags.replaceChildren(...d.tags.map((t) => Object.assign(document.createElement("span"), { textContent: t }))); verdict.textContent = d.v; verdict.classList.toggle("ok", d.ok); verdict.classList.add("show"); };

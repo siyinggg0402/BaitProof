@@ -4,12 +4,14 @@ from __future__ import annotations
 from datetime import timedelta
 
 from core.storage import db
+from core.domain.i18n import norm, tactic_text, tr
 from core.domain.schemas import Level
 from core.domain.tactics import TACTICS, valid
 
 LEVEL_POINTS = {"untested": 0.0, "weak": 0.25, "learning": 0.6, "strong": 1.0}
 LEVEL_BARS = {"untested": 0, "weak": 1, "learning": 3, "strong": 5}
 LEVEL_TEXT = {"untested": "not yet tested", "weak": "weak", "learning": "getting there", "strong": "strong"}
+LEVEL_KEYS = {k: f"Level: {v}" for k, v in LEVEL_TEXT.items()}  # translation keys for the same words ("weak" alone is also used for evidence strength)
 INTERVAL_DAYS = {"weak": 1, "learning": 3, "strong": 7}
 
 
@@ -84,14 +86,15 @@ def due_count(rows: list[dict] | None = None) -> int:
     return sum(1 for r in (rows or all_mastery()) if r["level"] != "untested" and (d := db.parse(r["due"])) and d <= now)
 
 
-def resilience_map() -> dict:
+def resilience_map(lang: str = "en") -> dict:
+    lang = norm(lang)
     rows = all_mastery()
     return {
         "score": baitproof_score(rows),
         "due": due_count(rows),
         "tactics": [
-            {"id": r["tactic"], "label": TACTICS[r["tactic"]]["label"], "level": r["level"],
-             "level_text": LEVEL_TEXT[r["level"]], "bars": LEVEL_BARS[r["level"]]}
+            {"id": r["tactic"], "label": tactic_text(r["tactic"], "label", lang, TACTICS), "level": r["level"],
+             "level_text": LEVEL_TEXT[r["level"]] if lang == "en" else tr(LEVEL_KEYS[r["level"]], lang), "bars": LEVEL_BARS[r["level"]]}
             for r in rows
         ],
     }

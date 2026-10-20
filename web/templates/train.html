@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% block title %}Practice · Baitproof{% endblock %}
+{% block title %}{{ _("Practice") }} · Baitproof{% endblock %}
 {% block content %}
 <div class="narrow">
-  <span class="pill rise"><b>1 MIN</b> Four short questions</span>
-  <h1 class="rise d1">Quick practice</h1>
-  <p class="lead rise d2">Getting one wrong is how we learn. Every miss shows you the giveaway, so there are no wrong turns here.</p>
+  <span class="pill rise"><b>{{ _("1 MIN") }}</b> {{ _("Four short questions") }}</span>
+  <h1 class="rise d1">{{ _("Quick practice") }}</h1>
+  <p class="lead rise d2">{{ _("Getting one wrong is how we learn. Every miss shows you the giveaway, so there are no wrong turns here.") }}</p>
 </div>
-<section class="card rise d3 narrow" id="stage" aria-live="polite"><p>Picked from the tricks you meet most and the ones you find hardest.</p><button class="big" id="start">Start practice</button></section>
+<section class="card rise d3 narrow" id="stage" aria-live="polite"><p>{{ _("Picked from the tricks you meet most and the ones you find hardest.") }}</p><button class="big" id="start">{{ _("Start practice") }}</button></section>
 {% include "_map.html" %}
 {% endblock %}
 {% block scripts %}<script src="/static/js/train.js"></script>{% endblock %}

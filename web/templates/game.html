@@ -1,9 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Game · Baitproof{% endblock %}
+{% block title %}{{ _("Game") }} · Baitproof{% endblock %}
 {% block content %}
+{% set practise %}<a href="/train">{{ _("practise") }}</a>{% endset %}
 <div id="game" class="game">
-  <noscript><p class="card">The game needs JavaScript. You can still <a href="/train">practise</a> without it.</p></noscript>
-  <p class="muted" id="game-loading">Loading your game…</p>
+  <noscript><p class="card">{{ _h("The game needs JavaScript. You can still {practise} without it.", practise=practise) }}</p></noscript>
+  <p class="muted" id="game-loading">{{ _("Loading your game…") }}</p>
 </div>
 {% endblock %}
 {% block scripts %}<script src="/static/js/game.js"></script>{% endblock %}

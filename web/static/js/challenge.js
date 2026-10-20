@@ -7,10 +7,10 @@ function show() {
   const d = items[idx];
   stage.replaceChildren(el("div", { className: "step" },
     progress(idx, items.length),
-    el("span", { className: "chip", textContent: `${idx + 1} of ${items.length}` }),
+    el("span", { className: "chip", textContent: t("{i} of {n}", { i: idx + 1, n: items.length }) }),
     el("blockquote", { textContent: d.text }), speakBtn(d.text),
-    el("h2", { textContent: "Scam or fine?" }),
-    el("div", { className: "opts" }, option("Scam", 0, () => next(true)), option("Looks fine", 1, () => next(false)))));
+    el("h2", { textContent: t("Scam or fine?") }),
+    el("div", { className: "opts" }, option(t("Scam"), 0, () => next(true)), option(t("Looks fine"), 1, () => next(false)))));
 }
 async function next(v) {
   answers.push(v);
@@ -20,9 +20,9 @@ async function next(v) {
   })).json();
   const link = location.origin + r.card_url;
   stage.replaceChildren(el("div", { className: "step" },
-    el("h2", { textContent: `I'm ${r.pct}% Baitproof 🛡️ (${r.right} of ${r.total})` }),
+    el("h2", { textContent: t("I'm {pct}% Baitproof 🛡️ ({right} of {total})", { pct: r.pct, right: r.right, total: r.total }) }),
     ...r.review.map((x, i) => el("p", { className: "feedback " + (x.correct ? "correct" : "incorrect"),
-      textContent: `${i + 1}. ${x.correct ? "✅" : "💡"} ${x.is_scam ? "Scam" : "Fine"}. ${x.tell}` })),
+      textContent: `${i + 1}. ${x.correct ? "✅" : "💡"} ${x.is_scam ? t("Scam. {tell}", { tell: x.tell }) : t("Fine. {tell}", { tell: x.tell })}` })),
     familyBox(r.pct, link),
-    el("a", { className: "big", href: link, textContent: "Open my result card" })));
+    el("a", { className: "big", href: link, textContent: t("Open my result card") })));
 }

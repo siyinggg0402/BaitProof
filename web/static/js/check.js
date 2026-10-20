@@ -1,10 +1,10 @@
 // Live view: stream each gate as it runs, then swap in the finished result. Falls back to a normal form post if anything fails.
 const form = document.getElementById("check-form");
 const LABEL = {
-  ingest: "Reading the message", triage: "Checking how you're doing", intent: "Working out what it asks of you", tools: "Checking links and numbers",
-  analysis: "AI review", grounding: "Verifying claims against the message", arbiter: "Weighing the evidence", loop: "Investigating further",
-  "second-look": "Taking a second look", sufficiency: "Confidence check", critic: "Second reviewer", output: "Final safety checks",
-  flywheel: "Adding to your practice", guard: "Safety net",
+  ingest: t("Reading the message"), triage: t("Checking how you're doing"), intent: t("Working out what it asks of you"), tools: t("Checking links and numbers"),
+  analysis: t("AI review"), grounding: t("Verifying claims against the message"), arbiter: t("Weighing the evidence"), loop: t("Investigating further"),
+  "second-look": t("Taking a second look"), sufficiency: t("Confidence check"), critic: t("Second reviewer"), output: t("Final safety checks"),
+  flywheel: t("Adding to your practice"), guard: t("Safety net"),
 };
 const ICON = { pass: "✓", flag: "!", skip: "–", block: "✕" };
 

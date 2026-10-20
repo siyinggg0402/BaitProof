@@ -1,38 +1,39 @@
 {% extends "base.html" %}
 {% block content %}
+{% set harder %}<span class="dots"><span class="grad">{{ _("harder to fool") }}</span></span>{% endset %}
 <section class="hero">
   <div>
-    <span class="pill rise"><b>FREE</b> Private by design. We keep tricks, not messages.</span>
-    <h1 class="rise d1">Make your family <span class="dots"><span class="grad">harder to fool</span></span>.</h1>
-    <p class="lead rise d2">Paste any suspicious message. Baitproof tells you if it's a scam, shows you the one giveaway, then turns it into quick practice so the next one doesn't work on you.</p>
-    <div class="cta-row rise d3"><a class="btn big" href="#check">Check a message</a><a class="btn big sec" href="/train">Start practice</a></div>
-    <ul class="trust rise d4"><li>Plain language</li><li>Read aloud</li><li>Learns which tricks fool you</li></ul>
+    <span class="pill rise"><b>{{ _("FREE") }}</b> {{ _("Private by design. We keep tricks, not messages.") }}</span>
+    <h1 class="rise d1">{{ _h("Make your family {harder}.", harder=harder) }}</h1>
+    <p class="lead rise d2">{{ _("Paste any suspicious message. Baitproof tells you if it's a scam, shows you the one giveaway, then turns it into quick practice so the next one doesn't work on you.") }}</p>
+    <div class="cta-row rise d3"><a class="btn big" href="#check">{{ _("Check a message") }}</a><a class="btn big sec" href="/train">{{ _("Start practice") }}</a></div>
+    <ul class="trust rise d4"><li>{{ _("Plain language") }}</li><li>{{ _("Read aloud") }}</li><li>{{ _("Learns which tricks fool you") }}</li></ul>
   </div>
   <div class="rise d2" aria-hidden="true">
     <div class="mock">
-      <div class="mock-top"><i></i><i></i><i></i><span>New message</span></div>
+      <div class="mock-top"><i></i><i></i><i></i><span>{{ _("New message") }}</span></div>
       <div class="mock-body">
-        <div class="bubble" id="demo-bubble">DHL: Your parcel is on hold. Pay the $1.99 fee within 24 hours. Pay now: dhl-fee-pay.xyz</div>
-        <div class="mock-tags" id="demo-tags"><span>Rushing you</span><span>Fake website address</span></div>
-        <div class="mock-verdict show" id="demo-verdict">Scam. Don't pay, don't tap the link.</div>
+        <div class="bubble" id="demo-bubble">{{ _("DHL: Your parcel is on hold. Pay the $1.99 fee within 24 hours. Pay now: dhl-fee-pay.xyz") }}</div>
+        <div class="mock-tags" id="demo-tags"><span>{{ labels['urgency-pressure'] }}</span><span>{{ labels['lookalike-link'] }}</span></div>
+        <div class="mock-verdict show" id="demo-verdict">{{ _("Scam. Don't pay, don't tap the link.") }}</div>
       </div>
     </div>
-    <p class="mock-cap">Example only</p>
+    <p class="mock-cap">{{ _("Example only") }}</p>
   </div>
 </section>
 
 <form method="post" action="/check" class="card reveal" id="check-form">
-  <label for="message">Paste the message here</label>
-  <textarea id="message" name="message" rows="5" required maxlength="4000" placeholder="e.g. “Your parcel is on hold. Pay a $1.99 fee within 24 hours…”">{{ text }}</textarea>
-  <div class="examples"><span>Try an example:</span>
-    <button type="button" class="ghost" data-example="Hi grandma, it's me. I'm in trouble and need cash. Please buy four $100 gift cards and send me the numbers. Don't tell Mom.">Grandchild in trouble</button>
-    <button type="button" class="ghost" data-example="DHL: Your parcel is on hold. Pay the $1.99 fee within 24 hours or it will be returned. Pay now: dhl-fee-pay.xyz/track">Parcel fee</button>
-    <button type="button" class="ghost" data-example="Hi, this is Dr. Lee's clinic. Reminder: your appointment is tomorrow at 10:30am. Please call the number on your appointment card to reschedule.">A normal message</button>
+  <label for="message">{{ _("Paste the message here") }}</label>
+  <textarea id="message" name="message" rows="5" required maxlength="4000" placeholder="{{ _('e.g. “Your parcel is on hold. Pay a $1.99 fee within 24 hours…”') }}">{{ text }}</textarea>
+  <div class="examples"><span>{{ _("Try an example:") }}</span>
+    <button type="button" class="ghost" data-example="{{ _("Hi grandma, it's me. I'm in trouble and need cash. Please buy four $100 gift cards and send me the numbers. Don't tell Mom.") }}">{{ _("Grandchild in trouble") }}</button>
+    <button type="button" class="ghost" data-example="{{ _("DHL: Your parcel is on hold. Pay the $1.99 fee within 24 hours or it will be returned. Pay now: dhl-fee-pay.xyz/track") }}">{{ _("Parcel fee") }}</button>
+    <button type="button" class="ghost" data-example="{{ _("Hi, this is Dr. Lee's clinic. Reminder: your appointment is tomorrow at 10:30am. Please call the number on your appointment card to reschedule.") }}">{{ _("A normal message") }}</button>
   </div>
-  <button class="big">Check it</button>
+  <button class="big">{{ _("Check it") }}</button>
 </form>
 
-<section class="card live" id="live" hidden aria-live="polite"><h2>Checking your message…</h2><ol class="live-steps" id="live-steps"></ol></section>
+<section class="card live" id="live" hidden aria-live="polite"><h2>{{ _("Checking your message…") }}</h2><ol class="live-steps" id="live-steps"></ol></section>
 <div id="result-slot">{% if result %}{% include "_result.html" %}{% endif %}</div>
 {% include "_map.html" %}
 {% endblock %}

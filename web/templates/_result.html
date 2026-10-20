@@ -7,23 +7,23 @@
     {% else %}<path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/>{% endif %}</svg></span>
     <span>{{ result.headline.split(' ', 1)[1] }}</span></div>
   <div class="body">
-    {% if result.tell %}<div class="panel"><b>The giveaway</b>{{ result.tell }}</div>{% endif %}
-    {% if result.action %}<div class="panel"><b>What to do</b>{{ result.action }}</div>{% endif %}
-    {% if result.tactics %}<ul class="chips" aria-label="Tricks found">{% for t in result.tactics %}<li title="{{ t.quote }}">{{ labels[t.id] }}</li>{% endfor %}</ul>{% endif %}
-    {% if result.added_to_training %}<p class="added">Added to your practice: {% for t in result.added_to_training %}{{ labels[t] }}{{ ", " if not loop.last }}{% endfor %}</p>{% endif %}
+    {% if result.tell %}<div class="panel"><b>{{ _("The giveaway") }}</b>{{ result.tell }}</div>{% endif %}
+    {% if result.action %}<div class="panel"><b>{{ _("What to do") }}</b>{{ result.action }}</div>{% endif %}
+    {% if result.tactics %}<ul class="chips" aria-label="{{ _('Tricks found') }}">{% for t in result.tactics %}<li title="{{ t.quote }}">{{ labels[t.id] }}</li>{% endfor %}</ul>{% endif %}
+    {% if result.added_to_training %}<p class="added">{{ _("Added to your practice: {tricks}", tricks=result.added_to_training|trick_names) }}</p>{% endif %}
     {% if result.evidence %}
-    <details class="evidence" open><summary>The evidence ({{ result.evidence|length }})</summary>
+    <details class="evidence" open><summary>{{ _("The evidence ({n})", n=result.evidence|length) }}</summary>
       <ul class="ev">{% for e in result.evidence %}
-        <li class="ev-{{ e.supports }}"><span class="ev-tag">{{ {'scam': 'Red flag', 'safe': 'Reassuring', 'neutral': 'Note'}[e.supports] }}</span>
-          <span class="ev-body">{{ e.claim }}<small>{{ {'rule': 'Known pattern', 'intent': 'What it asks', 'tool': 'Checked', 'model': 'AI reviewer'}[e.kind] }} · {{ e.strength }}{% if e.kind == 'model' %} · counts for less{% endif %}</small></span></li>
+        <li class="ev-{{ e.supports }}"><span class="ev-tag">{{ _({'scam': 'Red flag', 'safe': 'Reassuring', 'neutral': 'Note'}[e.supports]) }}</span>
+          <span class="ev-body">{{ e.claim }}<small>{{ _({'rule': 'Known pattern', 'intent': 'What it asks', 'tool': 'Checked', 'model': 'AI reviewer'}[e.kind]) }} · {{ _(e.strength) }}{% if e.kind == 'model' %} · {{ _("counts for less") }}{% endif %}</small></span></li>
       {% endfor %}</ul></details>
     {% endif %}
-    <details class="trace"><summary>How I decided ({{ result.confidence }} confidence)</summary>
+    <details class="trace"><summary>{{ _("How I decided ({level})", level=_(result.confidence + " confidence")) }}</summary>
       <ol>{% for s in result.trace %}<li class="st-{{ s.status }}"><strong>{{ STAGES.get(s.stage, s.stage) }}</strong>{% if s.ms %} <small>{{ s.ms }} ms</small>{% endif %}: {{ s.detail }}</li>{% endfor %}</ol></details>
-    <button class="speak" data-say="{{ result.headline }} {{ result.tell }} {{ result.action }}">🔊 Read aloud</button>
-    <div class="feedback-row" role="group" aria-label="Was this answer right?"><span>Was this right?</span>
-      <button type="button" class="ghost" data-feedback="up">👍 Yes</button><button type="button" class="ghost" data-feedback="down">👎 No</button>
+    <button class="speak" data-say="{{ result.headline }} {{ result.tell }} {{ result.action }}">🔊 {{ _("Read aloud") }}</button>
+    <div class="feedback-row" role="group" aria-label="{{ _('Was this answer right?') }}"><span>{{ _("Was this right?") }}</span>
+      <button type="button" class="ghost" data-feedback="up">👍 {{ _("Yes") }}</button><button type="button" class="ghost" data-feedback="down">👎 {{ _("No") }}</button>
       <span class="muted" data-fb-note></span></div>
-    <p><a class="big" href="/train">Practise this trick →</a></p>
+    <p><a class="big" href="/train">{{ _("Practise this trick →") }}</a></p>
   </div>
 </section>

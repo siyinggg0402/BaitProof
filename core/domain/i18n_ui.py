@@ -1,4 +1,202 @@
-"""Chinese (Simplified) text for the website, the game and the bot: English text -> Simplified Chinese. Merged into core.domain.i18n.ZH.
-Keep one entry per English string, with the same {placeholders}. Traditional is derived automatically from these."""
+"""Chinese (Simplified) text for the website, the game and practice: English text -> Simplified Chinese. Merged into core.domain.i18n.ZH.
+Keep one entry per English string, with the same {placeholders}. Traditional is derived automatically from these, so write Simplified only.
+Wording: plain, warm, short sentences for older adults; "你" throughout; 骗局 (scam), 套路 (trick), 破绽 (giveaway), 核实 (verify), 练习, 记录, 挑战."""
 
-UI_ZH: dict[str, str] = {}
+UI_ZH: dict[str, str] = {
+    # ---- page frame: header, tabs, footer, language switcher
+    "Main": "主导航", "Sections": "栏目", "Check": "查一查", "Practice": "练习", "Game": "游戏", "Records": "记录", "Larger text": "放大文字",
+    "Challenge family": "挑战家人", "Challenge": "挑战", "Language": "语言",
+    "tricks": "套路",
+    "We keep the {tricks} you meet, not your messages.": "我们只记下你遇到的{tricks}，不保存你的消息。",
+    "Offline mode: AI not configured, using built-in checks.": "离线模式：未配置AI，使用内置检查。",
+
+    # ---- home page
+    "harder to fool": "更难被骗",
+    "Make your family {harder}.": "让你的家人{harder}。",
+    "FREE": "免费",
+    "Private by design. We keep tricks, not messages.": "注重隐私：我们只记套路，不存消息。",
+    "Paste any suspicious message. Baitproof tells you if it's a scam, shows you the one giveaway, then turns it into quick practice so the next one doesn't work on you.":
+        "把可疑的消息贴进来。Baitproof 会告诉你是不是骗局，指出最关键的破绽，再把它变成简短的练习，下次骗子就骗不到你了。",
+    "Check a message": "检查一条消息", "Start practice": "开始练习",
+    "Plain language": "大白话", "Read aloud": "朗读", "Learns which tricks fool you": "记住哪些套路最容易骗到你",
+    "New message": "新消息", "Example only": "仅为示例",
+    "DHL: Your parcel is on hold. Pay the $1.99 fee within 24 hours. Pay now: dhl-fee-pay.xyz":
+        "【顺丰速运】您的快递已被扣留，请在24小时内支付3元费用。立即支付：sf-fee-pay.xyz",
+    "Scam. Don't pay, don't tap the link.": "骗局！不要付款，不要点链接。",
+    "Paste the message here": "把消息贴在这里",
+    "e.g. “Your parcel is on hold. Pay a $1.99 fee within 24 hours…”": "例如：“您的快递已被扣留，请在24小时内支付3元费用……”",
+    "Try an example:": "试试看示例：",
+    "Grandchild in trouble": "孙辈出事了", "A normal message": "一条正常消息", "Check it": "帮我检查",
+    "Hi grandma, it's me. I'm in trouble and need cash. Please buy four $100 gift cards and send me the numbers. Don't tell Mom.":
+        "奶奶，是我，我换了新号码。我出事了，急需用钱，请你马上转5000元到这个账户，千万别告诉我妈。",
+    "DHL: Your parcel is on hold. Pay the $1.99 fee within 24 hours or it will be returned. Pay now: dhl-fee-pay.xyz/track":
+        "【顺丰速运】您的快递已被扣留，请在24小时内支付3元派送费，否则包裹将被退回。立即支付：sf-fee-pay.xyz/track",
+    "Hi, this is Dr. Lee's clinic. Reminder: your appointment is tomorrow at 10:30am. Please call the number on your appointment card to reschedule.":
+        "您好，这里是李医生诊所。提醒您：您预约的就诊时间是明天上午10点30分。如需改期，请拨打预约卡上的电话。",
+    "Checking your message…": "正在检查你的消息……",
+    # the looping demo on the home page
+    "Hi grandma, it's me. I'm in trouble. Please buy four gift cards and send me the numbers. Don't tell Mom.":
+        "妈，我手机坏了，这是我的新号码。我有急事，你先转5000元给我，别告诉爸爸。",
+    "Gift cards": "转账汇款",
+    "Scam. Call them on a number you know.": "骗局！请用你知道的号码打给本人。",
+    "Reminder: your appointment is tomorrow at 10:30am. Call the number on your card to reschedule.":
+        "提醒：您预约的就诊时间是明天上午10点30分。如需改期，请拨打预约卡上的电话。",
+    "Looks fine, but verify first.": "看起来没问题，但请先核实。",
+    # the live view while a check runs
+    "Reading the message": "正在读取消息", "Checking how you're doing": "正在了解你现在的情况", "Working out what it asks of you": "正在分析它要你做什么",
+    "Checking links and numbers": "正在检查链接和号码", "AI review": "AI审阅", "Verifying claims against the message": "正在核对原文，确认依据",
+    "Weighing the evidence": "正在权衡证据", "Investigating further": "正在进一步调查", "Taking a second look": "正在再看一遍", "Confidence check": "把握度检查",
+    "Second reviewer": "第二位审阅者", "Final safety checks": "最后的安全检查", "Adding to your practice": "正在加入你的练习", "Safety net": "安全兜底",
+    # the same stages, as the finished answer lists them ("How I decided")
+    "Read the message": "读取消息", "Checked how you're doing": "了解你现在的情况", "Worked out what it asks of you": "分析它要你做什么",
+    "Checked links and numbers": "检查链接和号码", "Verified claims against the message": "核对原文，确认依据", "Weighed the evidence": "权衡证据",
+    "Investigated further": "进一步调查", "Took a second look": "再看一遍", "Added to your practice": "已加入你的练习",
+
+    # ---- the answer
+    "The giveaway": "破绽", "What to do": "该怎么做", "Tricks found": "发现的套路", "Added to your practice: {tricks}": "已加入你的练习：{tricks}",
+    "The evidence ({n})": "证据（{n}）", "How I decided ({level})": "我是怎么判断的（{level}）",
+    "high confidence": "把握很大", "medium confidence": "把握一般", "low confidence": "把握不大",
+    "Was this answer right?": "这个回答对吗？", "Was this right?": "这个回答对吗？", "Yes": "对", "No": "不对",
+    "Practise this trick →": "练习这种套路 →",
+    "Thanks. I only keep your thumb, never your message.": "谢谢。我只记下你点的赞或踩，不会保存你的消息。",
+
+    # ---- your scam resilience (the map)
+    "Your scam resilience": "你的防骗能力",
+    "Baitproof score {score} out of 100": "Baitproof 分数：{score}分（满分100分）",
+    "Baitproof score.": "Baitproof 分数。",
+    "It grows as you practise and fades if you stop, so a little often works best.": "分数会随练习增长，一旦停下就会慢慢下降，所以经常练一点最有效。",
+    "trick is due for a refresher": "种套路该复习了", "tricks are due for a refresher": "种套路该复习了",
+    "Filter tricks": "按套路筛选", "All": "全部", "Needs work": "需要加强", "Getting there": "渐入佳境", "Strong": "很强",
+    "Level: not yet tested": "还没练过", "Level: weak": "需加强", "Level: getting there": "渐入佳境", "Level: strong": "很强",
+
+    # ---- records
+    "My records": "我的记录", "YOUR HISTORY": "你的历史", "The website and Telegram, in one place": "网站和 Telegram 的检查都在这里",
+    "Every message you check, here or in Telegram, is saved to your profile with the verdict and the giveaway, and the tricks go straight into your practice and game.":
+        "你在这里或在 Telegram 里检查的每条消息，都会连同结论和破绽一起存进你的个人档案，其中的套路会直接加入你的练习和游戏。",
+    "Connected": "已连接", "Not connected": "未连接",
+    "Forward suspicious messages to the Baitproof bot and they show up here automatically. Connect once with a short code.":
+        "把可疑的消息转发给 Baitproof 机器人，它们会自动出现在这里。只需用一个短代码连接一次。",
+    "Connect Telegram": "连接 Telegram", "Open Telegram": "打开 Telegram", "Disconnect Telegram": "断开 Telegram",
+    "Open Telegram and send this code to the bot {name}:": "打开 Telegram，把这个代码发给 {name}：",
+    "The code works once and expires in {timer}.": "这个代码只能用一次，{timer} 后失效。",
+    "✅ Checks you run in Telegram now appear below. In Telegram you can also send {history} and {score}.":
+        "✅ 你在 Telegram 里做的检查现在会显示在下面。在 Telegram 里你还可以发送 {history} 和 {score}。",
+    "messages checked": "已检查的消息", "flagged as scams": "被判为骗局", "website · Telegram": "网站 · Telegram", "trick you meet most": "最常遇到的套路",
+    "Filter records": "筛选记录", "Website": "网站", "Delete": "删除", "Delete this record": "删除这条记录",
+    "Nothing here yet. {check} or forward one to the Telegram bot.": "这里还没有记录。{check}，或者转发一条给 Telegram 机器人。",
+    "Nothing here yet. {check}.": "这里还没有记录。{check}。",
+    "Scam": "骗局", "Likely scam": "很可能是骗局", "Looks safe": "看起来没问题", "Not sure": "不确定", "Support": "给你支持",
+    "Your data": "你的数据",
+    "We keep the verdict, the tricks and the giveaway, never the message itself. A short preview with phone numbers, emails and link paths removed helps you recognise a record.":
+        "我们保存结论、套路和破绽，绝不保存消息原文。预览只有短短一段，其中的电话号码、邮箱和链接路径都已去掉，方便你认出是哪一条。",
+    "Keep a short redacted preview": "保留一小段已隐去隐私的预览", "Delete all my records": "删除我的全部记录",
+    "Really delete everything? Click again": "真的要全部删除吗？再点一次确认",
+    "(your Baitproof bot)": "你的 Baitproof 机器人", "Or open the bot and send:  /link {code}": "或者打开机器人，发送：/link {code}",
+    "{k} days ago": "{k}天前", "{k} hours ago": "{k}小时前", "{k} minutes ago": "{k}分钟前", "just now": "刚刚",
+
+    # ---- practice
+    "1 MIN": "1分钟", "Four short questions": "四道小题", "Quick practice": "快速练习",
+    "Getting one wrong is how we learn. Every miss shows you the giveaway, so there are no wrong turns here.": "答错一题，正是学习的好机会。每次答错都会告诉你破绽在哪里，所以在这里没有白走的路。",
+    "Picked from the tricks you meet most and the ones you find hardest.": "题目从你最常遇到的套路和你觉得最难的套路里挑选。",
+    "Nothing to practise yet.": "暂时没有可练习的内容。", "Your reply": "你的回复", "Check my answer": "检查我的答案", "Finish": "完成", "Next →": "下一题 →",
+    "{i} of {n}": "第{i}题，共{n}题",
+    "You got {good} of {n} right.": "{n}题里你答对了{good}题。",
+    "Baitproof score: {score}{diff}. See your updated map below.": "Baitproof 分数：{score}{diff}。更新后的防骗能力图在下面。",
+    "Practise again": "再练一次",
+    "not yet tested": "还没练过", "keep practising": "继续练习", "you missed this one before": "你之前答错过这个", "this is a weak spot": "这是你的薄弱环节",
+    "time to review it": "该复习了", "you just got a scam like this": "你刚收到过类似的骗局",
+    "What is the safest thing to do?": "最安全的做法是什么？",
+    "Which trick is this message using?": "这条消息用的是哪种套路？",
+    "Which part is the giveaway that this is a scam?": "哪一句话暴露了这是骗局？",
+    "Write a short, safe reply (or say what you would do).": "写一句简短又安全的回复（或者说说你会怎么做）。",
+    "Nice catch! {tell}": "答对了！{tell}",
+    "Good try. This trick is sneaky, and spotting it takes practice. The giveaway: {tell}": "没关系。这种套路很狡猾，要多练才能识破。破绽在这里：{tell}",
+    "You're on the right track. Add that you'd check through an official number or website. ": "方向对了。再补充一点：你会通过官方电话或网站去核实。",
+    "Click the link to check if it's real": "点开链接看看是不是真的",
+    "Reply with the details they asked for, to be safe": "为了保险，按对方要求回复相关信息",
+    "Do what they say quickly so nothing bad happens": "赶紧照对方说的做，免得出事",
+    "Call the phone number written in the message": "拨打消息里写的电话号码",
+    "Send a small amount first to see if it works": "先转一小笔钱试试看",
+    "Forward it to friends and ask what to do, then follow the link": "转给朋友问问怎么办，再点开里面的链接",
+
+    # ---- family challenge and the share card
+    "Can you spot the scam?": "你能识破骗局吗？", "FAMILY": "家人",
+    "{n} real-style messages. Decide which are scams and which are fine, then share your score.": "{n}条仿真消息。判断哪些是骗局，哪些没问题，然后分享你的成绩。",
+    "Start the challenge": "开始挑战", "Scam or fine?": "是骗局，还是没问题？", "Looks fine": "看起来没问题", "Scam. {tell}": "骗局。{tell}", "Fine. {tell}": "没问题。{tell}",
+    "I'm {pct}% Baitproof 🛡️ ({right} of {total})": "我的防骗力 {pct}% 🛡️（答对{right}/{total}）",
+    "Open my result card": "查看我的成绩卡",
+    "I'm {pct}% Baitproof": "我的防骗力 {pct}%", "I'm {pct}% Baitproof 🛡️": "我的防骗力 {pct}% 🛡️",
+    "I'm {pct}% Baitproof 🛡️ Can you beat me?": "我的防骗力 {pct}% 🛡️ 你能超过我吗？",
+    "I spotted {right} of {total} scam messages. Can you beat me?": "{total}条消息里，我答对了{right}条。你能超过我吗？",
+    "I spotted {right} of {total} messages. Can you beat me?": "{total}条消息里，我答对了{right}条。你能超过我吗？",
+    "I spotted {right} of {total} scam messages.": "{total}条消息里，我答对了{right}条。", "Can you beat me?": "你能超过我吗？",
+    "Family challenge": "家人挑战", "Take the challenge": "接受挑战", "More ways to share": "更多分享方式", "Challenge link: {url}": "挑战链接：{url}",
+    "Copied! Paste it into a message to your family.": "已复制！粘贴到发给家人的消息里就行。", "Copy this link:": "请复制这个链接：",
+    "Hi {name}, I just tried a quick 2-minute quiz on spotting scam messages and got {pct}%. Scammers target families like ours, so could you try it too? {link}":
+        "{name}，我刚做了一个2分钟的防骗小测验，答对了{pct}%。骗子专挑我们这样的家庭下手，你也来试试好吗？{link}",
+    "there": "你好呀", "Mum": "妈妈", "Who is this for?": "这条消息发给谁？", "Who is it for?": "发给谁？", "WhatsApp": "WhatsApp", "Text message": "短信", "Email": "邮件",
+    "Copy message": "复制消息", "Copied! Paste it into any chat.": "已复制！粘贴到任何聊天里就行。", "Can you try this scam quiz?": "你能试试这个防骗小测验吗？",
+    "Send it to someone you want to protect": "发给你想保护的人",
+
+    # ---- the game
+    "practise": "练习",
+    "The game needs JavaScript. You can still {practise} without it.": "游戏需要开启 JavaScript。没有它，你仍然可以去{practise}。",
+    "Loading your game…": "正在载入你的游戏……", "Couldn't load the game. Please refresh.": "游戏载入失败，请重新载入页面。",
+    "Something went wrong. Please try again.": "出错了，请再试一次。",
+    "Level {n} · {title}": "第{n}级 · {title}", "Progress to the next level": "升级进度", "{a} / {b} XP to level {n}": "{a} / {b} XP，升到第{n}级", "{a} / {b} XP": "{a} / {b} XP",
+    "{n}-day streak": "连续{n}天", "Baitproof score {n}": "Baitproof 分数 {n}", "{n} rounds": "玩了{n}局",
+    "Sound effects": "音效", "Beat the clock (+5 XP for quick answers)": "限时挑战（答得快 +5 XP）",
+    "Game modes": "游戏模式", "Inbox Rush": "收件箱快答", "Quick play": "快速开始",
+    "8 messages. Scam, fine, or check first? Aimed at the tricks you find hardest.": "8条消息。是骗局、没问题，还是先核实？专挑你最拿不准的套路来考。",
+    "Daily Challenge": "每日挑战", "Completed": "已完成", "+50 XP": "+50 XP",
+    "Done today ✓. You can replay it for fun.": "今天已完成 ✓。想玩的话可以再玩一遍。",
+    "The same 6 messages for everyone today. +50 XP the first time.": "今天人人都是同样的6条消息。第一次完成可得 +50 XP。",
+    "Spot the Tell": "找破绽", "Tap the exact words that give a scam away.": "点出暴露骗局的那几句话。",
+    "Your circle": "你身边的骗局", "From your circle": "来自你身边",
+    "{n} scams that reached your own family.": "有{n}条骗局真的发到了你身边。", "{n} scam that reached your own family.": "有{n}条骗局真的发到了你身边。",
+    "Scams you check or forward will appear here to practise on.": "你检查或转发过的骗局会出现在这里，供你练习。",
+    "Boss battles": "关主挑战",
+    "One boss per trick. Beat all of its messages with lives to spare to earn a badge and raise that trick in your resilience map.":
+        "每种套路有一位关主。保住生命、答对关里所有消息，就能拿到徽章，并提升这种套路在你防骗能力图里的等级。",
+    "Boss beaten": "已通关", "{n} messages · 3 lives": "{n}条消息 · 3条命", "{n} lives left": "还剩{n}条命", "{trick} boss · ": "{trick}关主 · ",
+    "{trick} boss beaten!": "击败了“{trick}”关主！", "💥 The boss won this time": "💥 这次关主赢了",
+    "The boss got you this time. You can try again.": "关主这次赢了。你可以再来一次。",
+    "Badges ({n}/{m})": "徽章（{n}/{m}）", "No badges yet. Finish a round to earn your first.": "还没有徽章。完成一局就能拿到第一枚。", "New badges": "新徽章",
+    "Quit": "退出",
+    "Tap the words that give this scam away": "点出暴露这个骗局的那几句话", "Words of the message": "消息里的词句",
+    "What is this message?": "这条消息是什么？", "Your answer": "你的答案", "Check first": "先核实",
+    "Keys: S, F and C. “Check first” means you'd phone the sender on a number you already trust.": "快捷键：S、F、C。“先核实”是指你会用自己已有的号码打电话给对方确认。",
+    "Time left": "剩余时间",
+    "🎯 Great eye!": "🎯 眼力真好！", "✅ Nice catch!": "✅ 识破了！", "🟡 Careful is good!": "🟡 小心一点是好事！", "💡 That one was genuine": "💡 虚惊一场", "💡 Here's the tell": "💡 破绽在这里",
+    "This one is a scam.": "这条是骗局。", "This one is genuine.": "这条是真的消息。", "This one is worth checking first: it could be real or fake.": "这条值得先核实：它可能是真的，也可能是假的。",
+    "Why it's fine": "为什么没问题", "See results": "查看结果", "+{n} XP": "+{n} XP",
+    "🌟 Flawless round!": "🌟 全部答对！", "🎉 Round complete!": "🎉 这一局完成了！", "Experience": "经验值",
+    "right": "答对", "best combo": "最高连对", "XP earned": "获得 XP", "Baitproof score": "Baitproof 分数",
+    "Every slip shows you a tell. Have another go.": "每次失手都会让你看到一个破绽。再来一次吧。", "Not one slip. Your family is lucky to have you.": "一题都没错。有你在，你的家人真幸运。",
+    "Nice work. Each round makes the next scam easier to spot.": "做得好。每玩一局，下一个骗局就更容易识破。",
+    "Level up! You're now level {n}: {title}": "升级啦！你现在是第{n}级：{title}", "Daily Challenge complete: +50 XP bonus!": "每日挑战完成：奖励 +50 XP！",
+    "Try again": "再试一次", "Play again": "再玩一局", "All games": "全部游戏", "Practise my weak tricks": "练习我的薄弱套路",
+    # game titles and badges
+    "Rookie": "新手", "Spotter": "留心人", "Sleuth": "小侦探", "Detective": "神探", "Guardian": "守护者", "Sentinel": "哨兵", "Scam Slayer": "骗局克星",
+    "First steps": "迈出第一步", "Finish your first round": "完成你的第一局",
+    "Flawless": "完美无误", "Finish a round without a single slip": "一局里一题都没错",
+    "On fire": "连战连胜", "Get 5 right in a row": "连续答对5题",
+    "3-day streak": "连续3天", "Play three days in a row": "连续3天都玩了游戏",
+    "Week warrior": "一周达人", "Play seven days in a row": "连续7天都玩了游戏",
+    "Daily challenger": "每日挑战者", "Complete a Daily Challenge": "完成一次每日挑战",
+    "Reach level 3": "升到第3级", "Reach level 5": "升到第5级",
+    "Family detective": "家庭神探", "Spot 5 scams that reached your own family": "识破5条真正发到你身边的骗局",
+    "Eagle eye": "火眼金睛", "Find the giveaway in 5 messages": "在5条消息里找出破绽",
+    "Master of “{label}”": "“{label}”大师", "Beat the {label} boss": "击败“{label}”关主",
+    # game and page errors
+    "That round has expired. Start a new one.": "这一局已过期，请重新开始。", "Unknown game mode.": "不认识的游戏模式。",
+    "Not enough messages for that mode yet.": "这个模式的消息还不够。", "Choose scam, looks fine, or check first.": "请选择：骗局、看起来没问题，或先核实。",
+    "This round is already finished.": "这一局已经结束了。", "That message isn't part of this round.": "这条消息不属于这一局。", "Already answered.": "这题已经答过了。",
+    "No lives left. Start the battle again.": "没有命了。请重新开始挑战。", "Pick one of the tricks to challenge.": "请选一种套路来挑战。",
+    "No scams from your own circle yet. Check a message first and it will appear here.": "你身边还没有骗局。先检查一条消息，它就会出现在这里。",
+    "Unknown language": "不支持这种语言", "Paste a message to check.": "请先贴上要检查的消息。",
+    "That result has expired. Please check the message again.": "这个结果已过期，请重新检查这条消息。",
+    "invalid feedback": "反馈无效", "invalid id": "编号无效", "That practice session expired. Start a new one.": "这次练习已过期，请重新开始。",
+    "Challenge not found": "找不到这个挑战",
+    "Too many requests. Please wait a minute and try again.": "请求太频繁了，请等一分钟再试。", "Too many attempts. Please wait a minute.": "尝试次数太多，请等一分钟。",
+}

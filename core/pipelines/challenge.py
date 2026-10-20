@@ -9,8 +9,8 @@ from core.storage import db
 from core.storage import library
 
 
-def create(n: int = 6) -> str:
-    ex = library.all_examples()
+def create(n: int = 6, lang: str = "en") -> str:
+    ex = library.all_examples(lang)
     scams = [e for e in ex if e["is_scam"]]
     legit = [e for e in ex if not e["is_scam"]]
     user = [e for e in scams if e["source"] == "user"]

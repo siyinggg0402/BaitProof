@@ -5,10 +5,35 @@ import os
 import secrets
 import time
 from collections import defaultdict, deque
+from urllib.parse import urlsplit
 
 from fastapi import FastAPI, HTTPException, Request
 
+from core.domain import i18n
 from core.storage import db
+
+LANG_COOKIE = "lang"
+LANG_CODES = {c.lower(): c for c in i18n.LANGS}  # 'zh-hant' -> 'zh-Hant'
+
+
+def request_lang(request: Request) -> str:
+    """The visitor's language: the `lang` cookie (en | zh | zh-Hant), else their browser's Accept-Language, else English."""
+    cached = getattr(request.state, "lang", None)
+    if cached:
+        return cached
+    code = LANG_CODES.get(request.cookies.get(LANG_COOKIE, "").lower())
+    lang = code or i18n.from_accept_language(request.headers.get("accept-language"))
+    request.state.lang = lang
+    return lang
+
+
+def safe_next(target: str | None) -> str:
+    """Where to go after switching language: only a path on this site ('/records?channel=web'), never another site."""
+    t = target or ""
+    if not t.startswith("/") or t.startswith("//") or "\\" in t or any(ord(c) < 32 or ord(c) == 127 for c in t):
+        return "/"
+    parts = urlsplit(t)
+    return t if not parts.scheme and not parts.netloc else "/"
 
 
 async def bind_profile(request: Request) -> None:
@@ -45,6 +70,8 @@ def add_security_headers(app: FastAPI) -> None:
         resp.headers["Content-Security-Policy"] = "default-src 'self'; style-src 'self'; script-src 'self'; frame-ancestors 'none'"
         resp.headers["X-Content-Type-Options"] = "nosniff"
         resp.headers["Referrer-Policy"] = "same-origin"
+        if resp.headers.get("content-type", "").startswith("text/html"):
+            resp.headers["Vary"] = "Cookie, Accept-Language"  # the page's language depends on both
         return resp
 
 

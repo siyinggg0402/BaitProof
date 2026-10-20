@@ -3,7 +3,7 @@
 # Then: edit /opt/baitproof/.env (keys), edit deploy/Caddyfile domain, restart services.
 set -euo pipefail
 REPO="${1:?usage: setup_vm.sh <git-repo-url>}"
-sudo apt-get update -y && sudo apt-get install -y python3-venv git caddy
+sudo apt-get update -y && sudo apt-get install -y python3-venv git caddy fonts-noto-cjk  # fonts-noto-cjk draws the Chinese text on the share-card image
 sudo useradd --system --home /opt/baitproof baitproof 2>/dev/null || true
 sudo mkdir -p /opt/baitproof /var/lib/baitproof
 sudo chown -R "$USER" /opt/baitproof

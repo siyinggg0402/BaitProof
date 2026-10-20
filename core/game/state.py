@@ -5,6 +5,7 @@ import json
 import math
 from datetime import timedelta
 
+from core.domain.i18n import norm, tactic_text, tr
 from core.domain.tactics import TACTICS
 from core.storage import db
 
@@ -48,8 +49,18 @@ def xp_for(level: int) -> int:
     return 50 * level * (level - 1)
 
 
-def title_for(level: int) -> str:
-    return TITLES[min(level - 1, len(TITLES) - 1)]
+def title_for(level: int, lang: str = "en") -> str:
+    return tr(TITLES[min(level - 1, len(TITLES) - 1)], lang)
+
+
+def badge_text(bid: str, lang: str = "en") -> tuple[str, str]:
+    """(title, description) of a badge in the reader's language. The per-trick 'Master of ...' badges are built from the trick's name."""
+    lang = norm(lang)
+    if bid.startswith("boss:") and bid[5:] in TACTICS and lang != "en":
+        label = tactic_text(bid[5:], "label", lang, TACTICS)
+        return tr("Master of “{label}”", lang, label=label), tr("Beat the {label} boss", lang, label=label)
+    title, desc = BADGES[bid]
+    return tr(title, lang), tr(desc, lang)
 
 
 def today() -> str:
@@ -67,12 +78,12 @@ def touch_streak(state: dict) -> None:
     state["last_play"] = t
 
 
-def summary(state: dict | None = None) -> dict:
+def summary(state: dict | None = None, lang: str = "en") -> dict:
     s = state or get()
     lvl = level_for(s["xp"])
     lo, hi = xp_for(lvl), xp_for(lvl + 1)
     streak_alive = s["last_play"] in (today(), (db.now().date() - timedelta(days=1)).isoformat())
-    return {"xp": s["xp"], "level": lvl, "title": title_for(lvl), "xp_into_level": s["xp"] - lo, "xp_for_level": hi - lo, "streak": s["streak"] if streak_alive else 0,
+    return {"xp": s["xp"], "level": lvl, "title": title_for(lvl, lang), "xp_into_level": s["xp"] - lo, "xp_for_level": hi - lo, "streak": s["streak"] if streak_alive else 0,
             "best_streak": s["best_streak"], "rounds": s["rounds"], "best_combo": s["best_combo"], "daily_done": s["daily_done"] == today(),
-            "badges": [{"id": b, "title": BADGES[b][0], "desc": BADGES[b][1]} for b in s["badges"] if b in BADGES],
+            "badges": [{"id": b, "title": badge_text(b, lang)[0], "desc": badge_text(b, lang)[1]} for b in s["badges"] if b in BADGES],
             "badges_total": len(BADGES), "boss_won": s["boss_won"]}

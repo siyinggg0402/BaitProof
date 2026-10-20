@@ -8,6 +8,7 @@ import uuid
 from collections import OrderedDict
 from dataclasses import dataclass, field
 
+from core.domain.i18n import norm, tactic_text
 from core.domain.tactics import TACTICS
 from core.game import pool as gp
 from core.game import state as gs
@@ -98,7 +99,7 @@ def select(mode: str, trick: str, rnd: random.Random, state: dict, items: list[g
         chosen = _pick(mine, 6, rnd, seen)
         chosen += _pick(safes, 2, rnd, seen)
     elif mode == "tell":
-        chosen = _pick([i for i in scams if len(i.tell_phrase.split()) >= 2], 5, rnd, seen)
+        chosen = _pick([i for i in scams if len(i.tell_phrase.split()) >= 2 or (gp.is_cjk(i.text) and i.tell_phrase)], 5, rnd, seen)  # Chinese phrases have no spaces
     elif mode == "yours":
         chosen = _pick([i for i in scams if i.source == "yours"], 5, rnd, seen)
         if not chosen:
@@ -117,12 +118,14 @@ def select(mode: str, trick: str, rnd: random.Random, state: dict, items: list[g
     return chosen
 
 
-def start(mode: str, trick: str = "", items: list[gp.Item] | None = None, owner: str = "") -> Round:
+def start(mode: str, trick: str = "", items: list[gp.Item] | None = None, owner: str = "", lang: str = "en") -> Round:
     if mode not in MODES:
         raise GameError("Unknown game mode.")
     state = gs.get()
     rnd = random.Random(f"daily-{gs.today()}") if mode == "daily" else random.Random()
-    pool_items = sorted(items if items is not None else gp.build_pool(), key=lambda i: i.id) if mode == "daily" else (items if items is not None else gp.build_pool())
+    if items is None:
+        items = gp.build_pool(lang)  # the messages are in the player's language
+    pool_items = sorted(items, key=lambda i: i.id) if mode == "daily" else items
     chosen = select(mode, trick, rnd, state, pool_items)
     if len(chosen) < 3:
         raise GameError("Not enough messages for that mode yet.")
@@ -132,7 +135,7 @@ def start(mode: str, trick: str = "", items: list[gp.Item] | None = None, owner:
     return r
 
 
-def public(r: Round) -> dict:
+def public(r: Round, lang: str = "en") -> dict:
     """What the browser sees: the messages, never the answers."""
     out = []
     for i in r.items:
@@ -140,7 +143,7 @@ def public(r: Round) -> dict:
         if r.mode == "tell":
             d["words"] = gp.words(i.text)
         out.append(d)
-    return {"round": r.id, "mode": r.mode, "trick": r.trick, "trick_label": TACTICS[r.trick]["label"] if r.trick else "", "lives": r.lives, "total": len(r.items), "items": out}
+    return {"round": r.id, "mode": r.mode, "trick": r.trick, "trick_label": tactic_text(r.trick, "label", lang, TACTICS) if r.trick else "", "lives": r.lives, "total": len(r.items), "items": out}
 
 
 # ---------------------------------------------------------------- scoring an answer
@@ -170,7 +173,7 @@ def _grade(r: Round, item: gp.Item, choice: str | None, picked: list[int] | None
     return "wrong"
 
 
-def answer(r: Round, item_id: str, choice: str | None = None, picked: list[int] | None = None, fast: bool = False) -> dict:
+def answer(r: Round, item_id: str, choice: str | None = None, picked: list[int] | None = None, fast: bool = False, lang: str = "en") -> dict:
     if r.finished:
         raise GameError("This round is already finished.")
     item = next((i for i in r.items if i.id == item_id), None)
@@ -208,18 +211,28 @@ def answer(r: Round, item_id: str, choice: str | None = None, picked: list[int] 
     gs.save(s)
     span = gp.phrase_span(item.text, item.tell_phrase)
     careful = item.truth == "safe" and choice == "scam"
+    tell, action = _explain(item, lang)
     return {
         "outcome": outcome, "truth": item.truth, "xp": gain, "combo": r.combo, "lives": r.lives, "over": r.over, "answered": len(r.answered), "total": len(r.items),
-        "tell": item.tell, "action": item.action, "highlight": list(span) if span else None, "tell_phrase": item.tell_phrase,
-        "tricks": [TACTICS[t]["label"] for t in item.tactics if t in TACTICS], "false_alarm": careful, "yours": item.source == "yours",
+        "tell": tell, "action": action, "highlight": list(span) if span else None, "tell_phrase": item.tell_phrase,
+        "tricks": [tactic_text(t, "label", lang, TACTICS) for t in item.tactics if t in TACTICS], "false_alarm": careful, "yours": item.source == "yours",
         "level": gs.level_for(s["xp"]),
     }
 
 
+def _explain(item: gp.Item, lang: str) -> tuple[str, str]:
+    """The explanation and the safe next step, in the reader's language. English is the item's own text. A Chinese reader gets the item's own
+    Chinese text (in the right script); for a message that only has an English explanation (one the person forwarded earlier, say) the
+    trick's own plain-language explanation stands in, so the page is never half English."""
+    from core.pipelines.train import localized
+
+    return localized(item.tell, item.tactic, "tell", lang, safe=item.truth != "scam"), localized(item.action, item.tactic, "action", lang, safe=item.truth != "scam")
+
+
 # ---------------------------------------------------------------- finishing
-def finish(r: Round) -> dict:
+def finish(r: Round, lang: str = "en") -> dict:
     if r.summary is not None:
-        return r.summary
+        return _speak(r, lang)
     s = gs.get()
     done = len(r.answered) >= len(r.items) or r.over
     bonus = 0
@@ -254,7 +267,20 @@ def finish(r: Round) -> dict:
         "level_up": level > r.start_level, "level_before": r.start_level, "badges_new": earned, "daily_bonus": daily_first, "state": gs.summary(s),
         "resilience": model.baitproof_score(),
     }
-    return r.summary
+    return _speak(r, lang)
+
+
+def _speak(r: Round, lang: str) -> dict:
+    """The finished round's summary with its names and titles in the reader's language (the stored copy stays in English)."""
+    lang, summary = norm(lang), r.summary
+    if lang == "en":
+        return summary
+    out = dict(summary)
+    out["trick_label"] = tactic_text(r.trick, "label", lang, TACTICS) if r.trick else ""
+    out["badges_new"] = [{"id": b["id"], "title": gs.badge_text(b["id"], lang)[0], "desc": gs.badge_text(b["id"], lang)[1]} for b in summary["badges_new"]]
+    out["state"] = {**summary["state"], "title": gs.title_for(summary["state"]["level"], lang),
+                    "badges": [{"id": b["id"], "title": gs.badge_text(b["id"], lang)[0], "desc": gs.badge_text(b["id"], lang)[1]} for b in summary["state"]["badges"]]}
+    return out
 
 
 def _award(s: dict, r: Round, done: bool, perfect: bool, daily_first: bool, won_boss: bool) -> list[dict]:
@@ -284,15 +310,15 @@ def _award(s: dict, r: Round, done: bool, perfect: bool, daily_first: bool, won_
     return [{"id": b, "title": gs.BADGES[b][0], "desc": gs.BADGES[b][1]} for b in new]
 
 
-def overview() -> dict:
+def overview(lang: str = "en") -> dict:
     """The hub: progress, what's available today, and the 12 boss tiles with the person's current mastery."""
     s = gs.get()
-    items = gp.build_pool()
+    items = gp.build_pool(lang)
     mastery = {r["tactic"]: r for r in model.all_mastery()}
     return {
-        **gs.summary(s),
+        **gs.summary(s, lang),
         "yours_available": sum(1 for i in items if i.source == "yours"),
-        "tricks": [{"id": t, "label": v["label"], "blurb": v["blurb"], "level": mastery[t]["level"], "bars": model.LEVEL_BARS[mastery[t]["level"]],
+        "tricks": [{"id": t, "label": tactic_text(t, "label", lang, TACTICS), "blurb": tactic_text(t, "blurb", lang, TACTICS), "level": mastery[t]["level"], "bars": model.LEVEL_BARS[mastery[t]["level"]],
                     "won": t in s["boss_won"], "messages": sum(1 for i in items if i.truth == "scam" and t in i.tactics)} for t, v in TACTICS.items()],
         "resilience": model.baitproof_score(),
     }

@@ -2,17 +2,14 @@
 // Delegated, so buttons inside a result swapped in by the live view work too.
 document.addEventListener("click", (e) => {
   const sp = e.target.closest(".speak[data-say]");
-  if (sp && "speechSynthesis" in window) {
-    speechSynthesis.cancel();
-    speechSynthesis.speak(new SpeechSynthesisUtterance(sp.dataset.say));
-  }
+  if (sp) say(sp.dataset.say);
   const fb = e.target.closest("[data-feedback]");
   if (fb) {
     const row = fb.closest(".feedback-row"), id = fb.closest("[data-check]")?.dataset.check;
     if (!id) return;
     row.querySelectorAll("button").forEach((b) => (b.disabled = true));
     fetch("/api/feedback", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ check_id: id, rating: fb.dataset.feedback }) })
-      .then(() => { row.querySelector("[data-fb-note]").textContent = "Thanks. I only keep your thumb, never your message."; })
+      .then(() => { row.querySelector("[data-fb-note]").textContent = t("Thanks. I only keep your thumb, never your message."); })
       .catch(() => row.querySelectorAll("button").forEach((b) => (b.disabled = false)));
   }
 });
@@ -53,11 +50,7 @@ function el(tag, props, ...kids) {
   return e;
 }
 function speakBtn(text) {
-  return el("button", { className: "speak", textContent: "🔊 Read aloud", onclick: () => {
-    if (!("speechSynthesis" in window)) return;
-    speechSynthesis.cancel();
-    speechSynthesis.speak(new SpeechSynthesisUtterance(text));
-  } });
+  return el("button", { className: "speak", textContent: "🔊 " + t("Read aloud"), onclick: () => say(text) });
 }
 function progress(done, total) {
   const bar = el("div", { className: "progress", ariaHidden: "true" });
@@ -79,28 +72,35 @@ document.getElementById("textsize")?.setAttribute("aria-pressed", String(documen
 
 // "Send it to Mum": pre-written, personalised share links (WhatsApp / SMS / email / copy).
 function familyBox(pct, link) {
-  const msg = (name) =>
-    `Hi ${name || "there"}, I just tried a quick 2-minute quiz on spotting scam messages and got ${pct}%. ` +
-    `Scammers target families like ours, so could you try it too? ${link}`;
-  const name = el("input", { value: "Mum", maxLength: 30, ariaLabel: "Who is this for?" });
-  const wa = el("a", { className: "btn sec", target: "_blank", rel: "noopener", textContent: "WhatsApp" });
-  const sms = el("a", { className: "btn sec", textContent: "Text message" });
-  const mail = el("a", { className: "btn sec", textContent: "Email" });
+  const msg = (name) => t("Hi {name}, I just tried a quick 2-minute quiz on spotting scam messages and got {pct}%. Scammers target families like ours, so could you try it too? {link}", { name: name || t("there"), pct, link });
+  const name = el("input", { value: t("Mum"), maxLength: 30, ariaLabel: t("Who is this for?") });
+  const wa = el("a", { className: "btn sec", target: "_blank", rel: "noopener", textContent: t("WhatsApp") });
+  const sms = el("a", { className: "btn sec", textContent: t("Text message") });
+  const mail = el("a", { className: "btn sec", textContent: t("Email") });
   const note = el("p", { className: "muted", ariaLive: "polite" });
-  const copy = el("button", { type: "button", className: "btn sec", textContent: "Copy message", onclick: async () => {
-    try { await navigator.clipboard.writeText(msg(name.value)); note.textContent = "Copied! Paste it into any chat."; }
+  const copy = el("button", { type: "button", className: "btn sec", textContent: t("Copy message"), onclick: async () => {
+    try { await navigator.clipboard.writeText(msg(name.value)); note.textContent = t("Copied! Paste it into any chat."); }
     catch (_) { note.textContent = msg(name.value); }
   } });
   const update = () => {
-    const t = encodeURIComponent(msg(name.value));
-    wa.href = `https://wa.me/?text=${t}`;
-    sms.href = `sms:?&body=${t}`;
-    mail.href = `mailto:?subject=${encodeURIComponent("Can you try this scam quiz?")}&body=${t}`;
+    const x = encodeURIComponent(msg(name.value));
+    wa.href = `https://wa.me/?text=${x}`;
+    sms.href = `sms:?&body=${x}`;
+    mail.href = `mailto:?subject=${encodeURIComponent(t("Can you try this scam quiz?"))}&body=${x}`;
   };
   name.addEventListener("input", update);
   update();
   return el("div", { className: "panel family" },
-    el("b", { textContent: "Send it to someone you want to protect" }),
-    el("label", { textContent: "Who is it for?" }), name,
+    el("b", { textContent: t("Send it to someone you want to protect") }),
+    el("label", { textContent: t("Who is it for?") }), name,
     el("div", { className: "famrow" }, wa, sms, mail, copy), note);
+}
+
+// language menu (a <details>): Escape or a click anywhere else closes it
+const langMenu = document.getElementById("lang");
+if (langMenu) {
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && langMenu.open) { langMenu.open = false; langMenu.querySelector("summary").focus(); }
+  });
+  document.addEventListener("click", (e) => { if (langMenu.open && !langMenu.contains(e.target)) langMenu.open = false; });
 }

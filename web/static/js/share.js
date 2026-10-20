@@ -5,8 +5,8 @@ document.getElementById("share").addEventListener("click", async (e) => {
   try {
     if (navigator.share) return await navigator.share({ title: "Baitproof", text, url });
     await navigator.clipboard.writeText(`${text} ${url}`);
-    note.textContent = "Copied! Paste it into a message to your family.";
+    note.textContent = t("Copied! Paste it into a message to your family.");
   } catch (_) {
-    note.textContent = "Copy this link: " + url;
+    note.textContent = t("Copy this link:") + " " + url;
   }
 });

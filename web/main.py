@@ -11,22 +11,24 @@ from collections import OrderedDict
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, Form, HTTPException, Request
+from fastapi import Depends, FastAPI, Form, HTTPException, Query, Request
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.responses import HTMLResponse, RedirectResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 import core  # noqa: F401  (loads .env)
 from core.ai import llm
 from core import obs
+from core.domain import i18n
 from core.domain.schemas import Drill
-from core.domain.tactics import TACTICS
 from core.pipelines import challenge, check, train
 from core.storage import history, links, model
-from web import cardimg
+from web import cardimg, ui
 from web import admin, game, results
-from web.deps import add_security_headers, bind_profile, limit_expensive
+from web.deps import LANG_CODES, LANG_COOKIE, add_security_headers, bind_profile, limit_expensive, request_lang, safe_next
 
 BASE = Path(__file__).parent
 
@@ -40,20 +42,53 @@ app = FastAPI(title="Baitproof", dependencies=[Depends(bind_profile)], lifespan=
 add_security_headers(app)
 
 app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
-templates = Jinja2Templates(directory=BASE / "templates")
-templates.env.globals["STAGES"] = {  # plain-language names for the pipeline's stages
-    "ingest": "Read the message", "triage": "Checked how you're doing", "intent": "Worked out what it asks of you", "tools": "Checked links and numbers",
-    "analysis": "AI review", "grounding": "Verified claims against the message", "arbiter": "Weighed the evidence", "loop": "Investigated further",
-    "second-look": "Took a second look", "sufficiency": "Confidence check", "critic": "Second reviewer", "output": "Final safety checks",
-    "flywheel": "Added to your practice", "guard": "Safety net"}
+
+
+def page_lang(request: Request) -> str:
+    """The language of this page. The operator's pages stay in English."""
+    return "en" if request.url.path.startswith("/admin") else request_lang(request)
+
+
+def ui_context(request: Request) -> dict:
+    """Added to every template: the language, the helpers that translate, the switcher and the strings the page's scripts need."""
+    lang = page_lang(request)
+    here = request.url.path + (f"?{request.url.query}" if request.url.query else "")
+    return {
+        "lang": lang, "html_lang": ui.HTML_LANG[lang], "list_sep": ui.LIST_SEP[lang], "labels": ui.labels(lang), "i18n_json": ui.i18n_json(lang),
+        "STAGES": {k: ui.tr(v, lang) for k, v in ui.STAGES.items()}, "lang_next": "/" if request.url.path == "/check" else here,
+        "langs": [(c, i18n.NAMES[c], ui.HTML_LANG[c]) for c in i18n.LANGS], "lang_short": ui.SHORT[lang],
+    }
+
+
+templates = Jinja2Templates(directory=BASE / "templates", context_processors=[ui_context])
+templates.env.globals.update({"_": ui.translate, "_h": ui.translate_html, "tr_in": ui.translate_in, "STAGES": ui.STAGES})
 templates.env.filters["timestamp"] = lambda t: __import__("time").strftime("%H:%M:%S", __import__("time").localtime(t))
 app.include_router(admin.mount(templates))
+
+
+@app.exception_handler(StarletteHTTPException)
+async def translated_errors(request: Request, exc: StarletteHTTPException):
+    """The plain-language error messages ('That result has expired...') are shown to people, so they follow the visitor's language."""
+    if isinstance(exc.detail, str) and request_lang(request) != "en":
+        exc = StarletteHTTPException(exc.status_code, ui.tr(exc.detail, request_lang(request)), headers=exc.headers)
+    return await http_exception_handler(request, exc)
 
 SESSIONS: "OrderedDict[str, dict[str, Drill]]" = OrderedDict()  # in-memory; answers never leave the server
 
 
 def page(request: Request, name: str, **ctx):
-    return templates.TemplateResponse(request, name, {"map": model.resilience_map(), "ai": llm.available(), "labels": {k: v["label"] for k, v in TACTICS.items()}, **ctx})
+    return templates.TemplateResponse(request, name, {"map": model.resilience_map(page_lang(request)), "ai": llm.available(), **ctx})
+
+
+@app.get("/lang/{code}")
+def set_language(request: Request, code: str, next: str = "/"):
+    """Remember the visitor's language (a cookie, no account) and go back to where they were."""
+    lang = LANG_CODES.get(code.lower())
+    if lang is None:
+        raise HTTPException(404, "Unknown language")
+    resp = RedirectResponse(safe_next(next), status_code=303)
+    resp.set_cookie(LANG_COOKIE, lang, max_age=31536000, path="/", samesite="lax", secure=request.url.scheme == "https")
+    return resp
 
 
 app.include_router(game.mount(page))
@@ -68,7 +103,7 @@ def index(request: Request):
 def do_check(request: Request, message: str = Form(...)):
     if not message.strip():
         raise HTTPException(400, "Paste a message to check.")
-    result = check.check_message(message)
+    result = check.check_message(message, lang=request_lang(request))
     history.add(result, "web", message)
     return page(request, "index.html", result=result, text=message[:4000])
 
@@ -78,17 +113,18 @@ class StreamIn(BaseModel):
 
 
 @app.post("/api/check/stream", dependencies=[Depends(limit_expensive)])
-async def check_stream(body: StreamIn):
+async def check_stream(request: Request, body: StreamIn):
     """Live view: Server-Sent Events, one per gate as it runs, then 'done' with the id of the finished check."""
     text = body.message.strip()
     if not text:
         raise HTTPException(400, "Paste a message to check.")
     q: "queue.Queue[tuple[str, object]]" = queue.Queue()
+    lang = request_lang(request)
     ctx = contextvars.copy_context()  # carries the visitor's profile into the worker thread
 
     def work() -> None:
         try:
-            r = ctx.run(check.check_message, text, True, lambda step: q.put(("step", step.model_dump())))
+            r = ctx.run(check.check_message, text, True, lambda step: q.put(("step", step.model_dump())), True, lang)
             ctx.run(results.put, r)
             ctx.run(history.add, r, "web", text)
             q.put(("done", r.check_id))
@@ -116,7 +152,7 @@ def result_partial(request: Request, check_id: str):
     r = results.get(check_id)
     if r is None:
         raise HTTPException(404, "That result has expired. Please check the message again.")
-    return templates.TemplateResponse(request, "_result.html", {"result": r, "labels": {k: v["label"] for k, v in TACTICS.items()}})
+    return templates.TemplateResponse(request, "_result.html", {"result": r})
 
 
 class FeedbackIn(BaseModel):
@@ -142,18 +178,9 @@ def feedback(request: Request, body: FeedbackIn):
 
 
 # ---------------------------------------------------------------- records + Telegram link
-def _ago(ts: str) -> str:
-    from datetime import datetime, timezone
-
-    secs = int((datetime.now(timezone.utc) - datetime.fromisoformat(ts)).total_seconds())
-    for n, unit in ((86400, "day"), (3600, "hour"), (60, "minute")):
-        if secs >= n:
-            k = secs // n
-            return f"{k} {unit}{'s' if k != 1 else ''} ago"
-    return "just now"
-
-
-templates.env.filters["ago"] = _ago
+templates.env.filters["ago"] = ui.ago_filter
+templates.env.filters["script"] = ui.script_filter
+templates.env.filters["trick_names"] = ui.trick_names
 BOT_USERNAME = lambda: os.getenv("TELEGRAM_BOT_USERNAME", "").lstrip("@")  # noqa: E731
 
 
@@ -224,13 +251,14 @@ class StartOut(BaseModel):
 
 
 @app.post("/api/train/start", dependencies=[Depends(limit_expensive)])
-def train_start():
-    drills = train.build_session()
+def train_start(request: Request):
+    lang = request_lang(request)
+    drills = train.build_session(lang=lang)
     sid = drills[0].id + "s" if drills else "empty"
     SESSIONS[sid] = {d.id: d for d in drills}
     while len(SESSIONS) > 200:
         SESSIONS.popitem(last=False)
-    return {"session": sid, "items": [d.public() for d in drills], "map": model.resilience_map()}
+    return {"session": sid, "items": [d.public() for d in drills], "map": model.resilience_map(lang)}
 
 
 class AnswerIn(BaseModel):
@@ -241,19 +269,20 @@ class AnswerIn(BaseModel):
 
 
 @app.post("/api/train/answer")
-def train_answer(a: AnswerIn):
+def train_answer(request: Request, a: AnswerIn):
     drill = SESSIONS.get(a.session, {}).get(a.item_id)
     if not drill:
         raise HTTPException(404, "That practice session expired. Start a new one.")
     before = model.baitproof_score()
-    g = train.grade(drill, a.choice, a.text)
-    m = model.resilience_map()
+    lang = request_lang(request)
+    g = train.grade(drill, a.choice, a.text, lang=lang)
+    m = model.resilience_map(lang)
     return {"result": g.result, "note": g.note, "correct_index": drill.correct_index, "map": m, "delta": m["score"] - before}
 
 
 @app.post("/challenge/new", dependencies=[Depends(limit_expensive)])
-def challenge_new():
-    return RedirectResponse(f"/challenge/{challenge.create()}", status_code=303)
+def challenge_new(request: Request):
+    return RedirectResponse(f"/challenge/{challenge.create(lang=request_lang(request))}", status_code=303)
 
 
 @app.get("/challenge/{cid}", response_class=HTMLResponse)
@@ -269,38 +298,40 @@ class SubmitIn(BaseModel):
 
 
 @app.post("/api/challenge/{cid}/submit")
-def challenge_submit(cid: str, body: SubmitIn):
+def challenge_submit(request: Request, cid: str, body: SubmitIn):
     items = challenge.get(cid)
     if items is None:
         raise HTTPException(404, "Challenge not found")
     res = challenge.score(items, body.answers)
-    res["card_url"] = f"/card/{cid}?s={res['right']}"
+    lang = request_lang(request)
+    res["card_url"] = f"/card/{cid}?s={res['right']}" + ("" if lang == "en" else f"&lang={lang}")  # the link carries the language of its preview
     return res
 
 
 @app.get("/card/{cid}", response_class=HTMLResponse)
-def card(request: Request, cid: str, s: int = 0):
+def card(request: Request, cid: str, s: int = 0, lang: str | None = Query(None)):
     items = challenge.get(cid)
     if items is None:
         raise HTTPException(404, "Challenge not found")
     total = len(items)
     s = max(0, min(s, total))
-    return page(request, "card.html", cid=cid, pct=round(100 * s / total), right=s, total=total,
+    og_lang = LANG_CODES.get((lang or "").lower()) or request_lang(request)  # the preview follows the link's language, the page the visitor's
+    return page(request, "card.html", cid=cid, pct=round(100 * s / total), right=s, total=total, og_lang=og_lang,
                 url=str(request.url_for("challenge_page", cid=cid)),
-                image=str(request.url_for("card_image", cid=cid)) + f"?s={s}")
+                image=str(request.url_for("card_image", cid=cid)) + f"?s={s}" + ("" if og_lang == "en" else f"&lang={og_lang}"))
 
 
 @app.get("/card-image/{cid}.png")
-def card_image(cid: str, s: int = 0):
+def card_image(cid: str, s: int = 0, lang: str = "en"):
     """Share-card image for link previews (Open Graph). Public: contains only the score, no message content."""
     items = challenge.get(cid)
     if items is None:
         raise HTTPException(404, "Challenge not found")
     s = max(0, min(s, len(items)))
-    return Response(cardimg.render(round(100 * s / len(items)), s, len(items)), media_type="image/png",
+    return Response(cardimg.render(round(100 * s / len(items)), s, len(items), LANG_CODES.get(lang.lower(), "en")), media_type="image/png",
                     headers={"Cache-Control": "public, max-age=86400"})
 
 
 @app.get("/api/map")
-def api_map():
-    return model.resilience_map()
+def api_map(request: Request):
+    return model.resilience_map(request_lang(request))
