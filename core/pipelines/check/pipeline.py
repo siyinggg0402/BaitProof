@@ -9,7 +9,7 @@ from core.ai import llm
 from core.domain import i18n
 from core.domain.i18n import tactic_text, tr
 from core.domain.lang import detect
-from core.domain.schemas import CheckResult, TacticHit, Verdict
+from core.domain.schemas import CheckResult, Verdict
 from core.domain.tactics import TACTICS
 from core.obs.logger import fingerprint
 from core.obs.metrics import cost_usd

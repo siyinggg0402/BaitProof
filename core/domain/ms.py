@@ -53,7 +53,7 @@ RULES: dict[str, list[str]] = {
         r"\bcabutan bertuah\b", r"\bpasti untung\b", r"\bdijamin untung\b", r"\bmodal selamat\b", r"\btanpa risiko\b", r"\b(?:tiada|tanpa) pengalaman\b",
         rf"\bkomisen{S}{{0,20}}\b(?:sehari|per hari)\b", rf"\bgaji{S}{{0,20}}\b(?:per hari|sehari)\b"],
     "emotional-manipulation": [
-        rf"\b(?:nombor|nomor|no\.?) baru\b", r"\btelefon rosak\b", r"\bhp (?:lagi |saya )?rusak\b",
+        r"\b(?:nombor|nomor|no\.?) baru\b", r"\btelefon rosak\b", r"\bhp (?:lagi |saya )?rusak\b",
         rf"\bjangan (?:beritahu|bilang|bagitahu){S}{{0,15}}\b(?:abah|ayah|mak|ibu|papa|mama|bapak|suami|isteri)\b", r"\bkemalangan\b", r"\bditahan polis\b"],
     "remote-access-request": [
         rf"\b(?:muat turun|download|pasang|install|unduh){S}{{0,20}}\b(?:anydesk|teamviewer|apk)\b", r"\b(?:capaian|akses) jauh\b"],

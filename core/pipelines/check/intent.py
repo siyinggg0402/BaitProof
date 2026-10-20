@@ -15,7 +15,7 @@ from core.ai.prompts import INTENT_SYSTEM
 
 from .ingest import Ingested
 from . import scenarios
-from .knowledge import C, PRESSURE_RE
+from .knowledge import PRESSURE_RE
 
 ASKS = ("pay", "share_code", "share_credentials", "install", "click", "call", "reply")
 HIGH_RISK_ASKS = {"pay", "share_code", "share_credentials", "install"}
@@ -151,7 +151,7 @@ SCENARIO_PURPOSE = {
     "parcel-fee": "urgent-account-warning", "billing-update": "urgent-account-warning", "tech-support": "request-install-access",
     "family-emergency": "emotional-plea", "romance": "emotional-plea", "boss-gift-card": "emotional-plea",
     "subscription-renewal": "callback-request", "warranty-callback": "callback-request", "marketplace-code": "request-secret",
-    "government-rebate": "claim-prize-reward", **ZH.SCENARIO_PURPOSE,
+    **ZH.SCENARIO_PURPOSE,
 }
 
 

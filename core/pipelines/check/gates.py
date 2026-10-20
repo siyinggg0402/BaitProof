@@ -1,7 +1,6 @@
 """Deterministic gates: grounding, verdict arbiter, flywheel. The model proposes; these decide."""
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass, field
 
 from core.domain import intents
