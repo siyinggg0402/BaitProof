@@ -43,7 +43,13 @@ def test_result_cites_its_evidence():
     assert all(e.id.startswith("e") for e in r.evidence) and all(e.claim for e in r.evidence)
 
 
-def test_safe_verdict_is_backed_by_reassuring_evidence():
+def test_safe_verdict_is_backed_by_reassuring_evidence(monkeypatch):
+    from core.ai import llm
+
+    monkeypatch.setattr(llm, "available", lambda: True)
+    monkeypatch.setattr(llm, "chat_json", lambda system, user, **k: (
+        {"asks": [], "pressure": []} if "diagnose what a message wants" in system else {"concern": False} if "second reviewer" in system
+        else {"verdict": "safe", "tactics": [], "the_tell": "", "action": ""}))
     r = check_message("Lunch on Sunday at ours? Everyone's coming around 1.")
     assert r.verdict == V.SAFE and any(e.supports == "safe" for e in r.evidence)
 

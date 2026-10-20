@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from core.domain import privacy
 from core.storage import library
 
-from .knowledge import BRANDS, INJECTION_RE, RAILS, VICTIM_RE
+from .knowledge import AMBIGUOUS_BRANDS, BRANDS, INJECTION_RE, RAILS, VICTIM_RE
 
 MAX_LEN = 4000
 STOPWORDS = frozenset("the and you your to is a of for in on it i we are be this that with at my me can will please have has not from or if as so by an".split())
@@ -53,7 +53,7 @@ def ingest(raw: str) -> Ingested:
         hosts=hosts,
         amounts=AMOUNT_RE.findall(text),
         rails={k: m.group(0) for k, p in RAILS.items() if (m := p.search(text))},
-        brands=[b for b in BRANDS if re.search(rf"\b{b}\b", low)],
+        brands=[b for b in BRANDS if b not in AMBIGUOUS_BRANDS and re.search(rf"\b{b}\b", low)],
         phones=privacy.phones_in(text),
         phone_raw=privacy.phone_matches(text),
     )

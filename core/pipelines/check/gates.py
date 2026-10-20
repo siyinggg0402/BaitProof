@@ -39,7 +39,7 @@ class Decision:
     model_dependent: bool = False  # True when the verdict/confidence rests on the model's opinion (a second look could change it)
 
 
-def arbitrate(ledger: Ledger, intent: Intent, f: Findings, model_verdict: Verdict | None, injection: bool, english: bool = True) -> Decision:
+def arbitrate(ledger: Ledger, intent: Intent, f: Findings, model_verdict: Verdict | None, injection: bool, english: bool = True, scam_votes: int = 0) -> Decision:
     """Asymmetric by design: evidence can escalate freely; 'safe' must be earned and any disagreement downgrades it.
     Reads the ledger, so every verdict can name the evidence it rests on."""
     m_scam = model_verdict in (Verdict.SCAM, Verdict.LIKELY_SCAM)
@@ -64,18 +64,28 @@ def arbitrate(ledger: Ledger, intent: Intent, f: Findings, model_verdict: Verdic
         d = Decision(Verdict.SCAM if not m_safe else Verdict.LIKELY_SCAM, conf,
                      [f"{flags} separate red flags" if flags >= 2 else f"evidence adds up ({w:g} points against {h:g} reassuring)"],
                      model_dependent=m_safe or bool(model_only))
+    elif not ind_ids and not ledger.has_script_match() and model_only and scam_votes < 2:
+        # A red flag only the model raised, seen once: not enough for 'likely scam'. A second consistent look (the loop's job) is.
+        d = Decision(Verdict.UNSURE, "low", ["only the AI raised a red flag, and only once so far"], model_dependent=True)
     elif flags == 1:
         d = Decision(Verdict.LIKELY_SCAM, "low" if (m_safe or h > w) else "medium", ["1 red flag" + (" (outweighed by reassuring facts)" if h > w else "")],
                      model_dependent=m_safe or bool(model_only))
     elif m_scam:
         d = Decision(Verdict.UNSURE, "low", ["model suspects a scam but gave no verifiable evidence"], model_dependent=True)
-    elif intent.high_risk or f.suspicious_hosts or intent.pressure or injection or model_verdict == Verdict.UNSURE:
-        d = Decision(Verdict.UNSURE, "low", ["asks for something sensitive or is hard to judge"])
+    elif intent.high_risk or f.suspicious_hosts or intent.pressure or injection or intent.opener or model_verdict == Verdict.UNSURE:
+        only_model = not (intent.high_risk or f.suspicious_hosts or intent.pressure or injection or intent.opener)  # a second look can only help here
+        d = Decision(Verdict.UNSURE, "low", ["the AI isn't sure and nothing else explains it" if only_model else "asks for something sensitive or is hard to judge"],
+                     model_dependent=only_model)
     elif not english and not m_safe:
         d = Decision(Verdict.UNSURE, "low", ["can't judge this language with built-in rules alone"])
     elif "click" in intent.asks and not (f.all_links_official() or f.all_links_established()):
         d = Decision(Verdict.UNSURE, "low", ["contains a link that can't be verified"])
+    elif model_verdict is None and not any(e.kind != "model" and e.source != "benign-intent" for e in ledger.safe()):
+        # No model opinion (outage, or not configured) and no tool positively verified anything: the rules alone can't vouch for a message.
+        d = Decision(Verdict.UNSURE, "low", ["built-in rules alone can't vouch that a message is safe"])
     else:
+        # Every independent check is clean. A model 'safe' makes that high confidence. (A model that is only 'unsure' never reaches here:
+        # the loop's second look can turn 'unsure' into 'safe', and two unsure looks stay unsure.)
         d = Decision(Verdict.SAFE, "high" if m_safe else "medium", ["asks for nothing risky and no red flags found"], model_dependent=not m_safe)
 
     if d.verdict == Verdict.SCAM and not ledger.has_independent_support():  # the strongest label needs evidence the model didn't supply

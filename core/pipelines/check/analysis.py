@@ -75,6 +75,9 @@ def rule_evidence(ing: Ingested, intent: Intent, f: Findings, ledger: Ledger) ->
                    f"Follows the “{sc.label}” scam script ({intent.scenario_signs} of its {len(sc.signals)} telltale signs)", intent.evidence.get("scenario", ""), None)
     for text, quote, tactic in intent.mismatches:
         ledger.add("intent", "mismatch", "scam", "medium", text, quote, tactic)
+    if intent.opener:
+        ledger.add("intent", "opener", "scam", "weak", "It reads like the first step of a scam: an out-of-the-blue message that invites you to reply or move to another app",
+                   intent.opener, None)
     if "secrecy" in intent.pressure_kinds:
         ledger.add("intent", "pressure:secrecy", "scam", "medium", "Tells you to keep it secret, so you can't check with anyone",
                    intent.evidence.get("pressure:secrecy", ""), "emotional-manipulation")
@@ -90,7 +93,7 @@ def safe_evidence(ing: Ingested, intent: Intent, ledger: Ledger, f: Findings | N
     ledger.discard("benign-intent")  # re-evaluated every round: new red flags revoke it
     if f is not None and f.all_links_established() and not ledger.scam() and not intent.high_risk and not intent.pressure and not ing.injection:
         ledger.add("tool", "established-links", "safe", "medium", "Every link goes to a long-established website that exists")
-    if not ledger.scam() and not intent.high_risk and "click" not in intent.asks and not intent.pressure and not ing.injection:
+    if not ledger.scam() and not intent.high_risk and "click" not in intent.asks and not intent.pressure and not ing.injection and not intent.opener:
         ledger.add("intent", "benign-intent", "safe", "medium", "It asks for nothing risky: no money, codes, passwords, links or installs, and it doesn't rush you")
 
 
@@ -123,12 +126,23 @@ def parse_model(out: dict) -> tuple[Verdict, list[TacticHit]]:
     return verdict, tactics
 
 
-def critic(ing: Ingested, intent: Intent) -> str | None:
-    """Second opinion, run only when we're about to say 'safe'. Returns a concern, or None."""
+LINK_WORDS = ("link", "url", "click", "website", "web address", "domain", "http")
+
+
+def critic(ing: Ingested, intent: Intent, f: Findings | None = None) -> str | None:
+    """Second opinion, run only when we're about to say 'safe'. Returns a concern, or None.
+    The reviewer sees what our tools verified, and a concern about a link is dropped if every link has been verified."""
     if not llm.available():
         return None
+    facts = f.summary() if f is not None else "none"
     try:
-        out = llm.chat_json(CRITIC_SYSTEM, f"MESSAGE:\n{ing.redacted}\n\nINTENT: {intent.summary()}", heavy=True, purpose="critic")
+        out = llm.chat_json(CRITIC_SYSTEM, f"MESSAGE:\n{ing.redacted}\n\nINTENT: {intent.summary()}\nVERIFIED FACTS (trusted, from our own checks):\n{facts}",
+                            heavy=True, purpose="critic")
     except llm.LLMUnavailable:
         return "second opinion unavailable"  # fail closed
-    return str(out.get("reason") or "possible scam") if out.get("concern") else None
+    if not out.get("concern"):
+        return None
+    reason = str(out.get("reason") or "possible scam")
+    if f is not None and (f.all_links_official() or f.all_links_established()) and any(w in reason.lower() for w in LINK_WORDS):
+        return None  # we already verified every link; a generic 'there is a link' worry adds nothing
+    return reason

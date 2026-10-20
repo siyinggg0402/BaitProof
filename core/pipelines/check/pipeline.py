@@ -82,7 +82,7 @@ def _check(text: str, store: bool, tr: Trace, run: obs.Run) -> CheckResult:
     abstract, phrase = (str(out.get("abstract_example", "")), str(out.get("tell_phrase", ""))) if out else ("", "")
 
     if d.verdict == Verdict.SAFE and case.votes:
-        concern = analysis.critic(ing, it)
+        concern = analysis.critic(ing, it, f)
         if concern:
             d = gates.Decision(Verdict.UNSURE, "low", [f"second opinion: {concern}"])
             ledger.add("model", "critic", "scam", "weak", f"A second reviewer was worried: {concern}")

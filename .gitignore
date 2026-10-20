@@ -7,3 +7,6 @@ __pycache__/
 .pytest_cache/
 .DS_Store
 logs/
+# third-party datasets are downloaded by scripts/fetch_real_data.py, never committed (see data/external/README.md)
+data/external/*
+!data/external/README.md

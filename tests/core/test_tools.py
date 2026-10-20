@@ -175,7 +175,7 @@ def test_resolver_self_check_is_cached(monkeypatch):
 # ---------------------------------------------------------------- findings -> evidence
 def ev(**f):  # noqa: E302
     ing = ingest("Call 1-876-555-0123 or visit new-site.xyz and amazon.com")
-    it = SimpleNamespace(asks=set(), pressure=False, pressure_kinds=set(), scenario="", mismatches=[], model_scenario="", evidence={})
+    it = SimpleNamespace(asks=set(), pressure=False, pressure_kinds=set(), scenario="", mismatches=[], model_scenario="", evidence={}, opener="")
     L = Ledger()
     fin = tools.Findings(hosts=["new-site.xyz", "amazon.com"], **f)
     analysis.rule_evidence(ing, it, fin, L)

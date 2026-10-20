@@ -11,7 +11,7 @@ from core.ai import llm
 from core.domain.schemas import Verdict
 from core.domain.tactics import TACTICS
 
-from . import analysis, gates, planner, tools
+from . import analysis, gates, planner, preconditions, tools
 from .evidence import Ledger
 from .ingest import Ingested
 from .intent import Intent
@@ -43,13 +43,23 @@ class Case:
     t0: float = field(default_factory=time.perf_counter)
 
     def model_verdict(self) -> Verdict | None:
-        """One opinion if the looks agree on direction; 'unsure' if the model contradicts itself."""
+        """The model's combined opinion. 'unsure' is neutral: only a direct scam-vs-safe contradiction makes it unsure."""
         if not self.votes:
             return None
-        return self.votes[-1] if len({_direction(v) for v in self.votes}) == 1 else Verdict.UNSURE
+        dirs = [_direction(v) for v in self.votes]
+        if "scam" in dirs and "safe" in dirs:
+            return Verdict.UNSURE  # the model contradicts itself
+        if "scam" in dirs:
+            return next(v for v in reversed(self.votes) if _direction(v) == "scam")
+        if "safe" in dirs and dirs.count("safe") >= dirs.count("unsure"):
+            return Verdict.SAFE
+        return Verdict.UNSURE
+
+    def scam_votes(self) -> int:
+        return sum(1 for v in self.votes if _direction(v) == "scam")
 
     def decide(self) -> gates.Decision:
-        self.decision = gates.arbitrate(self.ledger, self.it, self.f, self.model_verdict(), self.ing.injection, self.ing.english)
+        self.decision = gates.arbitrate(self.ledger, self.it, self.f, self.model_verdict(), self.ing.injection, self.ing.english, self.scam_votes())
         return self.decision
 
     def model_pass(self, second: bool = False) -> bool:
@@ -58,7 +68,9 @@ class Case:
         if not out:
             return False
         verdict, proposed = analysis.parse_model(out)
-        kept, dropped = gates.grounding_gate(proposed, self.ing.text, self.ing.redacted)
+        kept, unquoted = gates.grounding_gate(proposed, self.ing.text, self.ing.redacted)
+        kept, impossible = preconditions.filter_claims(kept, self.ing, self.it, self.f)  # a claim must also be possible for THIS message
+        dropped = [f"{t}: quote not found in the message" for t in unquoted] + impossible
         for t in kept:
             self.ledger.add("model", "analysis", "scam", "medium", t.why or f"The AI reviewer spotted: {TACTICS[t.id]['label'].lower()}", t.quote, t.id)
         if verdict == Verdict.SAFE:
@@ -70,7 +82,7 @@ class Case:
         label = "second look" if second else "analysis"
         self.tr.add("analysis" if not second else "second-look", "pass", f"model {label}: {verdict.value}; {len(proposed)} tactic(s) proposed")
         self.tr.add("grounding", "flag" if dropped else "pass",
-                    f"dropped {len(dropped)} AI claim(s) with no matching words in the message" if dropped else f"{len(kept)} AI claim(s) verified against the message")
+                    f"dropped {len(dropped)} AI claim(s) ({'; '.join(dropped)})" if dropped else f"{len(kept)} AI claim(s) verified against the message")
         return True
 
     def stop_reason(self) -> str:

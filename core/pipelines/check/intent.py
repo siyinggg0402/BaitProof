@@ -27,7 +27,14 @@ ASK_RULES = {
 NEGATION = re.compile(r"\b(?:never|don'?t|do not|won'?t|will not)\b[^.!?]{0,25}$", re.I)
 RELATIONS = re.compile(r"\b(mum|mom|dad|grandma|grandpa|nan|nana|gran|son|daughter|grandson|granddaughter|it'?s me)\b", re.I)
 AUTHORITY = re.compile(r"\b(officer|detective|police|irs|hmrc|social security|court|tax office|government|cyber ?crime|fraud department|security team)\b", re.I)
-ORGANISATION = re.compile(r"\b(bank|microsoft|apple|amazon|paypal|netflix|your provider|support team|customer service)\b", re.I)
+ORGANISATION = re.compile(r"\b(your bank|the bank|bank (?:alert|notice|security|team|fraud)|\w+ bank(?! (?:details|account|transfer|statement|holiday))|microsoft|apple|amazon|paypal|netflix|your provider|support team|customer service)\b", re.I)
+OPENER = re.compile(
+    r"\b[Ii]s this [A-Z][a-z]+\s*\?|\bwrong (?:person|number)\b|\b(?:got|found|have) your (?:number|email|contact|details) (?:from|through|via|on)\b"
+    r"|\b(?:this is )?my (?:new|temporary|temp|other) (?:number|phone)\b|\bnew number\b|\btemporary number\b|\b(?:lost|dropped|broke|cracked|smashed) my phone\b|\bphone (?:broke|died|fell)\b"
+    r"|\bcan you (?:check|confirm|see) (?:if )?you can (?:receive|get)\b|\bare you (?:available|at your desk)\b"
+    r"|\b(?:add me on|message me on|find me on|move (?:to|this to)|continue (?:on|in)) (?:telegram|whatsapp|signal|wechat)\b"
+    r"|\b(?:is (?:the|this) item|is it) still (?:available|for sale)\b|\bstill available\b"
+    r"|\b(?:saw|found|came across|noticed) your (?:profile|listing|ad|post|resume|cv)\b|\b(?:text|call|message) me (?:on|at) \+?[\d(]", re.I)
 
 PRESSURE_KINDS = {
     "deadline": PRESSURE_RE,
@@ -49,6 +56,7 @@ class Intent:
     mismatches: list[tuple] = field(default_factory=list)  # (plain text, quote, tactic)
     evidence: dict[str, str] = field(default_factory=dict)  # ask/pressure/identity/scenario -> quoted text
     disagreements: list[str] = field(default_factory=list)  # rules vs model: an open question for the confidence loop
+    opener: str = ""  # quote of an out-of-the-blue first-contact phrase (the usual first step of a scam)
     used_ai: bool = False
 
     @property
@@ -61,7 +69,7 @@ class Intent:
 
     def summary(self) -> str:
         who = f"{self.claimed} ({self.claimed_kind})" if self.claimed else "unknown"
-        sc = f"; follows_script={self.scenario}" if self.scenario else ""
+        sc = (f"; follows_script={self.scenario}" if self.scenario else "") + ("; first-contact opener" if self.opener else "")
         return f"asks={sorted(self.asks) or 'nothing'}; pressure={sorted(self.pressure_kinds) or 'none'}; claims_to_be={who}{sc}"
 
 
@@ -90,6 +98,8 @@ def _heuristic(ing: Ingested) -> Intent:
             it.claimed, it.claimed_kind = m.group(0).lower(), kind
             it.evidence["identity"] = m.group(0)
             break
+    if m := OPENER.search(ing.text):
+        it.opener = m.group(0)[:80]
     it.scenario, it.scenario_signs, q = scenarios.detect(ing.text)
     if it.scenario:
         it.evidence["scenario"] = q
@@ -127,6 +137,16 @@ def _supported(ask: str, ing: Ingested) -> bool:
     return True
 
 
+CONSEQUENCE = re.compile(r"\b(?:or|unless|otherwise|else|before)\b[^.!?]{0,70}\b(?:will|be|lose|cancel\w*|clos\w+|suspend\w*|block\w*|disconnect\w*|fine|penalt\w*|return\w*|delet\w+|arrest\w*|expire)\b", re.I)
+
+
+def _pressure_supported(kind: str, ing: Ingested) -> bool:
+    """A model-claimed pressure kind needs the text to back it. A bare time window ('expires in 15 minutes') is a fact, not pressure."""
+    if PRESSURE_KINDS[kind].search(ing.text):
+        return True
+    return kind in ("deadline", "threat") and bool(CONSEQUENCE.search(ing.text))
+
+
 def diagnose(ing: Ingested) -> Intent:
     it = _heuristic(ing)
     if llm.available():
@@ -138,7 +158,7 @@ def diagnose(ing: Ingested) -> Intent:
             kinds = [kinds] if isinstance(kinds, str) else (kinds or [])
             if kinds is True or out.get("pressure") is True:
                 kinds = ["deadline"]
-            it.pressure_kinds |= {k for k in kinds if k in PRESSURE_KINDS}
+            it.pressure_kinds |= {k for k in kinds if k in PRESSURE_KINDS and _pressure_supported(k, ing)}
             ident = out.get("claimed_identity")
             name = str((ident.get("name") if isinstance(ident, dict) else ident) or "")[:60]
             if name and (not it.claimed or it.claimed in name.lower()) and any(w in ing.text.lower() for w in re.findall(r"[a-z]{3,}", name.lower())):

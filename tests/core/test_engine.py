@@ -229,3 +229,68 @@ def test_the_scam_label_needs_independent_evidence(monkeypatch):
     r = check_message("Please send the small fee so we can book the hall.")
     assert r.verdict == V.LIKELY_SCAM  # capped: 'scam' needs evidence the model didn't supply
     assert not r.added_to_training
+
+
+def test_critic_sees_verified_facts_and_a_generic_link_worry_about_a_verified_link_is_ignored(monkeypatch):
+    seen = {}
+    monkeypatch.setattr(llm, "available", lambda: True)
+
+    def chat(system, user, heavy=True, retries=1, purpose=""):
+        if "diagnose what a message wants" in system:
+            return {"asks": [], "pressure": []}
+        if "second reviewer" in system:
+            seen["critic"] = user
+            return {"concern": True, "reason": "contains a link to click"}
+        return SAFE
+    monkeypatch.setattr(llm, "chat_json", chat)
+    r = check_message("Your order has shipped. Track it at https://www.amazon.com/progress-tracker/package")
+    assert r.verdict == V.SAFE  # the only worry was 'a link', and we verified it is amazon.com
+    assert "real website of amazon" in seen["critic"]  # the reviewer was shown the verified fact
+    # an unverified link is still a legitimate concern
+    r2 = check_message("Your order has shipped. Track it at https://quiet-track-now.top/package")
+    assert r2.verdict != V.SAFE
+
+
+# ---------------------------------------------------------------- calibration: a model 'unsure' is not a veto, rules alone can't vouch
+def test_model_unsure_on_a_clean_context_free_message_still_allows_safe(monkeypatch):
+    unsure = {"verdict": "unsure", "tactics": [], "the_tell": "", "action": ""}
+    fake(monkeypatch, analysis=unsure, second=SAFE)
+    r = check_message("Hey, I'm outside!")
+    assert r.verdict == V.SAFE and r.confidence in ("medium", "high")  # clean checks + a second look that agrees
+
+
+def test_model_unsure_both_looks_stays_unsure(monkeypatch):
+    unsure = {"verdict": "unsure", "tactics": [], "the_tell": "", "action": ""}
+    fake(monkeypatch, analysis=unsure, second=unsure)
+    assert check_message("Hey, I'm outside!").verdict == V.UNSURE
+
+
+def test_openers_stay_unsure_whatever_the_model_says(monkeypatch):
+    fake(monkeypatch, analysis=SAFE, second=SAFE)
+    assert check_message("Hi, is this Margaret? I got your number from Linda at the book club.").verdict == V.UNSURE
+
+
+def test_a_model_only_red_flag_needs_two_consistent_looks(monkeypatch):
+    flag = {"verdict": "likely_scam", "tactics": [{"id": "advance-fee", "quote": "membership fee", "why": "asks for a fee"}], "the_tell": "t", "action": "a"}
+    fake(monkeypatch, analysis=flag, second=SAFE, intent_out={"asks": ["pay"], "pressure": []})
+    one = check_message("Can you send me the $25 membership fee by Friday?")
+    assert one.verdict == V.UNSURE  # the second look disagreed: a lone suspicion
+    fake(monkeypatch, analysis=flag, second=flag, intent_out={"asks": ["pay"], "pressure": []})
+    two = check_message("Can you send me the $25 membership fee by Friday?")
+    assert two.verdict == V.LIKELY_SCAM  # both looks agree
+
+
+def test_without_a_model_rules_alone_never_clear_a_message():
+    r = check_message("Lunch on Sunday at ours? Everyone's coming around 1.")
+    assert r.verdict == V.UNSURE and r.confidence == "low" and not r.used_ai
+    assert any("rules alone" in s.detail for s in r.trace if s.stage == "arbiter")
+    # ...unless a tool positively verified something
+    assert check_message("Track it at https://www.amazon.com/progress-tracker/package").verdict == V.SAFE
+
+
+def test_vote_combination_treats_unsure_as_neutral():
+    from core.pipelines.check.engine import Case
+
+    mv = lambda votes: Case.model_verdict(type("C", (), {"votes": votes})())  # noqa: E731
+    assert mv([]) is None and mv([V.SAFE]) == V.SAFE and mv([V.UNSURE, V.SAFE]) == V.SAFE
+    assert mv([V.UNSURE, V.UNSURE]) == V.UNSURE and mv([V.SAFE, V.SCAM]) == V.UNSURE and mv([V.UNSURE, V.LIKELY_SCAM]) == V.LIKELY_SCAM

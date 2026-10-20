@@ -82,7 +82,10 @@ def test_model_cannot_remove_rule_findings_and_pressure_kinds_are_validated(monk
     _fake(monkeypatch, {"asks": [], "pressure": ["panic", "threat"], "claimed_identity": "", "scenario": ""})
     it = dx("Pay the $1.99 fee within 24 hours: dhl-fee-pay.xyz")
     assert "pay" in it.asks and "click" in it.asks and "deadline" in it.pressure_kinds  # rules kept
-    assert "threat" in it.pressure_kinds and "panic" not in it.pressure_kinds
+    assert "threat" not in it.pressure_kinds and "panic" not in it.pressure_kinds  # no threatening words in the text: the model's claim is rejected
+    _fake(monkeypatch, {"asks": [], "pressure": ["threat", "deadline"]})
+    it2 = dx("Pay the fee or your parcel will be returned.")
+    assert {"threat", "deadline"} <= it2.pressure_kinds  # consequence wording backs both
 
 
 def test_rules_vs_model_scenario_disagreement_is_recorded_for_the_loop(monkeypatch):
@@ -100,3 +103,9 @@ def test_neighbouring_scripts_are_not_a_disagreement(monkeypatch):
     _fake(monkeypatch, {"asks": [], "pressure": [], "scenario": "billing-update"})
     it = dx("Your Prime membership renews today for $349.99. Call 1-855-555-0101 to cancel and get a refund.")
     assert it.scenario == "subscription-renewal" and it.disagreements == []  # same family: no noise for the loop
+
+
+def test_a_bare_time_window_is_not_pressure(monkeypatch):
+    _fake(monkeypatch, {"asks": [], "pressure": ["deadline"]})
+    assert dx("Use code 482913 to log in. It expires in 15 minutes. If you didn't request this, ignore this message.").pressure_kinds == set()
+    assert "deadline" in dx("Your parcel will be returned unless you pay within 24 hours.").pressure_kinds
