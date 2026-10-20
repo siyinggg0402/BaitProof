@@ -31,7 +31,8 @@ class Example:
 
 
 def enabled() -> bool:
-    return os.getenv("BAITPROOF_FEWSHOT", "1") == "1"
+    """Off by default until a measurement says it helps (see README). BAITPROOF_FEWSHOT=1 turns it on."""
+    return os.getenv("BAITPROOF_FEWSHOT", "0") == "1"
 
 
 def features(text: str) -> list[str]:

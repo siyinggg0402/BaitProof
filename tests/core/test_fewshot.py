@@ -86,14 +86,15 @@ def test_block_shows_verdict_purpose_tricks_and_why():
     assert fewshot.block([]) == ""
 
 
-def test_the_analysis_prompt_includes_examples_and_can_be_switched_off(monkeypatch):
+def test_the_analysis_prompt_includes_examples_when_enabled_and_is_off_by_default(monkeypatch):
     ing = ingest("Your debit card has been blocked. Reactivate by verifying your PIN.")
     it = intent_stage._heuristic(ing)
     f = Findings(hosts=list(ing.entities.hosts))
+    assert "SIMILAR LABELLED EXAMPLES" not in analysis.build_user(ing, it, f)  # off by default
+    assert "SIMILAR LABELLED EXAMPLES" in analysis.build_user(ing, it, f, examples=True)
+    monkeypatch.setenv("BAITPROOF_FEWSHOT", "1")
     assert "SIMILAR LABELLED EXAMPLES" in analysis.build_user(ing, it, f)
     assert "SIMILAR LABELLED EXAMPLES" not in analysis.build_user(ing, it, f, examples=False)
-    monkeypatch.setenv("BAITPROOF_FEWSHOT", "0")
-    assert "SIMILAR LABELLED EXAMPLES" not in analysis.build_user(ing, it, f)
 
 
 def test_a_broken_bank_never_breaks_a_check(monkeypatch):
