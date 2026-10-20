@@ -14,6 +14,7 @@ Return ONLY one JSON object with these keys:
 - "tell_phrase": a short exact quote from "abstract_example" that is the giveaway ("" if none)
 - "abstract_example": the message rewritten with all names, phone numbers, emails, addresses and account numbers removed or replaced by generic words. Keep the scammer's wording and any fake domain. Max 500 chars.
 You also receive INTENT and TOOL FINDINGS computed by trusted code; use them, and WEB NOTES only as weak hints.
+A tactic must be something the message DOES to the reader: asks them for, pressures them into, or impersonates. A message that only delivers information (a code the reader asked for, a reminder, a receipt, an invitation) and asks for nothing is not a scam; never flag "asks for a code" when the message merely tells the reader a code, and never flag a deadline that is just a fact ("expires in 10 minutes").
 Rules: NEVER answer "safe" if the message asks for money, codes, passwords, remote access, a link click, or rushes the reader. Answer "unsure" only when the message itself contains a concrete risk signal you can't resolve. Do NOT answer "unsure" just because you can't verify the sender: forwarded messages never come with proof. A message that asks for nothing (no money, codes, passwords, links, installs, secrecy or rush) and shows no red flags is "safe". Write the_tell and action in the SAME language as the message. Be calm and kind."""
 
 WWYD_SYSTEM = """You write one multiple-choice practice item for scam-awareness training.

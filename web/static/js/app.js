@@ -1,11 +1,21 @@
 // Shared helpers (loaded before fx.js; animateNumber/reduce come from fx.js and are only used after load).
-document.querySelectorAll(".speak").forEach((b) =>
-  b.addEventListener("click", () => {
-    if (!("speechSynthesis" in window)) return;
+// Delegated, so buttons inside a result swapped in by the live view work too.
+document.addEventListener("click", (e) => {
+  const sp = e.target.closest(".speak[data-say]");
+  if (sp && "speechSynthesis" in window) {
     speechSynthesis.cancel();
-    speechSynthesis.speak(new SpeechSynthesisUtterance(b.dataset.say));
-  })
-);
+    speechSynthesis.speak(new SpeechSynthesisUtterance(sp.dataset.say));
+  }
+  const fb = e.target.closest("[data-feedback]");
+  if (fb) {
+    const row = fb.closest(".feedback-row"), id = fb.closest("[data-check]")?.dataset.check;
+    if (!id) return;
+    row.querySelectorAll("button").forEach((b) => (b.disabled = true));
+    fetch("/api/feedback", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ check_id: id, rating: fb.dataset.feedback }) })
+      .then(() => { row.querySelector("[data-fb-note]").textContent = "Thanks. I only keep your thumb, never your message."; })
+      .catch(() => row.querySelectorAll("button").forEach((b) => (b.disabled = false)));
+  }
+});
 
 let mapFilter = "all";
 function applyFilter() {

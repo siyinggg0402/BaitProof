@@ -21,7 +21,7 @@
   </div>
 </section>
 
-<form method="post" action="/check" class="card reveal" id="check">
+<form method="post" action="/check" class="card reveal" id="check-form">
   <label for="message">Paste the message here</label>
   <textarea id="message" name="message" rows="5" required maxlength="4000" placeholder="e.g. “Your parcel is on hold. Pay a $1.99 fee within 24 hours…”">{{ text }}</textarea>
   <div class="examples"><span>Try an example:</span>
@@ -32,34 +32,8 @@
   <button class="big">Check it</button>
 </form>
 
-{% if result %}
-{% set v = result.verdict.value %}
-<section class="card result v-{{ v }}" aria-live="polite" id="result">
-  <div class="banner"><span class="vicon" aria-hidden="true"><svg viewBox="0 0 24 24">
-    {% if v in ('scam','likely_scam') %}<path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/>
-    {% elif v == 'safe' %}<path d="M20 6 9 17l-5-5"/>
-    {% elif v == 'victim_support' %}<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>
-    {% else %}<path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/>{% endif %}</svg></span>
-    <span>{{ result.headline.split(' ', 1)[1] }}</span></div>
-  <div class="body">
-    {% if result.tell %}<div class="panel"><b>The giveaway</b>{{ result.tell }}</div>{% endif %}
-    {% if result.action %}<div class="panel"><b>What to do</b>{{ result.action }}</div>{% endif %}
-    {% if result.tactics %}<ul class="chips" aria-label="Tricks found">{% for t in result.tactics %}<li title="{{ t.quote }}">{{ labels[t.id] }}</li>{% endfor %}</ul>{% endif %}
-    {% if result.added_to_training %}<p class="added">Added to your practice: {% for t in result.added_to_training %}{{ labels[t] }}{{ ", " if not loop.last }}{% endfor %}</p>{% endif %}
-    {% if result.evidence %}
-    <details class="evidence" open><summary>The evidence ({{ result.evidence|length }})</summary>
-      <ul class="ev">{% for e in result.evidence %}
-        <li class="ev-{{ e.supports }}"><span class="ev-tag">{{ {'scam': 'Red flag', 'safe': 'Reassuring', 'neutral': 'Note'}[e.supports] }}</span>
-          <span class="ev-body">{{ e.claim }}<small>{{ {'rule': 'Known pattern', 'intent': 'What it asks', 'tool': 'Checked', 'model': 'AI reviewer'}[e.kind] }} · {{ e.strength }}{% if e.kind == 'model' %} · counts for less{% endif %}</small></span></li>
-      {% endfor %}</ul></details>
-    {% endif %}
-    <details class="trace"><summary>How I decided ({{ result.confidence }} confidence)</summary>
-      <ol>{% for s in result.trace %}<li class="st-{{ s.status }}"><strong>{{ s.stage }}</strong>: {{ s.detail }}</li>{% endfor %}</ol></details>
-    <button class="speak" data-say="{{ result.headline }} {{ result.tell }} {{ result.action }}">🔊 Read aloud</button>
-    <p><a class="big" href="/train">Practise this trick →</a></p>
-  </div>
-</section>
-{% endif %}
+<section class="card live" id="live" hidden aria-live="polite"><h2>Checking your message…</h2><ol class="live-steps" id="live-steps"></ol></section>
+<div id="result-slot">{% if result %}{% include "_result.html" %}{% endif %}</div>
 {% include "_map.html" %}
 {% endblock %}
-{% block scripts %}<script src="/static/js/examples.js"></script>{% endblock %}
+{% block scripts %}<script src="/static/js/examples.js"></script><script src="/static/js/check.js"></script>{% endblock %}

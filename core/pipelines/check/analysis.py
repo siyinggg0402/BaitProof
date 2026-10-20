@@ -95,7 +95,7 @@ def safe_evidence(ing: Ingested, intent: Intent, ledger: Ledger, f: Findings | N
 
 
 SECOND_LOOK = ("\n\nSECOND LOOK: before deciding, weigh both explanations. List the strongest signs this is a scam AND the strongest signs it is a "
-               "genuine message, then give your verdict. Do not assume the first impression is right.")
+               "genuine message, then give your verdict. Do not assume the first impression is right, and do not invent red flags: if the message asks the reader for nothing, say so.")
 
 
 def model_analysis(ing: Ingested, intent: Intent, f: Findings, second_look: bool = False) -> dict | None:

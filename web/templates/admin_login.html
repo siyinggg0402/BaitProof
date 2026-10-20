@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Operator login · Baitproof{% endblock %}
+{% block content %}
+<div class="narrow">
+  <h1>Operator login</h1>
+  <form method="post" action="/admin/login" class="card">
+    <label for="token">Admin token</label>
+    <input id="token" name="token" type="password" autocomplete="current-password" required>
+    {% if error %}<p class="err" role="alert">{{ error }}</p>{% endif %}
+    <button class="big">Sign in</button>
+  </form>
+</div>
+{% endblock %}

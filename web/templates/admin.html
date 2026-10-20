@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · Baitproof{% endblock %}
+{% block content %}
+{% set s = summary %}{% set h = health %}
+<div class="admin-head">
+  <div><span class="pill"><b>OPERATOR</b> No message text is ever stored or shown here</span>
+    <h1>Is it running OK?</h1></div>
+  <form method="post" action="/admin/logout"><button class="ghost" type="submit">Sign out</button></form>
+</div>
+
+<section class="card health h-{{ h.status }}">
+  <h2>{{ {'green': 'All good', 'amber': 'Needs a look', 'red': 'Something is broken'}[h.status] }}</h2>
+  {% if h.problems %}<ul>{% for p in h.problems %}<li>{{ p }}</li>{% endfor %}</ul>{% else %}<p class="muted">No problems found in the last hour.</p>{% endif %}
+</section>
+
+<nav class="windows" aria-label="Time window">{% for k, label in windows.items() %}<a href="/admin?hours={{ k }}" {% if k == hours %}aria-current="page"{% endif %}>{{ label }}</a>{% endfor %}</nav>
+
+<div class="kpis">
+  <div class="kpi"><b>{{ s.checks }}</b><span>checks</span></div>
+  <div class="kpi"><b>{{ s.latency_ms.p95 // 1000 }}s</b><span>slowest 5% (avg {{ s.latency_ms.avg // 1000 }}s)</span></div>
+  <div class="kpi"><b>{{ s.avg_rounds }}</b><span>rounds per check</span></div>
+  <div class="kpi"><b>${{ s.llm.est_cost_usd }}</b><span>estimated model spend</span></div>
+  <div class="kpi"><b>{{ (s.llm.fallback_rate * 100)|round|int }}%</b><span>model fell back to rules</span></div>
+  <div class="kpi"><b>👍 {{ s.feedback.up }} · 👎 {{ s.feedback.down }}</b><span>feedback</span></div>
+</div>
+
+<div class="grid2">
+  <section class="card"><h2>What it concluded</h2>
+    {% set vmax = (s.verdicts.values()|list|max) if s.verdicts else 1 %}
+    <ul class="bars-list">{% for k, v in s.verdicts.items() %}<li><span>{{ k }}</span><meter min="0" max="{{ vmax }}" value="{{ v }}"></meter><b>{{ v }}</b></li>{% endfor %}</ul>
+    <p class="muted">Confidence: {% for k, v in s.confidence.items() %}{{ k }} {{ v }}{{ " · " if not loop.last }}{% endfor %}<br>Rounds: {% for k, v in s.rounds_dist.items() %}{{ k }}→{{ v }}{{ " · " if not loop.last }}{% endfor %}</p>
+    {% if s.feedback_by_verdict %}<h3>Feedback by verdict</h3><ul class="bars-list">{% for k, v in s.feedback_by_verdict.items() %}<li><span>{{ k }}</span><b>👍 {{ v.up }} · 👎 {{ v.down }}</b></li>{% endfor %}</ul>{% endif %}
+  </section>
+  <section class="card"><h2>Model usage</h2>
+    <p>{{ s.llm.calls }} calls · {{ s.llm.tokens_in }} tokens in · {{ s.llm.tokens_out }} out<br>
+       Fell back to rules on {{ s.llm.fallbacks }} of {{ s.llm.configured_checks }} checks.</p>
+    <p class="muted">Warm-ups: {% for w in s.warmups %}{{ 'ok' if w.ok else 'FAILED' }} {{ w.ms }}ms{{ " · " if not loop.last }}{% else %}none logged{% endfor %}<br>
+       Personal details caught by the outgoing scrubber: <b>{{ s.pii_scrubbed }}</b> (should be 0)<br>Log lines dropped: {{ s.log_writes_dropped }}</p>
+  </section>
+</div>
+
+<div class="grid2">
+  <section class="card"><h2>Gates that tripped</h2>
+    {% if s.gate_trips %}<ul class="bars-list">{% set gmax = (s.gate_trips.values()|list|max) %}{% for k, v in s.gate_trips.items() %}<li><span>{{ k }}</span><meter min="0" max="{{ gmax }}" value="{{ v }}"></meter><b>{{ v }}</b></li>{% endfor %}</ul>
+    {% else %}<p class="muted">None. (A flag isn't bad: it means a gate caught something.)</p>{% endif %}</section>
+  <section class="card"><h2>Where the time goes</h2>
+    {% if s.stage_avg_ms %}{% set tmax = (s.stage_avg_ms.values()|list|max) or 1 %}<ul class="bars-list">{% for k, v in s.stage_avg_ms.items() %}<li><span>{{ k }}</span><meter min="0" max="{{ tmax }}" value="{{ v }}"></meter><b>{{ v }}ms</b></li>{% endfor %}</ul>{% else %}<p class="muted">No data yet.</p>{% endif %}</section>
+</div>
+
+<section class="card"><h2>Tools</h2>
+  {% if s.tools %}<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Tool</th><th>Calls</th><th>Worked</th><th>Avg time</th></tr></thead><tbody>
+  {% for k, v in s.tools.items() %}<tr><td>{{ k }}</td><td>{{ v.calls }}</td><td>{{ (v.ok_rate * 100)|round|int }}%</td><td>{{ v.avg_ms }}ms</td></tr>{% endfor %}</tbody></table></div>{% else %}<p class="muted">No tool calls yet.</p>{% endif %}
+  {% if s.errors %}<h3>Recent errors ({{ s.errors }})</h3><ul>{% for e in s.recent_errors %}<li>{{ e.where }} · {{ e.type }}</li>{% endfor %}</ul>{% endif %}
+</section>
+
+<section class="card"><h2>Recent checks</h2>
+  <div class="tbl-wrap"><table class="tbl"><thead><tr><th>When</th><th>Id</th><th>Verdict</th><th>Conf.</th><th>Rounds</th><th>Time</th><th>AI</th><th>Tokens</th><th>Extra tools</th><th>Gates flagged</th></tr></thead><tbody>
+  {% for c in recent %}<tr><td>{{ c.ts|int|timestamp }}</td><td><code>{{ c.id }}</code></td><td>{{ c.verdict }}</td><td>{{ c.confidence }}</td><td>{{ c.rounds }}</td><td>{{ (c.latency_ms or 0) // 100 / 10 }}s</td>
+    <td>{{ '✓' if c.ai else 'rules' }}</td><td>{{ c.tokens }}</td><td>{{ c.tools|join(', ') }}</td><td>{{ c.flags|join(', ') }}</td></tr>
+  {% else %}<tr><td colspan="10" class="muted">No checks in this window.</td></tr>{% endfor %}</tbody></table></div>
+</section>
+<meta http-equiv="refresh" content="60">
+{% endblock %}

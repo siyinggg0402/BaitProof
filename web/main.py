@@ -1,22 +1,30 @@
 from __future__ import annotations
 
+import asyncio
+import contextvars
+import json
+import queue
+import re
+import threading
 from collections import OrderedDict
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from fastapi.responses import HTMLResponse, RedirectResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
 import core  # noqa: F401  (loads .env)
 from core.ai import llm
+from core import obs
 from core.domain.schemas import Drill
 from core.domain.tactics import TACTICS
 from core.pipelines import challenge, check, train
 from core.storage import model
 from web import cardimg
+from web import admin, results
 from web.deps import add_security_headers, bind_profile, limit_expensive
 
 BASE = Path(__file__).parent
@@ -32,6 +40,13 @@ add_security_headers(app)
 
 app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
 templates = Jinja2Templates(directory=BASE / "templates")
+templates.env.globals["STAGES"] = {  # plain-language names for the pipeline's stages
+    "ingest": "Read the message", "triage": "Checked how you're doing", "intent": "Worked out what it asks of you", "tools": "Checked links and numbers",
+    "analysis": "AI review", "grounding": "Verified claims against the message", "arbiter": "Weighed the evidence", "loop": "Investigated further",
+    "second-look": "Took a second look", "sufficiency": "Confidence check", "critic": "Second reviewer", "output": "Final safety checks",
+    "flywheel": "Added to your practice", "guard": "Safety net"}
+templates.env.filters["timestamp"] = lambda t: __import__("time").strftime("%H:%M:%S", __import__("time").localtime(t))
+app.include_router(admin.mount(templates))
 
 SESSIONS: "OrderedDict[str, dict[str, Drill]]" = OrderedDict()  # in-memory; answers never leave the server
 
@@ -51,6 +66,73 @@ def do_check(request: Request, message: str = Form(...)):
         raise HTTPException(400, "Paste a message to check.")
     result = check.check_message(message)
     return page(request, "index.html", result=result, text=message[:4000])
+
+
+class StreamIn(BaseModel):
+    message: str
+
+
+@app.post("/api/check/stream", dependencies=[Depends(limit_expensive)])
+async def check_stream(body: StreamIn):
+    """Live view: Server-Sent Events, one per gate as it runs, then 'done' with the id of the finished check."""
+    text = body.message.strip()
+    if not text:
+        raise HTTPException(400, "Paste a message to check.")
+    q: "queue.Queue[tuple[str, object]]" = queue.Queue()
+    ctx = contextvars.copy_context()  # carries the visitor's profile into the worker thread
+
+    def work() -> None:
+        try:
+            r = ctx.run(check.check_message, text, True, lambda step: q.put(("step", step.model_dump())))
+            ctx.run(results.put, r)
+            q.put(("done", r.check_id))
+        except Exception as e:
+            q.put(("error", type(e).__name__))
+
+    threading.Thread(target=work, daemon=True).start()
+
+    async def events():
+        loop = asyncio.get_running_loop()
+        while True:
+            try:
+                kind, payload = await loop.run_in_executor(None, lambda: q.get(timeout=60))
+            except queue.Empty:
+                kind, payload = "error", "timeout"
+            yield f"data: {json.dumps({'type': kind, 'data': payload})}\n\n"
+            if kind in ("done", "error"):
+                return
+
+    return StreamingResponse(events(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+@app.get("/result/{check_id}", response_class=HTMLResponse)
+def result_partial(request: Request, check_id: str):
+    r = results.get(check_id)
+    if r is None:
+        raise HTTPException(404, "That result has expired. Please check the message again.")
+    return templates.TemplateResponse(request, "_result.html", {"result": r, "labels": {k: v["label"] for k, v in TACTICS.items()}})
+
+
+class FeedbackIn(BaseModel):
+    check_id: str
+    rating: str
+
+
+FEEDBACK_SEEN: set[tuple[str, str]] = set()
+
+
+@app.post("/api/feedback")
+def feedback(request: Request, body: FeedbackIn):
+    """Thumbs up/down on a verdict. Stores only the check id and the rating, never the message."""
+    if body.rating not in ("up", "down") or not re.fullmatch(r"[0-9a-f]{12}", body.check_id):
+        raise HTTPException(422, "invalid feedback")
+    key = (request.client.host if request.client else "?", body.check_id)
+    if key not in FEEDBACK_SEEN:
+        if len(FEEDBACK_SEEN) > 5000:
+            FEEDBACK_SEEN.clear()
+        FEEDBACK_SEEN.add(key)
+        obs.emit({"kind": "feedback", "check_id": body.check_id, "rating": body.rating})
+    return {"ok": True}
 
 
 @app.get("/train", response_class=HTMLResponse)

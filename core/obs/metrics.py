@@ -62,6 +62,11 @@ def summarize(events: list[dict]) -> dict:
             d["ok"] += 1 if t.get("ok") else 0
             d["ms"] += t.get("ms", 0)
     fb = Counter(e.get("rating") for e in events if e.get("kind") == "feedback")
+    verdict_of = {c.get("id"): c.get("verdict") for c in checks}
+    fb_by_verdict: dict[str, dict] = defaultdict(lambda: {"up": 0, "down": 0})
+    for e in events:
+        if e.get("kind") == "feedback" and e.get("check_id") and e["check_id"] in verdict_of and e.get("rating") in ("up", "down"):
+            fb_by_verdict[verdict_of[e["check_id"]]][e["rating"]] += 1
     errors = [e for e in events if e.get("kind") == "error"]
     return {
         "checks": n,
@@ -78,10 +83,26 @@ def summarize(events: list[dict]) -> dict:
         "tools": {k: {"calls": v["calls"], "ok_rate": round(v["ok"] / v["calls"], 2), "avg_ms": int(v["ms"] / v["calls"])} for k, v in tools.items()},
         "flywheel_stored": sum(1 for c in checks if c.get("flywheel")),
         "feedback": {"up": fb.get("up", 0), "down": fb.get("down", 0)},
+        "feedback_by_verdict": dict(fb_by_verdict),
+        "pii_scrubbed": sum(c.get("pii_scrubbed", 0) for c in checks),
+        "rounds_dist": dict(Counter(c.get("rounds", 1) for c in checks)),
+        "warmups": [{"ok": e.get("ok"), "ms": e.get("ms")} for e in events if e.get("event") == "llm_warmup"][-3:],
         "errors": len(errors),
         "recent_errors": [{"ts": e.get("ts"), "where": e.get("where"), "type": e.get("type")} for e in errors[-5:]],
         "log_writes_dropped": DROPPED["count"],
     }
+
+
+def recent_checks(events: list[dict], n: int = 25) -> list[dict]:
+    """Newest first. Only ids, enums and numbers: no message text exists in the log to leak."""
+    rows = []
+    for c in [e for e in events if e.get("kind") == "check"][-n:][::-1]:
+        rows.append({"ts": c.get("ts"), "id": c.get("id"), "verdict": c.get("verdict"), "confidence": c.get("confidence"), "rounds": c.get("rounds", 1),
+                     "latency_ms": c.get("latency_ms"), "ai": bool(c.get("used_ai")), "tokens": c.get("tokens_in", 0) + c.get("tokens_out", 0),
+                     "flags": [f'{x["stage"]}:{x["status"]}' for x in c.get("stages", []) if x.get("status") in ("flag", "block")],
+                     "tools": sorted({t["tool"] for t in c.get("tools", []) if t["tool"] not in ("domain_check", "payment_rail", "phone_check")}),
+                     "flywheel": bool(c.get("flywheel"))})
+    return rows
 
 
 def health(events: list[dict] | None = None) -> dict:
@@ -95,6 +116,8 @@ def health(events: list[dict] | None = None) -> dict:
         problems.append(f'{s["errors"]} internal error(s) in the last hour')
     if s["latency_ms"]["p95"] > 30000:
         problems.append(f'slow: p95 {s["latency_ms"]["p95"] // 1000}s per check')
+    if s["pii_scrubbed"]:
+        problems.append(f'{s["pii_scrubbed"]} personal detail(s) were caught by the outgoing scrubber: an upstream redaction was missed')
     if s["log_writes_dropped"]:
         problems.append("some log lines could not be written (disk or permissions)")
     fb = s["feedback"]

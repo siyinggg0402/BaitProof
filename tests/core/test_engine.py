@@ -210,3 +210,22 @@ def test_model_only_suspicion_is_overruled_by_independent_reassurance(net, monke
     AGE.update(days=None, dns="ok")
     r2 = check_message("Hi, your invoice is ready: https://billing.quiet-acme.io/inv/8841")
     assert r2.verdict == V.LIKELY_SCAM
+
+
+def test_a_message_that_asks_for_nothing_cannot_be_called_a_scam_on_the_models_word_alone(monkeypatch):
+    otp = {"verdict": "likely_scam", "tactics": [
+        {"id": "otp-credential-phish", "quote": "Your verification code is 771204", "why": "requests a code"},
+        {"id": "urgency-pressure", "quote": "It expires in 10 minutes", "why": "deadline"}], "the_tell": "t", "action": "a"}
+    fake(monkeypatch, analysis=otp, second=otp)
+    r = check_message("Your verification code is 771204. It expires in 10 minutes. Never share this code.")
+    assert r.verdict == V.UNSURE and r.confidence == "low"  # two quoted-but-unsupported claims, and nothing is being asked
+    assert not r.added_to_training
+
+
+def test_the_scam_label_needs_independent_evidence(monkeypatch):
+    two = {"verdict": "scam", "tactics": [{"id": "advance-fee", "quote": "small fee", "why": "fee"},
+                                           {"id": "job-task-scam", "quote": "book the hall", "why": "job"}], "the_tell": "t", "action": "a"}
+    fake(monkeypatch, analysis=two, second=two, intent_out={"asks": ["pay"], "pressure": []})
+    r = check_message("Please send the small fee so we can book the hall.")
+    assert r.verdict == V.LIKELY_SCAM  # capped: 'scam' needs evidence the model didn't supply
+    assert not r.added_to_training

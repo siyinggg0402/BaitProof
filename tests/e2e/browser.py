@@ -14,7 +14,7 @@ CHROME = os.getenv("CHROME_PATH", "/Applications/Google Chrome.app/Contents/MacO
 
 def main() -> int:
     # NEBIUS_API_KEY="" forces offline rules: the e2e test must never spend model credit (dotenv does not override set vars)
-    env = {**os.environ, "BAITPROOF_DB": tempfile.mkdtemp() + "/e2e.sqlite", "BAITPROOF_LOG_DIR": tempfile.mkdtemp(), "NEBIUS_API_KEY": ""}
+    env = {**os.environ, "BAITPROOF_DB": tempfile.mkdtemp() + "/e2e.sqlite", "BAITPROOF_LOG_DIR": tempfile.mkdtemp(), "NEBIUS_API_KEY": "", "BAITPROOF_ADMIN_TOKEN": "e2e-token"}
     srv = subprocess.Popen([sys.executable, "-m", "uvicorn", "web.main:app", "--port", str(PORT)], env=env,
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     time.sleep(2.5)
@@ -25,7 +25,12 @@ def main() -> int:
             ctx = b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2, is_mobile=True, has_touch=True,
                                 permissions=["clipboard-read", "clipboard-write"])
             page = ctx.new_page()
-            page.on("console", lambda m: m.type in ("error", "warning") and problems.append(f"console {m.type}: {m.text}"))
+            expect_401 = {"n": 0}  # the wrong-token login attempt deliberately returns 401
+
+            def on_console(m):
+                if m.type in ("error", "warning") and not (expect_401["n"] and "401" in m.text):
+                    problems.append(f"console {m.type}: {m.text}")
+            page.on("console", on_console)
             page.on("pageerror", lambda e: problems.append(f"pageerror: {e}"))
 
             W = 390  # fixed viewport width; innerWidth can't be used because mobile emulation widens it to fit overflow
@@ -35,7 +40,7 @@ def main() -> int:
                     const bar = document.querySelector('.bar'), br = bar ? bar.getBoundingClientRect().right : W;
                     const out = [];
                     for (const e of document.querySelectorAll('body *')) {
-                        if (e.closest('.glow') || !e.getClientRects().length) continue;
+                        if (e.closest('.glow, .tbl-wrap') || !e.getClientRects().length) continue;  // tables scroll inside their own container
                         const r = e.getBoundingClientRect().right;
                         if (r > W + 1 || (bar && bar.contains(e) && r > br + 1)) out.push(e.tagName.toLowerCase() + '.' + (e.className || '') + '@' + Math.round(r));
                     }
@@ -54,6 +59,30 @@ def main() -> int:
             assert "SCAM" in page.inner_text("#result .banner"), page.inner_text("#result .banner")
             assert "Added to your practice" in page.inner_text("#result")
             no_overflow("result")
+            steps = page.locator("#live-steps li").count()
+            assert steps >= 5 and not page.is_visible("#live"), steps  # the live view showed the gates, then got out of the way
+            res = page.inner_text("#result").lower()  # inner_text applies CSS text-transform
+            assert "the evidence" in res and "red flag" in res
+            page.click("#result [data-feedback=up]")
+            page.wait_for_selector("#result [data-fb-note]:has-text('Thanks')")
+            assert page.is_disabled("#result [data-feedback=down]")
+
+            # operator dashboard: login, then numbers without any message text
+            page.goto(base + "/admin")
+            assert page.url.endswith("/admin/login")
+            expect_401["n"] = 1
+            page.fill("#token", "wrong")
+            page.click("button.big")
+            page.wait_for_selector(".err")
+            expect_401["n"] = 0
+            page.fill("#token", "e2e-token")
+            page.click("button.big")
+            page.wait_for_selector("text=Is it running OK?")
+            no_overflow("admin")
+            body = page.inner_text("body")
+            assert "Recent checks" in body and "gift" not in body.lower().split("recent checks")[1][:2000]
+            assert page.locator("table.tbl tbody tr").count() >= 1 and "👍 1" in body
+            page.goto(base)
 
             # text size toggle persists
             page.click("#textsize")

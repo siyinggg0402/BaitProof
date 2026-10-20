@@ -97,6 +97,8 @@ def _check(text: str, store: bool, tr: Trace, run: obs.Run) -> CheckResult:
         tell = (f"“{tactics[0].quote}”: " if tactics[0].quote else "") + TACTICS[first]["tell"]
     if not action:
         action = TACTICS[first]["action"] if first and verdict != Verdict.SAFE else CAVEAT
+    if verdict == Verdict.SAFE and not tell:
+        tell = "Nothing here asks for money, codes, passwords or a rush, and I found no red flags."
     tell, action, fixes = gates.output_gate(verdict, tell, action, CAVEAT)
     tr.add("output", "flag" if fixes else "pass", "; ".join(fixes) if fixes else "tone and safety rules satisfied")
 

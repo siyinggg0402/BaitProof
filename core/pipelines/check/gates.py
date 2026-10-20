@@ -54,9 +54,11 @@ def arbitrate(ledger: Ledger, intent: Intent, f: Findings, model_verdict: Verdic
 
     if strong:  # hard evidence from independent sources: the model can't talk us out of it
         d = Decision(Verdict.SCAM, "medium" if m_safe else "high", ["hard evidence: " + "; ".join(e.claim for e in strong[:2])], model_dependent=m_safe)
-    elif not ind_ids and not ledger.has_script_match() and h > 0 and (m_scam or model_only):
-        # Every red flag is the model's alone, and independent checks found reassuring facts: that is a doubt, not a verdict.
-        d = Decision(Verdict.UNSURE, "low", ["only the AI is suspicious, and independent checks look reassuring"], model_dependent=True)
+    elif not ind_ids and not ledger.has_script_match() and (m_scam or model_only) and (h > 0 or not (intent.asks - {"reply"})):
+        # Every red flag is the model's alone, and either independent checks found reassuring facts or the message asks for nothing
+        # (nothing to steal): that is a doubt, not a verdict.
+        why = "independent checks look reassuring" if h > 0 else "the message asks for nothing"
+        d = Decision(Verdict.UNSURE, "low", [f"only the AI is suspicious, and {why}"], model_dependent=True)
     elif flags >= 2 or w >= 4:  # two kinds of red flag, or enough smaller facts piling up
         conf = "low" if m_safe else ("high" if h < w / 2 else "medium")
         d = Decision(Verdict.SCAM if not m_safe else Verdict.LIKELY_SCAM, conf,
@@ -75,6 +77,10 @@ def arbitrate(ledger: Ledger, intent: Intent, f: Findings, model_verdict: Verdic
         d = Decision(Verdict.UNSURE, "low", ["contains a link that can't be verified"])
     else:
         d = Decision(Verdict.SAFE, "high" if m_safe else "medium", ["asks for nothing risky and no red flags found"], model_dependent=not m_safe)
+
+    if d.verdict == Verdict.SCAM and not ledger.has_independent_support():  # the strongest label needs evidence the model didn't supply
+        d = Decision(Verdict.LIKELY_SCAM, "medium" if d.confidence == "high" else d.confidence, d.reasons + ["only the AI raised these flags, so 'likely' rather than 'scam'"],
+                     model_dependent=True)
 
     if injection and d.verdict == Verdict.SAFE:
         d = Decision(Verdict.UNSURE, "low", ["message tries to instruct the checker"])

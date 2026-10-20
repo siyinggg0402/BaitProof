@@ -46,3 +46,17 @@ def add_security_headers(app: FastAPI) -> None:
         resp.headers["X-Content-Type-Options"] = "nosniff"
         resp.headers["Referrer-Policy"] = "same-origin"
         return resp
+
+
+LOGIN_HITS: dict[str, deque] = defaultdict(deque)
+LOGIN_RATE = 8  # admin login attempts per minute per IP
+
+
+async def limit_login(request: Request) -> None:
+    """Brute-force guard for the admin token."""
+    q, now = LOGIN_HITS[request.client.host if request.client else "?"], time.monotonic()
+    while q and now - q[0] > 60:
+        q.popleft()
+    if len(q) >= LOGIN_RATE:
+        raise HTTPException(429, "Too many attempts. Please wait a minute.")
+    q.append(now)
