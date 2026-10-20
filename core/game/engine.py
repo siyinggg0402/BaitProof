@@ -145,6 +145,8 @@ def public(r: Round) -> dict:
 
 # ---------------------------------------------------------------- scoring an answer
 def _tell_score(item: gp.Item, picked: list[int]) -> str:
+    if gp.is_cjk(item.text):  # Chinese: the tappable units are clauses, scored by overlap with the giveaway's span
+        return gp.tell_score_clauses(item, picked)
     toks = {gp.norm_word(w) for w in item.tell_phrase.split()} - {""}
     ws = gp.words(item.text)
     sel = {gp.norm_word(ws[i]) for i in picked if 0 <= i < len(ws)} - {""}

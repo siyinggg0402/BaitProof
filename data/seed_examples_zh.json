@@ -1,0 +1,587 @@
+[
+ {
+  "id": "z01",
+  "is_scam": true,
+  "tactics": [
+   "urgency-pressure",
+   "lookalike-link",
+   "advance-fee"
+  ],
+  "text": "【申通快递】您的包裹因收件地址不完整滞留中转站，请于今日内点击 http://sto-redeliver.top/a 补充地址并支付3元复投费，逾期退回。",
+  "tell_phrase": "http://sto-redeliver.top/a",
+  "tell": "快递公司不会用奇怪的网址收费。sto-redeliver.top 不是申通的官方网站。",
+  "action": "不要点链接。打开快递App或官方网站，自己查询包裹。",
+  "lang": "zh"
+ },
+ {
+  "id": "z02",
+  "is_scam": true,
+  "tactics": [
+   "lookalike-link",
+   "impersonation-official",
+   "urgency-pressure"
+  ],
+  "text": "【工商银行】您的账户存在异常交易已被临时冻结，请立即登录 icbc-safe-verify.com 解冻，否则将永久停用。",
+  "tell_phrase": "icbc-safe-verify.com",
+  "tell": "银行的官方网址以 icbc.com.cn 结尾，这个网址是假的。",
+  "action": "不要点。自己打开银行App，或拨打银行卡背面的电话核实。",
+  "lang": "zh"
+ },
+ {
+  "id": "z03",
+  "is_scam": true,
+  "tactics": [
+   "authority-spoofing",
+   "irreversible-payment",
+   "emotional-manipulation"
+  ],
+  "text": "我是市公安局的李警官，您的身份证被人冒用，涉及一起诈骗案，需要您配合调查，把名下资金转入我们提供的安全账户进行核查，请不要告诉任何人。",
+  "tell_phrase": "转入我们提供的安全账户",
+  "tell": "真正的警察不会在电话里叫你转账，也没有什么“安全账户”。",
+  "action": "马上挂断。自己拨打110或当地派出所的电话核实。",
+  "lang": "zh"
+ },
+ {
+  "id": "z04",
+  "is_scam": true,
+  "tactics": [
+   "job-task-scam",
+   "too-good-to-be-true",
+   "advance-fee"
+  ],
+  "text": "招聘兼职刷单员，一单赚20到80元，日赚500+，先垫付后返还本金加佣金，加微信 swork_168 报名。",
+  "tell_phrase": "先垫付后返还本金加佣金",
+  "tell": "真正的工作是公司付钱给你，不会要你先垫付。",
+  "action": "不要加，也不要垫付。垫付的钱一分都拿不回来。",
+  "lang": "zh"
+ },
+ {
+  "id": "z05",
+  "is_scam": true,
+  "tactics": [
+   "investment-crypto",
+   "emotional-manipulation"
+  ],
+  "text": "你好，我是在上海做医生的小陈，在朋友圈看到你，觉得你人很好。我有个朋友在做黄金期货，稳赚，我可以教你，小额先试试。",
+  "tell_phrase": "稳赚，我可以教你",
+  "tell": "陌生人突然对你好，又带你赚钱，这就是常说的“杀猪盘”。",
+  "action": "不要投钱。把这件事告诉家人，并停止联系。",
+  "lang": "zh"
+ },
+ {
+  "id": "z06",
+  "is_scam": true,
+  "tactics": [
+   "impersonation-official",
+   "otp-credential-phish"
+  ],
+  "text": "您好，我是淘宝客服，您昨天购买的商品被检测为缺货，需要为您退款并赔付50元红包，请添加微信 tb_kf_889 处理，并提供银行卡后四位。",
+  "tell_phrase": "请添加微信 tb_kf_889 处理",
+  "tell": "淘宝客服不会让你加微信办退款。退款只在订单页里办理。",
+  "action": "不要加。打开淘宝App，在订单里联系官方客服。",
+  "lang": "zh"
+ },
+ {
+  "id": "z07",
+  "is_scam": true,
+  "tactics": [
+   "authority-spoofing",
+   "emotional-manipulation"
+  ],
+  "text": "我是公司的张总，现在在外面见客户不方便接电话，你先转3万元到这个账户，我晚点还你，别告诉其他同事。",
+  "tell_phrase": "别告诉其他同事",
+  "tell": "“老板”要你转账又叫你保密，一定要先打电话本人确认。",
+  "action": "用你本来就有的号码打给本人。别急着转钱。",
+  "lang": "zh"
+ },
+ {
+  "id": "z08",
+  "is_scam": true,
+  "tactics": [
+   "emotional-manipulation",
+   "urgency-pressure"
+  ],
+  "text": "妈，我是小军，手机丢了，这是新号码。我现在有急事要交一笔押金，你先转8000到这个账户，我晚点跟你解释。",
+  "tell_phrase": "手机丢了，这是新号码",
+  "tell": "“换了新号码”加“急着要钱”，是最常见的冒充亲人的骗局。",
+  "action": "先打电话到他原来的号码。再问一个只有本人才知道的问题。",
+  "lang": "zh"
+ },
+ {
+  "id": "z09",
+  "is_scam": true,
+  "tactics": [
+   "too-good-to-be-true",
+   "lookalike-link",
+   "advance-fee"
+  ],
+  "text": "【幸运抽奖】恭喜您被选为本月幸运客户，获得价值6999元的手机一部！请点击 http://lucky-gift88.cc 领取，需先支付9.9元运费。",
+  "tell_phrase": "需先支付9.9元运费",
+  "tell": "没参加过的抽奖就中奖，还要你先付费，就是骗局。",
+  "action": "忽略它。不要点链接，也不要付运费。",
+  "lang": "zh"
+ },
+ {
+  "id": "z10",
+  "is_scam": true,
+  "tactics": [
+   "advance-fee",
+   "impersonation-official"
+  ],
+  "text": "【微粒贷】您的额度已提升至8万元，无需抵押，当天放款，请下载APP激活，需先缴纳1200元保证金。",
+  "tell_phrase": "需先缴纳1200元保证金",
+  "tell": "真正的贷款不会在放款前先收保证金。",
+  "action": "不要缴费。通过银行或正规平台的官方App申请贷款。",
+  "lang": "zh"
+ },
+ {
+  "id": "z11",
+  "is_scam": true,
+  "tactics": [
+   "impersonation-official",
+   "lookalike-link",
+   "urgency-pressure"
+  ],
+  "text": "【社保局】您的社保账户因信息未更新将于本月底停用，请点击 http://shebao-gov-update.vip 完成认证，否则无法报销医药费。",
+  "tell_phrase": "http://shebao-gov-update.vip",
+  "tell": "政府网站的网址以 gov.cn 结尾，这个不是。",
+  "action": "不要点。去当地社保局，或用官方App核实。",
+  "lang": "zh"
+ },
+ {
+  "id": "z12",
+  "is_scam": true,
+  "tactics": [
+   "impersonation-official",
+   "lookalike-link",
+   "urgency-pressure"
+  ],
+  "text": "【交管服务】您有一条违章记录未处理，将产生滞纳金，请于24小时内点击 http://jg-pay-fine.top 缴纳罚款。",
+  "tell_phrase": "24小时内点击",
+  "tell": "交管部门不会用短信链接收罚款。",
+  "action": "不要点。用官方的交管App查询违章。",
+  "lang": "zh"
+ },
+ {
+  "id": "z13",
+  "is_scam": true,
+  "tactics": [
+   "impersonation-official",
+   "urgency-pressure"
+  ],
+  "text": "【国家电网】您的电费账户已欠费，今晚将被停电，请立即扫码缴费。",
+  "tell_phrase": "今晚将被停电",
+  "tell": "要停你的电，却让你扫码付款，是假的。",
+  "action": "不要扫。到电力公司的官方App或营业厅查询。",
+  "lang": "zh"
+ },
+ {
+  "id": "z14",
+  "is_scam": true,
+  "tactics": [
+   "impersonation-official",
+   "lookalike-link",
+   "urgency-pressure"
+  ],
+  "text": "【微信安全中心】您的账号涉嫌违规，将在24小时内被封停，请点击 http://wx-safe-center.top 申诉解封。",
+  "tell_phrase": "http://wx-safe-center.top",
+  "tell": "微信的官方网址不是这个。吓你“要封号”是为了让你急着点。",
+  "action": "不要点。在微信App里的“设置”中自己查看账号状态。",
+  "lang": "zh"
+ },
+ {
+  "id": "z15",
+  "is_scam": true,
+  "tactics": [
+   "advance-fee",
+   "too-good-to-be-true"
+  ],
+  "text": "亲，你拍的商品已发货，需要你扫码确认收货并先支付100元担保保证金，退回后双倍返还。",
+  "tell_phrase": "先支付100元担保保证金",
+  "tell": "平台交易不需要你私下付“担保金”，更没有“双倍返还”。",
+  "action": "只在平台内付款。不要扫陌生人发来的码。",
+  "lang": "zh"
+ },
+ {
+  "id": "z16",
+  "is_scam": true,
+  "tactics": [
+   "investment-crypto",
+   "too-good-to-be-true",
+   "urgency-pressure"
+  ],
+  "text": "老师今天带大家抄底，明日必涨停，进群领取内部消息，名额有限，扫码进群，稳赚不赔！",
+  "tell_phrase": "稳赚不赔",
+  "tell": "没有人能保证“稳赚不赔”，说这话的就是骗子。",
+  "action": "不要进群，更不要转钱。先问问信得过的家人。",
+  "lang": "zh"
+ },
+ {
+  "id": "z17",
+  "is_scam": true,
+  "tactics": [
+   "investment-crypto",
+   "too-good-to-be-true"
+  ],
+  "text": "【数字资产】USDT套利项目，日收益3%，本金安全，入金越早收益越高，加入VIP群领取操作指南。",
+  "tell_phrase": "日收益3%，本金安全",
+  "tell": "每天赚3%等于一个月翻倍，这是假投资的典型承诺。",
+  "action": "不要入金。听到“稳赚”和“拉人头”就要警惕。",
+  "lang": "zh"
+ },
+ {
+  "id": "z18",
+  "is_scam": true,
+  "tactics": [
+   "remote-access-request",
+   "impersonation-official"
+  ],
+  "text": "您好，这里是银行客服，您的网银需要升级，请下载“远程协助”软件并告诉我屏幕上的九位数字，我帮您处理。",
+  "tell_phrase": "下载“远程协助”软件",
+  "tell": "银行客服不会让你安装远程控制软件。",
+  "action": "不要下载。挂断电话，自己拨打银行官方电话。",
+  "lang": "zh"
+ },
+ {
+  "id": "z19",
+  "is_scam": true,
+  "tactics": [
+   "otp-credential-phish",
+   "impersonation-official"
+  ],
+  "text": "【支付宝】您正在操作大额转账，我是客服，请把刚收到的验证码读给我听，否则无法取消。",
+  "tell_phrase": "把刚收到的验证码读给我听",
+  "tell": "验证码是你账户的钥匙，没有任何人需要你告诉他。",
+  "action": "绝不念出验证码。直接在支付宝App里查看交易。",
+  "lang": "zh"
+ },
+ {
+  "id": "z20",
+  "is_scam": true,
+  "tactics": [
+   "impersonation-official",
+   "urgency-pressure"
+  ],
+  "text": "【花呗】您的花呗将于明日关闭，会影响个人征信，请联系客服注销，客服QQ：1830275。",
+  "tell_phrase": "客服QQ：1830275",
+  "tell": "花呗开不开，在App里自己操作，不需要加QQ。",
+  "action": "不要加。打开支付宝App，在花呗页面里自己查看。",
+  "lang": "zh"
+ },
+ {
+  "id": "z21",
+  "is_scam": true,
+  "tactics": [
+   "impersonation-official",
+   "lookalike-link",
+   "urgency-pressure"
+  ],
+  "text": "【平安保险】您的车险即将到期，现在续保可享5折优惠，请点击 http://pa-car5.top 立即投保，今日有效。",
+  "tell_phrase": "http://pa-car5.top",
+  "tell": "保险公司的官方网址不是 pa-car5.top。",
+  "action": "不要点。通过官方App或你的保险经办人续保。",
+  "lang": "zh"
+ },
+ {
+  "id": "z22",
+  "is_scam": true,
+  "tactics": [
+   "advance-fee",
+   "too-good-to-be-true"
+  ],
+  "text": "房东出国了，房子急租，价格比市场价便宜一半，请先转1000元定金锁定，钥匙快递给你。",
+  "tell_phrase": "请先转1000元定金锁定",
+  "tell": "没见到房子、没见到房东就先付钱，十有八九是骗局。",
+  "action": "先看房、见到房东本人，再签合同付款。",
+  "lang": "zh"
+ },
+ {
+  "id": "z23",
+  "is_scam": true,
+  "tactics": [
+   "impersonation-official",
+   "otp-credential-phish",
+   "lookalike-link"
+  ],
+  "text": "【航空公司】您预订的航班因故取消，请点击 http://airline-refund.top 办理改签退款，需先验证银行卡号和验证码。",
+  "tell_phrase": "需先验证银行卡号和验证码",
+  "tell": "退款只会退回原来的付款方式，不需要你再给卡号和验证码。",
+  "action": "不要点。打开航空公司的官方App或官网查询航班。",
+  "lang": "zh"
+ },
+ {
+  "id": "z24",
+  "is_scam": true,
+  "tactics": [
+   "advance-fee",
+   "too-good-to-be-true"
+  ],
+  "text": "转让两张演唱会内场票，原价2800，急转1200，先付款后发电子票，加微信详聊。",
+  "tell_phrase": "先付款后发电子票",
+  "tell": "票价低得离谱，还要你先付款，是常见的假票骗局。",
+  "action": "走平台担保交易，或到官方渠道买票。",
+  "lang": "zh"
+ },
+ {
+  "id": "z25",
+  "is_scam": true,
+  "tactics": [
+   "otp-credential-phish",
+   "lookalike-link",
+   "urgency-pressure"
+  ],
+  "text": "您的游戏账号被检测到异常登录，请点击 http://game-appeal.cc 验证身份并提供密码，以免被封号。",
+  "tell_phrase": "验证身份并提供密码",
+  "tell": "游戏官方不会让你把密码发给任何人。",
+  "action": "不要点。只在游戏的官方App里改密码。",
+  "lang": "zh"
+ },
+ {
+  "id": "z26",
+  "is_scam": true,
+  "tactics": [
+   "too-good-to-be-true",
+   "lookalike-link",
+   "urgency-pressure"
+  ],
+  "text": "恭喜您获得微信红包888元，点击 http://hb-wechat-888.top 立即领取，仅限今日。",
+  "tell_phrase": "http://hb-wechat-888.top",
+  "tell": "红包不会通过陌生网址发给你。",
+  "action": "忽略它，也不要点。",
+  "lang": "zh"
+ },
+ {
+  "id": "z27",
+  "is_scam": true,
+  "tactics": [
+   "impersonation-official",
+   "remote-access-request",
+   "urgency-pressure"
+  ],
+  "text": "您好，这里是京东金融，您学生时期开通的校园贷还没有注销，会影响征信，需要您下载APP按指引操作注销。",
+  "tell_phrase": "会影响征信",
+  "tell": "这是“注销校园贷”骗局。正规平台不会让你转账“解除”。",
+  "action": "不要下载，也不要转账。到官方App里查看，或拨打官方客服电话。",
+  "lang": "zh"
+ },
+ {
+  "id": "z28",
+  "is_scam": true,
+  "tactics": [
+   "advance-fee",
+   "too-good-to-be-true"
+  ],
+  "text": "无抵押贷款，额度最高50万，月息0.5%，当天放款，不看征信，手续费先交3000元即可。",
+  "tell_phrase": "手续费先交3000元",
+  "tell": "放款前先收费，是贷款诈骗的标志。",
+  "action": "不要交钱。要贷款，请找银行或正规持牌机构。",
+  "lang": "zh"
+ },
+ {
+  "id": "z29",
+  "is_scam": true,
+  "tactics": [
+   "investment-crypto",
+   "too-good-to-be-true"
+  ],
+  "text": "免费领取股票投资课，老师每天带你实盘操作，月收益30%，扫码加入学习群。",
+  "tell_phrase": "月收益30%",
+  "tell": "每月赚30%不可能是真的，“免费课”只是为了把你拉进群。",
+  "action": "不要扫码。投资之前先和信得过的人商量。",
+  "lang": "zh"
+ },
+ {
+  "id": "z30",
+  "is_scam": true,
+  "tactics": [
+   "impersonation-official",
+   "authority-spoofing",
+   "urgency-pressure"
+  ],
+  "text": "【医保局】您的医保卡存在异常使用，请于今日内回电 400-812-3377 核实，否则将被冻结。",
+  "tell_phrase": "否则将被冻结",
+  "tell": "官方不会用短信吓你“要冻结”再让你打陌生号码。",
+  "action": "不要回电。用国家医保服务平台App或当地医保局的官方电话核实。",
+  "lang": "zh"
+ },
+ {
+  "id": "z31",
+  "is_scam": true,
+  "tactics": [
+   "impersonation-official",
+   "otp-credential-phish"
+  ],
+  "text": "您好，您在外卖平台的订单商家出餐超时，平台将赔付您30元，请点击链接领取并填写银行卡信息。",
+  "tell_phrase": "填写银行卡信息",
+  "tell": "领赔付不需要你填银行卡信息，这是在套你的卡号。",
+  "action": "不要点。在外卖App里查看订单和赔付。",
+  "lang": "zh"
+ },
+ {
+  "id": "z32",
+  "is_scam": true,
+  "tactics": [
+   "advance-fee",
+   "impersonation-official"
+  ],
+  "text": "抖音官方通知：您的账号已开通直播收益权限，需先缴纳500元保证金激活，扫码联系专员。",
+  "tell_phrase": "需先缴纳500元保证金激活",
+  "tell": "官方不会收“保证金”才给你权限。",
+  "action": "不要扫码，不要缴费。在抖音App里查看官方通知。",
+  "lang": "zh"
+ },
+ {
+  "id": "z33",
+  "is_scam": true,
+  "tactics": [
+   "impersonation-official",
+   "lookalike-link",
+   "urgency-pressure"
+  ],
+  "text": "【税务局】您的个人所得税有一笔年度未申报，将产生滞纳金，请点击 http://tax-gov-pay.vip 办理，否则影响征信。",
+  "tell_phrase": "http://tax-gov-pay.vip",
+  "tell": "税务局的官方网址以 gov.cn 结尾，这个不是。",
+  "action": "不要点。通过“个人所得税”官方App办理。",
+  "lang": "zh"
+ },
+ {
+  "id": "z34",
+  "is_scam": false,
+  "tactics": [],
+  "text": "【中国工商银行】您尾号6027的账户10月20日09:15收入工资12,860.00元，余额以银行为准。",
+  "tell_phrase": "",
+  "tell": "",
+  "action": "",
+  "lang": "zh"
+ },
+ {
+  "id": "z35",
+  "is_scam": false,
+  "tactics": [],
+  "text": "【美团外卖】您的订单已送达，祝您用餐愉快，请对本次服务评价。",
+  "tell_phrase": "",
+  "tell": "",
+  "action": "",
+  "lang": "zh"
+ },
+ {
+  "id": "z36",
+  "is_scam": false,
+  "tactics": [],
+  "text": "您的验证码是 508217，用于登录，5分钟内有效，请勿告诉他人。",
+  "tell_phrase": "",
+  "tell": "",
+  "action": "",
+  "lang": "zh"
+ },
+ {
+  "id": "z37",
+  "is_scam": false,
+  "tactics": [],
+  "text": "老妈，周末我带孩子回家看你们，想吃什么跟我说，我路上买。",
+  "tell_phrase": "",
+  "tell": "",
+  "action": "",
+  "lang": "zh"
+ },
+ {
+  "id": "z38",
+  "is_scam": false,
+  "tactics": [],
+  "text": "各位家长好，周五下午四点在学校礼堂召开期中家长会，请准时参加，谢谢。",
+  "tell_phrase": "",
+  "tell": "",
+  "action": "",
+  "lang": "zh"
+ },
+ {
+  "id": "z39",
+  "is_scam": false,
+  "tactics": [],
+  "text": "【菜鸟驿站】您的快递已到站，取件码 5-1-2036，营业时间8:00到21:00，请凭码取件。",
+  "tell_phrase": "",
+  "tell": "",
+  "action": "",
+  "lang": "zh"
+ },
+ {
+  "id": "z40",
+  "is_scam": false,
+  "tactics": [],
+  "text": "您好，您预约的10月28日下午2点体检已确认，请空腹前往，并携带身份证。",
+  "tell_phrase": "",
+  "tell": "",
+  "action": "",
+  "lang": "zh"
+ },
+ {
+  "id": "z41",
+  "is_scam": false,
+  "tactics": [],
+  "text": "物业提醒：明晚8点至10点小区电梯保养，期间暂停使用，请大家注意安全。",
+  "tell_phrase": "",
+  "tell": "",
+  "action": "",
+  "lang": "zh"
+ },
+ {
+  "id": "z42",
+  "is_scam": false,
+  "tactics": [],
+  "text": "【国家反诈中心】请注意：陌生人以“刷单返利”“冒充客服退款”为由要您转账的，都是诈骗，请立即停止并报警。",
+  "tell_phrase": "",
+  "tell": "",
+  "action": "",
+  "lang": "zh"
+ },
+ {
+  "id": "z43",
+  "is_scam": false,
+  "tactics": [],
+  "text": "【京东】您的订单已发货，快递员正在为您配送，预计今天下午送达。",
+  "tell_phrase": "",
+  "tell": "",
+  "action": "",
+  "lang": "zh"
+ },
+ {
+  "id": "z44",
+  "is_scam": false,
+  "tactics": [],
+  "text": "【中国移动】您本月套餐已使用80%，可登录中国移动App查看详情。",
+  "tell_phrase": "",
+  "tell": "",
+  "action": "",
+  "lang": "zh"
+ },
+ {
+  "id": "z45",
+  "is_scam": false,
+  "tactics": [],
+  "text": "小王，下周三公司团建，下午1点在楼下集合，大巴统一出发，记得穿运动鞋。",
+  "tell_phrase": "",
+  "tell": "",
+  "action": "",
+  "lang": "zh"
+ },
+ {
+  "id": "z46",
+  "is_scam": false,
+  "tactics": [],
+  "text": "您好，您在医院预约的挂号已成功，请于10月30日上午9点前到门诊三楼内科就诊。",
+  "tell_phrase": "",
+  "tell": "",
+  "action": "",
+  "lang": "zh"
+ },
+ {
+  "id": "z47",
+  "is_scam": false,
+  "tactics": [],
+  "text": "周日我们去吃火锅吧，我订了六点的位置，你们能来吗？",
+  "tell_phrase": "",
+  "tell": "",
+  "action": "",
+  "lang": "zh"
+ }
+]

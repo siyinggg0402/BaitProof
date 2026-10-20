@@ -75,6 +75,7 @@ ZH: dict[str, str] = {
     "Don't act on it yet. Check using a phone number or website you already trust.": "先别照做。用你信得过的电话号码或网站去核实。",
     "Don't act on it. Check using a phone number or website you already trust.": "不要照做。用你信得过的电话号码或网站去核实。",
     "I can't point to one clear giveaway, so treat it with care.": "我说不出一个明确的破绽，所以请小心对待。",
+    "Nothing here asks for money, codes, passwords or a rush, so this one is fine.": "这条消息没有要钱、要验证码、要密码，也没有催你，所以它没问题。",
     # ---- evidence
     "“{q}” is a known scam phrase ({label})": "“{q}”是常见的骗局用语（{label}）",
     "The link {host} {why}": "链接 {host} {why}",

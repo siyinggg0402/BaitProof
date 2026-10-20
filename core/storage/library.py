@@ -4,21 +4,30 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from core.domain import privacy
+from core.domain import i18n, privacy
 from core.domain.tactics import valid
 from core.storage import db
 
 SEED_PATH = Path(__file__).resolve().parents[2] / "data" / "seed_examples.json"
+SEED_ZH_PATH = Path(__file__).resolve().parents[2] / "data" / "seed_examples_zh.json"
 
 # Re-exported so existing imports keep working; the implementation lives in core.domain.privacy.
 URL_RE, EMAIL_RE, PHONE_RE = privacy.URL_RE, privacy.EMAIL_RE, privacy.PHONE_RE
 host_of, redact = privacy.host_of, privacy.redact
 
 
-def seed_examples() -> list[dict]:
-    items = json.loads(SEED_PATH.read_text())
+def seed_examples(lang: str = "en") -> list[dict]:
+    """The curated bank for a language. English by default (so every existing caller is unchanged); "zh" is the Simplified Chinese bank and
+    "zh-Hant" the same bank converted to Traditional (a phrase that no longer matches after conversion is dropped rather than shown wrong)."""
+    lang = i18n.norm(lang)
+    items = json.loads((SEED_PATH if lang == "en" else SEED_ZH_PATH).read_text(encoding="utf-8"))
     for it in items:
         it["source"] = "seed"
+        if lang == "zh-Hant":
+            for k in ("text", "tell_phrase", "tell", "action"):
+                it[k] = i18n.to_traditional(it[k])
+            if it["tell_phrase"] not in it["text"]:
+                it["tell_phrase"] = ""
     return items
 
 
@@ -32,8 +41,8 @@ def user_examples() -> list[dict]:
     ]
 
 
-def all_examples() -> list[dict]:
-    return user_examples() + seed_examples()
+def all_examples(lang: str = "en") -> list[dict]:
+    return user_examples() + seed_examples(lang)
 
 
 def add_user_example(text: str, tactics: list[str], tell_phrase: str, tell: str, action: str) -> bool:
