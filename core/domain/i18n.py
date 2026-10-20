@@ -187,9 +187,11 @@ ZH: dict[str, str] = {
     "Fake loan or credit-limit offer": "假贷款/提额", "Friendship that turns into an investment pitch": "交友变投资推销",
 }
 
-from core.domain.i18n_ui import UI_ZH  # noqa: E402  (website, game and bot strings live in their own file)
+from core.domain.i18n_bot import BOT_ZH  # noqa: E402  (website, game and bot strings live in their own files)
+from core.domain.i18n_ui import UI_ZH  # noqa: E402
 
 ZH.update(UI_ZH)
+ZH.update(BOT_ZH)
 
 TACTICS_ZH = {
     "urgency-pressure": {"label": "催你马上行动", "blurb": "他们说你必须立刻行动，让你来不及多想。", "tell": "正规公司会给你时间。只给几个小时的期限，是施压的手段。",

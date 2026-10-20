@@ -12,25 +12,31 @@ def main() -> None:
     from telegram import Update
     from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 
+    def hint(update: Update) -> str | None:
+        return getattr(update.effective_user, "language_code", None)  # the user's Telegram language, e.g. "zh-hans" or "en"
+
     async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         # a deep link from the website (t.me/<bot>?start=CODE) arrives as /start CODE
-        await update.message.reply_text(await asyncio.to_thread(handlers.on_start, update.effective_chat.id, " ".join(ctx.args or [])))
+        await update.message.reply_text(await asyncio.to_thread(handlers.on_start, update.effective_chat.id, " ".join(ctx.args or []), hint(update)))
 
     async def link(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
-        await update.message.reply_text(await asyncio.to_thread(handlers.on_link, update.effective_chat.id, " ".join(ctx.args or [])))
+        await update.message.reply_text(await asyncio.to_thread(handlers.on_link, update.effective_chat.id, " ".join(ctx.args or []), hint(update)))
 
     async def unlink(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
-        await update.message.reply_text(await asyncio.to_thread(handlers.on_unlink, update.effective_chat.id))
+        await update.message.reply_text(await asyncio.to_thread(handlers.on_unlink, update.effective_chat.id, hint(update)))
+
+    async def lang(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+        await update.message.reply_text(await asyncio.to_thread(handlers.on_lang, update.effective_chat.id, " ".join(ctx.args or []), hint(update)))
 
     async def history_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
-        await update.message.reply_text(await asyncio.to_thread(handlers.on_history, update.effective_chat.id))
+        await update.message.reply_text(await asyncio.to_thread(handlers.on_history, update.effective_chat.id, 5, hint(update)))
 
     async def score(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
-        await update.message.reply_text(handlers.on_score(update.effective_chat.id))
+        await update.message.reply_text(handlers.on_score(update.effective_chat.id, hint(update)))
 
     async def text(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         # Checking can call the model, so keep it off the event loop.
-        reply = await asyncio.to_thread(handlers.on_text, update.effective_chat.id, update.message.text or "")
+        reply = await asyncio.to_thread(handlers.on_text, update.effective_chat.id, update.message.text or "", hint(update))
         await update.message.reply_text(reply)
 
     app = Application.builder().token(os.environ["TELEGRAM_BOT_TOKEN"]).build()
@@ -39,6 +45,7 @@ def main() -> None:
     app.add_handler(CommandHandler("link", link))
     app.add_handler(CommandHandler("unlink", unlink))
     app.add_handler(CommandHandler("history", history_cmd))
+    app.add_handler(CommandHandler("lang", lang))
     app.add_handler(CommandHandler("help", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text))
     app.run_polling()
