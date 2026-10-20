@@ -5,31 +5,49 @@ from __future__ import annotations
 from core.ai import llm
 from core.ai.prompts import CHECK_SYSTEM, CRITIC_SYSTEM
 from core.domain.schemas import TacticHit, Verdict
-from core.domain.tactics import valid
+from core.domain.tactics import TACTICS, valid
 
+from .evidence import Ledger
 from .ingest import Ingested
 from .intent import Intent
 from .knowledge import RULES
 from .tools import Findings
 
 
-def rule_tactics(ing: Ingested, intent: Intent, f: Findings) -> list[TacticHit]:
-    hits: dict[str, TacticHit] = {}
+STRONG_RULE_TACTICS = {"remote-access-request"}  # a pattern hit that is near-conclusive on its own
+
+
+def rule_evidence(ing: Ingested, intent: Intent, f: Findings, ledger: Ledger) -> None:
+    """Independent (non-model) evidence from phrase rules, the domain/rail tools and the intent diagnosis."""
     for tid, pats in RULES.items():
         for p in pats:
             if m := p.search(ing.text):
-                hits[tid] = TacticHit(id=tid, quote=m.group(0)[:80], why="Matched a known scam phrase")
+                q = m.group(0)[:80]
+                ledger.add("rule", "pattern", "scam", "strong" if tid in STRONG_RULE_TACTICS else "medium",
+                           f"“{q}” is a known scam phrase ({TACTICS[tid]['label'].lower()})", q, tid)
                 break
-    for host in f.suspicious_hosts:
-        why = "; ".join({**f.soft_hosts, **f.hard_hosts}[host])
-        hits["lookalike-link"] = TacticHit(id="lookalike-link", quote=host, why=f"{host} {why}")
-        break
-    if f.irreversible_rails:
-        r = f.irreversible_rails[0]
-        hits["irreversible-payment"] = TacticHit(id="irreversible-payment", quote=ing.entities.rails[r], why="Payment that can't be taken back")
-    if "share_code" in intent.asks and "otp-credential-phish" not in hits and intent.evidence.get("share_code"):
-        hits["otp-credential-phish"] = TacticHit(id="otp-credential-phish", quote=intent.evidence["share_code"], why="Asks you to hand over a code")
-    return list(hits.values())
+    for host, why in f.hard_hosts.items():
+        ledger.add("tool", "domain_check", "scam", "strong", f"The link {host} {'; '.join(why)}", host, "lookalike-link")
+    for host, why in f.soft_hosts.items():
+        ledger.add("tool", "domain_check", "scam", "weak", f"The link {host} {'; '.join(why)}", host, "lookalike-link")
+    for r in f.irreversible_rails:
+        ledger.add("tool", "payment_rail", "scam", "strong", f"Asks for payment by {r.replace('-', ' ')}, which can't be taken back",
+                   ing.entities.rails[r], "irreversible-payment")
+    if "share_code" in intent.asks and intent.evidence.get("share_code"):
+        ledger.add("intent", "ask:share_code", "scam", "strong", "Asks you to hand over a code that is the key to your account",
+                   intent.evidence["share_code"], "otp-credential-phish")
+    if "pay" in intent.asks and intent.pressure:
+        ledger.add("intent", "ask:pay+pressure", "scam", "strong", "Asks you to pay while rushing you",
+                   intent.evidence.get("pressure", ""), None)
+    if ing.injection:
+        ledger.add("rule", "injection", "scam", "medium", "The message tries to give the checker instructions, which real messages never do")
+    for note in f.web_notes:  # untrusted web text: shown, never weighed
+        ledger.add("tool", "reputation", "neutral", "weak", "Web note (unverified): " + note[:200])
+
+
+def safe_evidence(ing: Ingested, intent: Intent, ledger: Ledger) -> None:
+    if not ledger.scam() and not intent.high_risk and "click" not in intent.asks and not intent.pressure and not ing.injection:
+        ledger.add("intent", "benign-intent", "safe", "medium", "It asks for nothing risky: no money, codes, passwords, links or installs, and it doesn't rush you")
 
 
 def model_analysis(ing: Ingested, intent: Intent, f: Findings) -> dict | None:

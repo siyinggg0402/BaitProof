@@ -124,6 +124,12 @@ textarea:focus,input:focus{outline:none;border-color:var(--brand);box-shadow:0 0
 .trace{margin:14px 0;font-size:.85rem}.trace summary{cursor:pointer;color:var(--muted);font-weight:600}.trace summary:hover{color:var(--ink)}
 .trace ol{padding-left:1.3em;color:var(--muted)}.trace .st-flag{color:var(--bad)}.trace .st-block{color:var(--bad);font-weight:700}.trace .st-skip{color:var(--faint)}
 
+.evidence{margin:14px 0}.evidence summary{cursor:pointer;font-weight:650}
+.ev{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:8px}
+.ev li{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);font-size:.95rem}
+.ev-tag{font:700 .68rem var(--sans);letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.ev-scam .ev-tag{background:var(--bad-soft);color:var(--bad)}.ev-safe .ev-tag{background:var(--ok-soft);color:var(--ok)}.ev-neutral .ev-tag{background:var(--info-soft);color:var(--muted)}
+.ev small{display:block;color:var(--faint);margin-top:2px;font-size:.75rem}
 /* resilience */
 .g1{stop-color:var(--brand)}.g2{stop-color:var(--violet)}
 .scorebox{display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin:4px 0 12px}

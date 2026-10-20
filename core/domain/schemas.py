@@ -26,6 +26,18 @@ class TacticHit(BaseModel):
     quote: str = ""  # exact words from the message; verified by the grounding gate
 
 
+class Evidence(BaseModel):
+    """One structured fact behind a verdict. `kind` says who produced it; model-only evidence is weighed less."""
+    id: str = ""
+    kind: str  # rule | intent | tool | model
+    source: str  # e.g. pattern, domain_check, payment_rail, reputation, analysis, critic
+    supports: str  # scam | safe | neutral
+    strength: str  # weak | medium | strong
+    claim: str  # plain-language statement shown to the user
+    quote: str = ""  # exact words from the message, when the evidence is about the text
+    tactic: str | None = None
+
+
 class TraceStep(BaseModel):
     stage: str
     status: str  # pass | flag | skip | block
@@ -40,7 +52,7 @@ class CheckResult(BaseModel):
     action: str = ""
     tactics: list[TacticHit] = Field(default_factory=list)
     added_to_training: list[str] = Field(default_factory=list)
-    evidence: list[str] = Field(default_factory=list)
+    evidence: list[Evidence] = Field(default_factory=list)
     used_ai: bool = False
     confidence: str = "medium"
     trace: list[TraceStep] = Field(default_factory=list)

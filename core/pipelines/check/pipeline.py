@@ -13,6 +13,7 @@ from core.obs.metrics import cost_usd
 from core.storage import library, model
 
 from . import analysis, gates, intent as intent_stage, tools
+from .evidence import Ledger
 from .ingest import ingest
 from .trace import Trace
 
@@ -53,7 +54,7 @@ def _log(text: str, r: CheckResult, run: obs.Run) -> None:
         "latency_ms": run.elapsed_ms, "ai_configured": llm.available(), "used_ai": r.used_ai, "model": os.getenv("NEBIUS_MODEL", ""),
         "msg": {"fp": fingerprint(text), "len": len(text), **run.meta},
         "stages": [{"stage": s.stage, "status": s.status, "ms": s.ms} for s in r.trace],
-        "tools": run.tools, "llm": run.llm, "llm_calls": tot["calls"], "tokens_in": tot["tokens_in"], "tokens_out": tot["tokens_out"],
+        "evidence": run.meta.pop("evidence", []), "tools": run.tools, "llm": run.llm, "llm_calls": tot["calls"], "tokens_in": tot["tokens_in"], "tokens_out": tot["tokens_out"],
         "cost_usd": round(cost_usd(tot["tokens_in"], tot["tokens_out"]), 6), "flywheel": bool(r.added_to_training),
     })
 
@@ -77,34 +78,42 @@ def _check(text: str, store: bool, tr: Trace, run: obs.Run) -> CheckResult:
 
     f = tools.run_tools(ing, tr)
 
-    proposed = analysis.rule_tactics(ing, it, f)
+    ledger = Ledger()
+    analysis.rule_evidence(ing, it, f, ledger)
     out = analysis.model_analysis(ing, it, f)
     m_verdict = None
     tell = action = abstract = phrase = ""
     if out:
         m_verdict, m_tactics = analysis.parse_model(out)
-        proposed += m_tactics
+        kept, dropped = gates.grounding_gate(m_tactics, ing.text, ing.redacted)  # model claims must quote the message
+        for t in kept:
+            ledger.add("model", "analysis", "scam", "medium", t.why or f"The AI reviewer spotted: {TACTICS[t.id]['label'].lower()}", t.quote, t.id)
+        if m_verdict == Verdict.SAFE:
+            ledger.add("model", "analysis", "safe", "medium", "The AI reviewer found nothing suspicious")
         tell, action = str(out.get("the_tell", ""))[:400], str(out.get("action", ""))[:400]
         abstract, phrase = str(out.get("abstract_example", "")), str(out.get("tell_phrase", ""))
         tr.add("analysis", "pass", f"model says {m_verdict.value}; {len(m_tactics)} tactic(s) proposed")
+        tr.add("grounding", "flag" if dropped else "pass",
+               f"dropped {len(dropped)} AI claim(s) with no matching words in the message" if dropped else f"{len(kept)} AI claim(s) verified against the message")
     else:
         tr.add("analysis", "skip", "no AI configured: using built-in rules only")
+        tr.add("grounding", "pass", f"{len(ledger.tactic_ids())} red flag(s) from built-in rules")
+    analysis.safe_evidence(ing, it, ledger)
 
-    tactics, dropped = gates.grounding_gate(proposed, ing.text, ing.redacted)
-    tr.add("grounding", "flag" if dropped else "pass",
-           f"dropped {len(dropped)} claim(s) with no matching words in the message" if dropped else f"{len(tactics)} red flag(s) verified against the message")
-
-    d = gates.arbitrate(tactics, it, f, m_verdict, ing.injection, ing.english)
+    d = gates.arbitrate(ledger, it, f, m_verdict, ing.injection, ing.english)
     tr.add("arbiter", "pass", f"{d.verdict.value} ({d.confidence} confidence): " + "; ".join(d.reasons))
 
     if d.verdict == Verdict.SAFE and out:
         concern = analysis.critic(ing, it)
         if concern:
             d = gates.Decision(Verdict.UNSURE, "low", [f"second opinion: {concern}"])
+            ledger.add("model", "critic", "scam", "weak", f"A second reviewer was worried: {concern}")
             tr.add("critic", "flag", concern)
         else:
+            ledger.add("model", "critic", "safe", "weak", "A second reviewer looked for risk signals and found none")
             tr.add("critic", "pass", "second reviewer found nothing")
 
+    tactics = ledger.tactic_hits()
     verdict, first = d.verdict, (tactics[0].id if tactics else None)
     if not tell and first:
         tell = (f"“{tactics[0].quote}”: " if tactics[0].quote else "") + TACTICS[first]["tell"]
@@ -115,10 +124,10 @@ def _check(text: str, store: bool, tr: Trace, run: obs.Run) -> CheckResult:
     if verdict == Verdict.UNSURE and not tell:
         tell = "I can't find a clear giveaway, but I can't rule a scam out either."
 
-    ok, why = gates.flywheel_gate(d, tactics)
+    ok, why = gates.flywheel_gate(d, ledger)
     added: list[str] = []
     if ok and store:
-        ids = [t.id for t in tactics]
+        ids = ledger.tactic_ids()
         phrase = phrase or tactics[0].quote
         # Prefer the model's name-free rewrite; otherwise the deterministic scrub (names can slip through offline).
         library.add_user_example(abstract or ing.text, ids, phrase, tell, action)
@@ -126,5 +135,6 @@ def _check(text: str, store: bool, tr: Trace, run: obs.Run) -> CheckResult:
         added = ids
     tr.add("flywheel", "pass" if added else "skip", why)
 
+    run.meta["evidence"] = [{"kind": e.kind, "source": e.source, "supports": e.supports, "strength": e.strength, "tactic": e.tactic} for e in ledger.items]
     return CheckResult(verdict=verdict, headline=HEADLINES[verdict], tell=tell, action=action, tactics=tactics,
-                       added_to_training=added, evidence=f.web_notes, used_ai=bool(out), confidence=d.confidence, trace=tr.steps)
+                       added_to_training=added, evidence=ledger.items, used_ai=bool(out), confidence=d.confidence, trace=tr.steps)

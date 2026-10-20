@@ -46,6 +46,13 @@
     {% if result.action %}<div class="panel"><b>What to do</b>{{ result.action }}</div>{% endif %}
     {% if result.tactics %}<ul class="chips" aria-label="Tricks found">{% for t in result.tactics %}<li title="{{ t.quote }}">{{ labels[t.id] }}</li>{% endfor %}</ul>{% endif %}
     {% if result.added_to_training %}<p class="added">Added to your practice: {% for t in result.added_to_training %}{{ labels[t] }}{{ ", " if not loop.last }}{% endfor %}</p>{% endif %}
+    {% if result.evidence %}
+    <details class="evidence" open><summary>The evidence ({{ result.evidence|length }})</summary>
+      <ul class="ev">{% for e in result.evidence %}
+        <li class="ev-{{ e.supports }}"><span class="ev-tag">{{ {'scam': 'Red flag', 'safe': 'Reassuring', 'neutral': 'Note'}[e.supports] }}</span>
+          <span class="ev-body">{{ e.claim }}<small>{{ {'rule': 'Known pattern', 'intent': 'What it asks', 'tool': 'Checked', 'model': 'AI reviewer'}[e.kind] }} · {{ e.strength }}{% if e.kind == 'model' %} · counts for less{% endif %}</small></span></li>
+      {% endfor %}</ul></details>
+    {% endif %}
     <details class="trace"><summary>How I decided ({{ result.confidence }} confidence)</summary>
       <ol>{% for s in result.trace %}<li class="st-{{ s.status }}"><strong>{{ s.stage }}</strong>: {{ s.detail }}</li>{% endfor %}</ol></details>
     <button class="speak" data-say="{{ result.headline }} {{ result.tell }} {{ result.action }}">🔊 Read aloud</button>

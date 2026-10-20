@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 
 from core.domain.schemas import TacticHit, Verdict
 
+from .evidence import Ledger
 from .intent import Intent
 from .tools import Findings
 
@@ -37,26 +38,20 @@ class Decision:
     reasons: list[str] = field(default_factory=list)
 
 
-def arbitrate(tactics: list[TacticHit], intent: Intent, f: Findings, model_verdict: Verdict | None, injection: bool, english: bool = True) -> Decision:
-    """Asymmetric by design: evidence can escalate freely; 'safe' must be earned and any disagreement downgrades it."""
-    ids = {t.id for t in tactics}
+def arbitrate(ledger: Ledger, intent: Intent, f: Findings, model_verdict: Verdict | None, injection: bool, english: bool = True) -> Decision:
+    """Asymmetric by design: evidence can escalate freely; 'safe' must be earned and any disagreement downgrades it.
+    Reads the ledger, so every verdict can name the evidence it rests on."""
+    ids = set(ledger.tactic_ids())
     m_scam = model_verdict in (Verdict.SCAM, Verdict.LIKELY_SCAM)
     m_safe = model_verdict == Verdict.SAFE
-    why: list[str] = []
+    strong = ledger.strong_independent_scam()
 
-    hard = (
-        bool(f.hard_hosts) or bool(ids & {"irreversible-payment", "remote-access-request"})
-        or ("pay" in intent.asks and intent.pressure)
-        or ("share_code" in intent.asks and "otp-credential-phish" in ids)
-    )
-    if hard:
-        why.append("hard evidence: " + ", ".join(sorted(ids & {"irreversible-payment", "remote-access-request", "otp-credential-phish", "lookalike-link"})
-                                                  or (["asks for payment under pressure"] if "pay" in intent.asks else ["impersonating link"])))
-        d = Decision(Verdict.SCAM, "medium" if m_safe else "high", why)
+    if strong:  # hard evidence from independent sources: the model can't talk us out of it
+        d = Decision(Verdict.SCAM, "medium" if m_safe else "high", ["hard evidence: " + "; ".join(e.claim for e in strong[:2])])
     elif len(ids) >= 2:
-        d = Decision(Verdict.SCAM if not m_safe else Verdict.LIKELY_SCAM, "low" if m_safe else "high", [f"{len(ids)} grounded red flags"])
+        d = Decision(Verdict.SCAM if not m_safe else Verdict.LIKELY_SCAM, "low" if m_safe else "high", [f"{len(ids)} separate red flags"])
     elif len(ids) == 1:
-        d = Decision(Verdict.LIKELY_SCAM, "low" if m_safe else "medium", ["1 grounded red flag"])
+        d = Decision(Verdict.LIKELY_SCAM, "low" if m_safe else "medium", ["1 red flag"])
     elif m_scam:
         d = Decision(Verdict.UNSURE, "low", ["model suspects a scam but gave no verifiable evidence"])
     elif intent.high_risk or f.suspicious_hosts or intent.pressure or injection or model_verdict == Verdict.UNSURE:
@@ -73,10 +68,13 @@ def arbitrate(tactics: list[TacticHit], intent: Intent, f: Findings, model_verdi
     return d
 
 
-def flywheel_gate(d: Decision, tactics: list[TacticHit]) -> tuple[bool, str]:
-    """Only confident scam verdicts may feed the training library, so a wrong label can't be drilled as truth."""
-    if d.verdict not in (Verdict.SCAM, Verdict.LIKELY_SCAM) or not tactics:
+def flywheel_gate(d: Decision, ledger: Ledger) -> tuple[bool, str]:
+    """Only confident scam verdicts backed by NON-MODEL evidence may feed the training library, so neither a wrong
+    label nor a model hallucination can be drilled as truth."""
+    if d.verdict not in (Verdict.SCAM, Verdict.LIKELY_SCAM) or not ledger.tactic_ids():
         return False, "not a confident scam: kept out of training"
     if d.confidence == "low":
         return False, "low confidence: kept out of training"
+    if not ledger.has_independent_support():
+        return False, "only the model suspects it (no independent evidence): kept out of training"
     return True, "added to training"
