@@ -37,6 +37,9 @@ class Ledger:
     def strong_independent_scam(self) -> list[Evidence]:
         return [e for e in self.independent_scam() if e.strength == "strong"]
 
+    def has_script_match(self) -> bool:
+        return any(e.source.startswith("scenario:") and e.kind != "model" for e in self.scam())
+
     def tactic_ids(self) -> list[str]:
         return list(dict.fromkeys(e.tactic for e in self.scam() if e.tactic))
 

@@ -42,15 +42,16 @@ def arbitrate(ledger: Ledger, intent: Intent, f: Findings, model_verdict: Verdic
     """Asymmetric by design: evidence can escalate freely; 'safe' must be earned and any disagreement downgrades it.
     Reads the ledger, so every verdict can name the evidence it rests on."""
     ids = set(ledger.tactic_ids())
+    flags = len(ids) + (1 if ledger.has_script_match() else 0)  # matching a known scam script is itself a red flag
     m_scam = model_verdict in (Verdict.SCAM, Verdict.LIKELY_SCAM)
     m_safe = model_verdict == Verdict.SAFE
     strong = ledger.strong_independent_scam()
 
     if strong:  # hard evidence from independent sources: the model can't talk us out of it
         d = Decision(Verdict.SCAM, "medium" if m_safe else "high", ["hard evidence: " + "; ".join(e.claim for e in strong[:2])])
-    elif len(ids) >= 2:
-        d = Decision(Verdict.SCAM if not m_safe else Verdict.LIKELY_SCAM, "low" if m_safe else "high", [f"{len(ids)} separate red flags"])
-    elif len(ids) == 1:
+    elif flags >= 2:
+        d = Decision(Verdict.SCAM if not m_safe else Verdict.LIKELY_SCAM, "low" if m_safe else "high", [f"{flags} separate red flags"])
+    elif flags == 1:
         d = Decision(Verdict.LIKELY_SCAM, "low" if m_safe else "medium", ["1 red flag"])
     elif m_scam:
         d = Decision(Verdict.UNSURE, "low", ["model suspects a scam but gave no verifiable evidence"])
@@ -71,7 +72,7 @@ def arbitrate(ledger: Ledger, intent: Intent, f: Findings, model_verdict: Verdic
 def flywheel_gate(d: Decision, ledger: Ledger) -> tuple[bool, str]:
     """Only confident scam verdicts backed by NON-MODEL evidence may feed the training library, so neither a wrong
     label nor a model hallucination can be drilled as truth."""
-    if d.verdict not in (Verdict.SCAM, Verdict.LIKELY_SCAM) or not ledger.tactic_ids():
+    if d.verdict not in (Verdict.SCAM, Verdict.LIKELY_SCAM) or not ledger.tactic_ids():  # needs a tactic to drill
         return False, "not a confident scam: kept out of training"
     if d.confidence == "low":
         return False, "low confidence: kept out of training"

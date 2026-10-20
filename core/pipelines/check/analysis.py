@@ -7,6 +7,7 @@ from core.ai.prompts import CHECK_SYSTEM, CRITIC_SYSTEM
 from core.domain.schemas import TacticHit, Verdict
 from core.domain.tactics import TACTICS, valid
 
+from . import scenarios
 from .evidence import Ledger
 from .ingest import Ingested
 from .intent import Intent
@@ -39,6 +40,17 @@ def rule_evidence(ing: Ingested, intent: Intent, f: Findings, ledger: Ledger) ->
     if "pay" in intent.asks and intent.pressure:
         ledger.add("intent", "ask:pay+pressure", "scam", "strong", "Asks you to pay while rushing you",
                    intent.evidence.get("pressure", ""), None)
+    if intent.scenario:
+        sc = scenarios.SCENARIOS[intent.scenario]
+        ledger.add("intent", f"scenario:{sc.id}", "scam", "medium",
+                   f"Follows the “{sc.label}” scam script ({intent.scenario_signs} of its {len(sc.signals)} telltale signs)", intent.evidence.get("scenario", ""), None)
+    for text, quote, tactic in intent.mismatches:
+        ledger.add("intent", "mismatch", "scam", "medium", text, quote, tactic)
+    if "secrecy" in intent.pressure_kinds:
+        ledger.add("intent", "pressure:secrecy", "scam", "medium", "Tells you to keep it secret, so you can't check with anyone",
+                   intent.evidence.get("pressure:secrecy", ""), "emotional-manipulation")
+    if intent.model_scenario:
+        ledger.add("model", "scenario", "scam", "weak", f"The AI reviewer thinks it follows the “{scenarios.SCENARIOS[intent.model_scenario].label}” scam script")
     if ing.injection:
         ledger.add("rule", "injection", "scam", "medium", "The message tries to give the checker instructions, which real messages never do")
     for note in f.web_notes:  # untrusted web text: shown, never weighed
