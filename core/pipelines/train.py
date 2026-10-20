@@ -26,6 +26,15 @@ GOOD_WORDS = re.compile(r"\b(?:ignore|delete|block|don'?t|do not|never|verify|ca
 BAD_WORDS = re.compile(r"\b(?:here is|my code|my password|i will pay|i'll pay|sending|click(?:ed)? the link)\b", re.I)
 
 
+# A distractor that describes a safe or reasonable action would make the quiz unfair. Deliberately specific: a scammer's
+# framing ("click the link to verify your account") is a legitimately BAD option and must not be rejected.
+SAFE_SOUNDING = re.compile(
+    r"\b(?:ignore|delete|block|report|hang up|do nothing|nothing)\b"
+    r"|\b(?:tell|ask|talk to|call|phone|contact|check with|confirm with|verify (?:with|through|by))\s+"
+    r"(?:mom|mum|dad|someone|a (?:friend|family|trusted)|your|my|the (?:real|bank|police|company|official)|family|friends)\b"
+    r"|\b(?:official|real) (?:website|number|site|app)\b", re.I)
+
+
 def select_tactics(n: int = 4) -> list[tuple[str, str]]:
     """Weakest + due + recently seen in REAL life. Returns [(tactic, reason)]."""
     now = db.now()
@@ -66,9 +75,11 @@ def _wrong_options(ex: dict, tactic: str) -> tuple[str, list[str]]:
     if llm.available():
         try:
             out = llm.chat_json(WWYD_SYSTEM, f"MESSAGE: {ex['text']}\nSAFE ACTION: {ex['action']}", heavy=True)
-            wrong = [str(o)[:140] for o in out.get("wrong_options", []) if o][:3]
-            if len(wrong) == 3:
-                return str(out.get("question") or q)[:200], wrong
+            wrong = [str(o)[:140] for o in out.get("wrong_options", []) if o]
+            wrong = [w for w in wrong if not SAFE_SOUNDING.search(w)][:3]
+            if len(wrong) >= 2:  # keep the model's good options, top up from vetted templates if one was unfair
+                spare = [t for t in BAD_ACTIONS if t not in wrong]
+                return str(out.get("question") or q)[:200], wrong + random.sample(spare, 3 - len(wrong))
         except llm.LLMUnavailable:
             pass
     return q, random.sample(BAD_ACTIONS, 3)

@@ -18,7 +18,9 @@ Rules: NEVER answer "safe" if the message asks for money, codes, passwords, remo
 
 WWYD_SYSTEM = """You write one multiple-choice practice item for scam-awareness training.
 Given a scam message and the safe action, return ONLY JSON:
-{"question": "<What should you do? style question, one sentence>", "wrong_options": [<3 short, plausible but UNSAFE reactions a worried person might choose>]}
+{"question": "<What should you do? style question, one sentence>", "wrong_options": [<3 short, plausible but UNSAFE reactions>]}
+Each wrong option must clearly mean complying with or engaging the scammer: paying, buying, sending information, clicking, installing, or replying to them.
+NEVER include as a wrong option anything that is a safe or reasonable response: ignoring or deleting the message, doing nothing, blocking, reporting, telling or asking family or friends, calling the real person or bank, or verifying.
 Plain grade-5 words. Do not invent brands or facts not in the message."""
 
 GRADE_SYSTEM = """You grade a short written reply a learner wrote to a scam message. Be generous and encouraging, never harsh.
