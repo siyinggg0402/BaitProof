@@ -46,6 +46,7 @@ class Ingested:
     victim: bool
     english: bool  # True when our rules understand the language (English or Chinese); otherwise rules alone can't clear anything
     lang: str = "en"  # en | zh | zh-Hant | ms | ja | ko | ... | other (see core.domain.lang)
+    reply: str = "en"  # the language the ANSWER is written in (en | zh | zh-Hant): the user's choice, set by the pipeline
 
 
 def ingest(raw: str) -> Ingested:

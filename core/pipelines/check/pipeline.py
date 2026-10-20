@@ -6,6 +6,9 @@ import os
 
 from core import obs
 from core.ai import llm
+from core.domain import i18n
+from core.domain.i18n import tactic_text, tr
+from core.domain.lang import detect
 from core.domain.schemas import CheckResult, TacticHit, Verdict
 from core.domain.tactics import TACTICS
 from core.obs.logger import fingerprint
@@ -27,19 +30,30 @@ HEADLINES = {
 }
 
 
-def check_message(text: str, store: bool = True, on_event=None, log: bool = True) -> CheckResult:
-    """Run one check. Never crashes on internal errors (returns a cautious 'not sure'), always logs one structured event."""
+def reply_language(text: str, lang: str | None) -> str:
+    """The language to answer in: the user's choice if they made one, otherwise the message's own language (English if we can't tell)."""
+    if lang:
+        return i18n.norm(lang)
+    d = detect(text) if text.strip() else "en"
+    return d if d in ("zh", "zh-Hant") else "en"
+
+
+def check_message(text: str, store: bool = True, on_event=None, log: bool = True, lang: str | None = None) -> CheckResult:
+    """Run one check. Never crashes on internal errors (returns a cautious 'not sure'), always logs one structured event.
+    `lang` is the language to answer in (en | zh | zh-Hant); by default the message's own."""
     run = obs.start()
-    tr = Trace(on_event)
+    reply = reply_language(text, lang)
+    trace = Trace(on_event, reply)
     try:
-        result = _check(text, store, tr, run)
+        result = _check(text, store, trace, run, reply)
     except ValueError:
         raise  # invalid input (empty message): the caller reports it
     except Exception as e:
         obs.emit({"kind": "error", "where": "check", "type": type(e).__name__, "id": run.id})
-        tr.add("guard", "block", "internal error: returning a cautious answer")
-        result = CheckResult(verdict=Verdict.UNSURE, headline=HEADLINES[Verdict.UNSURE], confidence="low",
-                             tell="I couldn't finish checking this message.", action=CAVEAT.replace("This looks okay, but I", "I"), trace=tr.steps)
+        trace.add("guard", "block", "internal error: returning a cautious answer")
+        result = CheckResult(verdict=Verdict.UNSURE, headline=tr(HEADLINES[Verdict.UNSURE], reply), confidence="low", lang=reply,
+                             tell=tr("I couldn't finish checking this message.", reply),
+                             action=tr("I can't be sure. If it asks for money, codes or a rush, check first using an official number or website you already trust.", reply), trace=trace.steps)
     result.check_id = run.id
     if log:
         _log(text, result, run)
@@ -58,24 +72,27 @@ def _log(text: str, r: CheckResult, run: obs.Run) -> None:
     })
 
 
-def _check(text: str, store: bool, tr: Trace, run: obs.Run) -> CheckResult:
+def _check(text: str, store: bool, tr_: Trace, run: obs.Run, reply: str = "en") -> CheckResult:
     ing = ingest(text)
+    ing.reply = reply
     run.meta["english"] = ing.english
-    tr.add("ingest", "flag" if ing.injection else "pass",
-           "message tries to give the checker instructions" if ing.injection else f"{len(ing.entities.hosts)} link(s), {len(ing.entities.rails)} payment method(s) found")
+    run.meta["lang"] = ing.lang
+    T = lambda s, **kw: tr(s, reply, **kw)  # noqa: E731
+    tr_.add("ingest", "flag" if ing.injection else "pass",
+            "message tries to give the checker instructions" if ing.injection else "{n} link(s), {m} payment method(s) found", n=len(ing.entities.hosts), m=len(ing.entities.rails))
 
     if ing.victim:
-        tr.add("triage", "flag", "sounds like you may already have acted: switching to support")
+        tr_.add("triage", "flag", "sounds like you may already have acted: switching to support")
         return CheckResult(
-            verdict=Verdict.VICTIM, headline=HEADLINES[Verdict.VICTIM],
-            tell="Scammers are skilled, and many smart people get fooled.",
-            action="Call your bank or card company now and tell them. Change any password you shared. Report it to your local police or consumer-fraud line. Tell someone you trust.",
-            trace=tr.steps)
+            verdict=Verdict.VICTIM, headline=T(HEADLINES[Verdict.VICTIM]),
+            tell=T("Scammers are skilled, and many smart people get fooled."),
+            action=T("Call your bank or card company now and tell them. Change any password you shared. Report it to your local police or consumer-fraud line. Tell someone you trust."),
+            trace=tr_.steps, lang=reply, message_lang=ing.lang)
 
     it = intent_stage.diagnose(ing)
-    tr.add("intent", "flag" if it.high_risk or it.pressure else "pass", it.summary())
+    tr_.add("intent", "flag" if it.high_risk or it.pressure else "pass", it.summary())
 
-    case = engine.investigate(ing, it, tr, run)  # first pass, then loops until confident or out of budget
+    case = engine.investigate(ing, it, tr_, run)  # first pass, then loops until confident or out of budget
     ledger, d, out, f = case.ledger, case.decision, case.out, case.f
     tell = str(out.get("the_tell", ""))[:400] if out else ""
     action = str(out.get("action", ""))[:400] if out else ""
@@ -84,25 +101,25 @@ def _check(text: str, store: bool, tr: Trace, run: obs.Run) -> CheckResult:
     if d.verdict == Verdict.SAFE and case.votes:
         concern = analysis.critic(ing, it, f)
         if concern:
-            d = gates.Decision(Verdict.UNSURE, "low", [f"second opinion: {concern}"])
-            ledger.add("model", "critic", "scam", "weak", f"A second reviewer was worried: {concern}")
-            tr.add("critic", "flag", concern)
+            d = gates.Decision(Verdict.UNSURE, "low", [T("second opinion: {concern}", concern=concern)])
+            ledger.add("model", "critic", "scam", "weak", T("A second reviewer was worried: {concern}", concern=concern))
+            tr_.add("critic", "flag", "{concern}", concern=concern)
         else:
-            ledger.add("model", "critic", "safe", "weak", "A second reviewer looked for risk signals and found none")
-            tr.add("critic", "pass", "second reviewer found nothing")
+            ledger.add("model", "critic", "safe", "weak", T("A second reviewer looked for risk signals and found none"))
+            tr_.add("critic", "pass", "second reviewer found nothing")
 
     tactics = ledger.tactic_hits()
     verdict, first = d.verdict, (tactics[0].id if tactics else None)
     if not tell and first:
-        tell = (f"“{tactics[0].quote}”: " if tactics[0].quote else "") + TACTICS[first]["tell"]
+        tell = (f"“{tactics[0].quote}”: " if tactics[0].quote else "") + tactic_text(first, "tell", reply, TACTICS)
     if not action:
-        action = TACTICS[first]["action"] if first and verdict != Verdict.SAFE else CAVEAT
+        action = tactic_text(first, "action", reply, TACTICS) if first and verdict != Verdict.SAFE else T(CAVEAT)
     if verdict == Verdict.SAFE and not tell:
-        tell = "Nothing here asks for money, codes, passwords or a rush, and I found no red flags."
-    tell, action, fixes = gates.output_gate(verdict, tell, action, CAVEAT)
-    tr.add("output", "flag" if fixes else "pass", "; ".join(fixes) if fixes else "tone and safety rules satisfied")
+        tell = T("Nothing here asks for money, codes, passwords or a rush, and I found no red flags.")
+    tell, action, fixes = gates.output_gate(verdict, tell, action, T(CAVEAT), reply)
+    tr_.add("output", "flag" if fixes else "pass", "; ".join(fixes) if fixes else "tone and safety rules satisfied")
 
-    ok, why = gates.flywheel_gate(d, ledger)
+    ok, why = gates.flywheel_gate(d, ledger, reply)
     added: list[str] = []
     if ok and store:
         ids = ledger.tactic_ids()
@@ -111,8 +128,8 @@ def _check(text: str, store: bool, tr: Trace, run: obs.Run) -> CheckResult:
         library.add_user_example(abstract or ing.text, ids, phrase, tell, action)
         model.record_exposure(ids)
         added = ids
-    tr.add("flywheel", "pass" if added else "skip", why)
+    tr_.add("flywheel", "pass" if added else "skip", why)
 
     run.meta["evidence"] = [{"kind": e.kind, "source": e.source, "supports": e.supports, "strength": e.strength, "tactic": e.tactic} for e in ledger.items]
-    return CheckResult(verdict=verdict, headline=HEADLINES[verdict], tell=tell, action=action, tactics=tactics,
-                       added_to_training=added, evidence=ledger.items, used_ai=bool(case.votes), confidence=d.confidence, trace=tr.steps)
+    return CheckResult(verdict=verdict, headline=T(HEADLINES[verdict]), tell=tell, action=action, tactics=tactics, added_to_training=added, evidence=ledger.items,
+                       used_ai=bool(case.votes), confidence=d.confidence, trace=tr_.steps, lang=reply, message_lang=ing.lang)

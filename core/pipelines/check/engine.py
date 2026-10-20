@@ -8,6 +8,8 @@ import time
 from dataclasses import dataclass, field
 
 from core.ai import llm
+from core.domain.i18n import tactic_text
+from core.domain.i18n import tr as _t  # `tr` is the Trace in several places below
 from core.domain.schemas import Verdict
 from core.domain.tactics import TACTICS
 
@@ -59,7 +61,7 @@ class Case:
         return sum(1 for v in self.votes if _direction(v) == "scam")
 
     def decide(self) -> gates.Decision:
-        self.decision = gates.arbitrate(self.ledger, self.it, self.f, self.model_verdict(), self.ing.injection, self.ing.english, self.scam_votes())
+        self.decision = gates.arbitrate(self.ledger, self.it, self.f, self.model_verdict(), self.ing.injection, self.ing.english, self.scam_votes(), self.ing.reply)
         return self.decision
 
     def model_pass(self, second: bool = False) -> bool:
@@ -71,30 +73,32 @@ class Case:
         kept, unquoted = gates.grounding_gate(proposed, self.ing.text, self.ing.redacted)
         kept, impossible = preconditions.filter_claims(kept, self.ing, self.it, self.f)  # a claim must also be possible for THIS message
         dropped = [f"{t}: quote not found in the message" for t in unquoted] + impossible
+        L = self.ing.reply
         for t in kept:
-            self.ledger.add("model", "analysis", "scam", "medium", t.why or f"The AI reviewer spotted: {TACTICS[t.id]['label'].lower()}", t.quote, t.id)
+            self.ledger.add("model", "analysis", "scam", "medium", t.why or _t("The AI reviewer spotted: {label}", L, label=tactic_text(t.id, "label", L, TACTICS).lower()), t.quote, t.id)
         if verdict == Verdict.SAFE:
             self.ledger.add("model", "second-look" if second else "analysis", "safe", "medium",
-                            "A second look by the AI reviewer also found nothing suspicious" if second else "The AI reviewer found nothing suspicious")
+                            _t("A second look by the AI reviewer also found nothing suspicious" if second else "The AI reviewer found nothing suspicious", L))
         self.votes.append(verdict)
         if not second:
             self.out = out
         label = "second look" if second else "analysis"
-        self.tr.add("analysis" if not second else "second-look", "pass", f"model {label}: {verdict.value}; {len(proposed)} tactic(s) proposed")
+        self.tr.add("analysis" if not second else "second-look", "pass", "model {label}: {verdict}; {n} tactic(s) proposed", label=label, verdict=verdict.value, n=len(proposed))
         self.tr.add("grounding", "flag" if dropped else "pass",
-                    f"dropped {len(dropped)} AI claim(s) ({'; '.join(dropped)})" if dropped else f"{len(kept)} AI claim(s) verified against the message")
+                    "dropped {n} AI claim(s) ({why})" if dropped else "{n} AI claim(s) verified against the message", n=len(dropped) if dropped else len(kept), why="; ".join(dropped))
         return True
 
     def stop_reason(self) -> str:
         d = self.decision
+        L = self.ing.reply
         if d.confidence == "high":
-            return "confident enough"
+            return _t("confident enough", L)
         if self.rounds >= MAX_ROUNDS:
-            return f"reached the round limit ({MAX_ROUNDS})"
+            return _t("reached the round limit ({n})", L, n=MAX_ROUNDS)
         if time.perf_counter() - self.t0 > MAX_SECONDS:
-            return "time budget used up"
+            return _t("time budget used up", L)
         if len(self.run.llm) >= MAX_LLM_CALLS:
-            return "model-call budget used up"
+            return _t("model-call budget used up", L)
         return ""
 
 
@@ -104,7 +108,7 @@ def investigate(ing: Ingested, it: Intent, tr: Trace, run) -> Case:
     analysis.rule_evidence(ing, it, f, case.ledger)
     if not case.model_pass():
         tr.add("analysis", "skip", "no AI configured: using built-in rules only")
-        tr.add("grounding", "pass", f"{len(case.ledger.tactic_ids())} red flag(s) from built-in rules")
+        tr.add("grounding", "pass", "{n} red flag(s) from built-in rules", n=len(case.ledger.tactic_ids()))
     analysis.safe_evidence(ing, it, case.ledger, f)
     d = case.decide()
     tr.add("arbiter", "pass", f"{d.verdict.value} ({d.confidence} confidence): " + "; ".join(d.reasons))
@@ -132,11 +136,11 @@ def _loop(case: Case) -> None:
         elif llm.available() and not case.second_looked and case.decision.model_dependent:  # only when the model's opinion is what's in doubt
             case.second_looked = True
             if not case.model_pass(second=True):
-                why = "second look unavailable"
+                why = _t("second look unavailable", ing.reply)
                 break
             action = "took a second look with a different framing"
         else:
-            why = "nothing more to check" if not qs else "nothing more any tool can answer"
+            why = _t("nothing more to check" if not qs else "nothing more any tool can answer", ing.reply)
             break
         analysis.safe_evidence(ing, it, ledger, f)
         d = case.decide()

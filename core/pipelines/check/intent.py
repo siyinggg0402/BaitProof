@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from core.ai import llm
 from core.domain import intents
 from core.domain import zh as ZH
+from core.domain.i18n import tr
 from core.domain.lang import CJK, Dual, Z, canon
 from core.ai.prompts import INTENT_SYSTEM
 
@@ -122,21 +123,22 @@ def _heuristic(ing: Ingested) -> Intent:
 def _mismatches(it: Intent, ing: Ingested) -> None:
     """Claim-vs-ask contradictions: the pattern real senders almost never produce."""
     who, kind = it.claimed, it.claimed_kind
+    T = lambda s, **kw: tr(s, ing.reply, **kw)  # noqa: E731
     if kind in ("authority", "organisation"):
         if ing.entities.rails:
             rail = next(iter(ing.entities.rails))
-            it.mismatches.append((f"Claims to be {who} but asks for payment by {rail.replace('-', ' ')}. Real organisations never collect payment that way",
+            it.mismatches.append((T("Claims to be {who} but asks for payment by {rail}. Real organisations never collect payment that way", who=who, rail=T(rail.replace('-', ' '))),
                                   ing.entities.rails[rail], "irreversible-payment"))
         if it.asks & {"share_code", "share_credentials"}:
             q = it.evidence.get("share_code") or it.evidence.get("share_credentials", "")
-            it.mismatches.append((f"Claims to be {who} but asks you to share a code or password, which real organisations never ask for by message", q,
+            it.mismatches.append((T("Claims to be {who} but asks you to share a code or password, which real organisations never ask for by message", who=who), q,
                                   "otp-credential-phish"))
         if "secrecy" in it.pressure_kinds:
-            it.mismatches.append((f"Claims to be {who} but tells you to keep it secret", it.evidence.get("pressure:secrecy", ""), "authority-spoofing" if kind == "authority" else None))
+            it.mismatches.append((T("Claims to be {who} but tells you to keep it secret", who=who), it.evidence.get("pressure:secrecy", ""), "authority-spoofing" if kind == "authority" else None))
     # A relative asking family for money is normal; what makes it a scam is a new number, secrecy, an emergency, a deadline or gift cards.
     suspicious_context = bool(it.pressure_kinds or ing.entities.rails or _NEW_NUMBER.search(ing.text))
     if kind == "relation" and "pay" in it.asks and suspicious_context:
-        it.mismatches.append(("Says it's family and asks for money, but gives you no way to check it's really them",
+        it.mismatches.append((T("Says it's family and asks for money, but gives you no way to check it's really them"),
                               it.evidence.get("pay", ""), "emotional-manipulation"))
 
 

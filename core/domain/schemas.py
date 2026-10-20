@@ -57,6 +57,8 @@ class CheckResult(BaseModel):
     confidence: str = "medium"
     trace: list[TraceStep] = Field(default_factory=list)
     check_id: str = ""
+    lang: str = "en"  # the language the answer is written in (en | zh | zh-Hant), chosen by the user
+    message_lang: str = "en"  # the language the checked message is in
 
 
 class Drill(BaseModel):

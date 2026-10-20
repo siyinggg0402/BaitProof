@@ -4,19 +4,21 @@ from __future__ import annotations
 import time
 from typing import Callable
 
+from core.domain.i18n import tr
 from core.domain.schemas import TraceStep
 
 
 class Trace:
-    def __init__(self, on_event: Callable[[TraceStep], None] | None = None) -> None:
+    def __init__(self, on_event: Callable[[TraceStep], None] | None = None, lang: str = "en") -> None:
+        self.lang = lang  # the reply language: details are written in it (English text is the key, see core.domain.i18n)
         self.steps: list[TraceStep] = []
         self._last = time.perf_counter()
         self._on_event = on_event  # the live stage view subscribes here
 
-    def add(self, stage: str, status: str, detail: str) -> None:
-        """status: pass | flag | skip | block"""
+    def add(self, stage: str, status: str, detail: str, **kw) -> None:
+        """status: pass | flag | skip | block. `detail` is an English template; `kw` fills its {placeholders} after translation."""
         now = time.perf_counter()
-        step = TraceStep(stage=stage, status=status, detail=detail[:240], ms=int((now - self._last) * 1000))
+        step = TraceStep(stage=stage, status=status, detail=tr(detail, self.lang, **kw)[:240], ms=int((now - self._last) * 1000))
         self._last = now
         self.steps.append(step)
         if self._on_event:
