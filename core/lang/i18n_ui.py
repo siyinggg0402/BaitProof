@@ -4,7 +4,7 @@ Wording: plain, warm, short sentences for older adults; "你" throughout; 骗局
 
 UI_ZH: dict[str, str] = {
     # ---- page frame: header, tabs, footer, language switcher
-    "Main": "主导航", "Sections": "栏目", "Check": "查一查", "Practice": "练习", "Game": "游戏", "Records": "记录", "Larger text": "放大文字",
+    "Main": "主导航", "Sections": "栏目", "Check": "查一查", "Train": "练习", "Game": "游戏", "Records": "记录", "Larger text": "放大文字",
     "Challenge family": "挑战家人", "Challenge": "挑战", "Language": "语言",
     "tricks": "套路",
     "We keep the {tricks} you meet, not your messages.": "我们只记下你遇到的{tricks}，不保存你的消息。",
@@ -15,8 +15,8 @@ UI_ZH: dict[str, str] = {
     "Make your family {harder}.": "让你的家人{harder}。",
     "FREE": "免费",
     "Private by design. We keep tricks, not messages.": "注重隐私：我们只记套路，不存消息。",
-    "Paste any suspicious message. Baitproof tells you if it's a scam, shows you the one giveaway, then turns it into quick practice so the next one doesn't work on you.":
-        "把可疑的消息贴进来。Baitproof 会告诉你是不是骗局，指出最关键的破绽，再把它变成简短的练习，下次骗子就骗不到你了。",
+    "Paste any suspicious message. Baitproof tells you if it's a scam and shows you the giveaway.":
+        "把可疑的消息贴进来。Baitproof 会告诉你是不是骗局，并指出破绽。",
     "Check a message": "检查一条消息", "Start practice": "开始练习",
     "Plain language": "大白话", "Read aloud": "朗读", "Learns which tricks fool you": "记住哪些套路最容易骗到你",
     "New message": "新消息", "Example only": "仅为示例",
@@ -95,6 +95,10 @@ UI_ZH: dict[str, str] = {
     "{k} days ago": "{k}天前", "{k} hours ago": "{k}小时前", "{k} minutes ago": "{k}分钟前", "just now": "刚刚",
 
     # ---- practice
+    # the Train page: quick practice, games, then the map
+    "A minute of practice makes the next scam easier to spot.": "每天练一分钟，下次遇到骗局就更容易识破。",
+    "Games": "游戏", "Short rounds that earn XP, streaks and badges.": "一局只要几分钟，可以赚 XP、保持连续天数、拿徽章。",
+    "One boss per trick. Beat it to earn a badge.": "每种套路有一位关主。打败它就能拿到徽章。",
     "1 MIN": "1分钟", "Four short questions": "四道小题", "Quick practice": "快速练习",
     "Getting one wrong is how we learn. Every miss shows you the giveaway, so there are no wrong turns here.": "答错一题，正是学习的好机会。每次答错都会告诉你破绽在哪里，所以在这里没有白走的路。",
     "Picked from the tricks you meet most and the ones you find hardest.": "题目从你最常遇到的套路和你觉得最难的套路里挑选。",

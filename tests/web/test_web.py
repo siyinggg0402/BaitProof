@@ -1,3 +1,5 @@
+import re
+
 from fastapi.testclient import TestClient
 
 from core.storage import library, model
@@ -75,8 +77,71 @@ def test_web_rejects_empty_and_escapes_html():
     assert c.get("/challenge/doesnotexist").status_code == 404
 
 
-def test_due_pill_shown():
+def test_due_pill_shown_on_the_train_hub_only():
     from web.main import app
 
     model.record_result("urgency-pressure", "incorrect")
-    assert "due for a refresher" in TestClient(app).get("/").text
+    c = TestClient(app)
+    assert "due for a refresher" in c.get("/train").text and 'href="/train#practice"' in c.get("/train").text
+    assert "due for a refresher" not in c.get("/").text
+
+
+# ------------------------------------------------------------------------------------------------ navigation and the page structure
+def nav(html):
+    """(links of the header menu, links of the phone tab bar), each as [(href, text, is_current)]."""
+    def links(block):
+        return [(m.group(1), re.sub(r"<[^>]+>", "", m.group(3)).strip(), "aria-current" in m.group(2)) for m in re.finditer(r'<a (?:class="navlink" )?href="([^"]+)"([^>]*)>(.*?)</a>', block, flags=re.S)]
+    head = re.search(r'<nav aria-label="Main">(.*?)</nav>', html, flags=re.S).group(1)
+    tabs = re.search(r'<nav class="tabs"[^>]*>(.*?)</nav>', html, flags=re.S).group(1)
+    return links(head), links(tabs)
+
+
+def test_the_menu_and_the_phone_tabs_are_check_train_records():
+    from web.main import app
+
+    c = TestClient(app)
+    for url in ("/", "/train", "/game", "/records", "/records?channel=web"):
+        head, tabs = nav(c.get(url).text)
+        assert [(h, t) for h, t, _ in head] == [("/", "Check"), ("/train", "Train"), ("/records", "Records")], url
+        assert [(h, t) for h, t, _ in tabs] == [("/", "Check"), ("/train", "Train"), ("/records", "Records")], url
+        assert "Challenge family" in c.get(url).text and 'id="textsize"' in c.get(url).text and 'id="lang"' in c.get(url).text  # the CTA, "Aa" and the language menu stay
+
+
+def test_the_current_tab_follows_the_page_and_the_game_belongs_to_train():
+    from web.main import app
+
+    c = TestClient(app)
+    current = lambda html: ([h for h, _, on in nav(html)[0] if on], [h for h, _, on in nav(html)[1] if on])  # noqa: E731
+    assert current(c.get("/").text) == (["/"], ["/"])
+    assert current(c.post("/check", data={"message": "hello there friend"}).text) == (["/"], ["/"])
+    assert current(c.get("/train").text) == (["/train"], ["/train"])
+    assert current(c.get("/game").text) == (["/train"], ["/train"])
+    assert current(c.get("/records").text) == (["/records"], ["/records"])
+
+
+def test_the_train_hub_holds_quick_practice_and_the_games_and_the_map():
+    from web.main import app
+
+    c = TestClient(app)
+    html = c.get("/train").text
+    assert html.index('id="practice"') < html.index('id="games"') < html.index('id="map-h"')  # quick practice, then games, then the map
+    assert 'id="stage"' in html and 'id="start"' in html and "/static/js/train.js" in html and "Quick practice" in html and "Start practice" in html
+    games = html[html.index('id="games"'):html.index('id="map-h"')]
+    hrefs = re.findall(r'class="mode-card[^"]*" href="([^"]+)"', games)
+    assert len(hrefs) == 4 and all(h.split("#")[0] == "/game" for h in hrefs) and {"/game#rush", "/game#daily", "/game#tell"} <= set(hrefs)
+    assert "Inbox Rush" in games and "Daily Challenge" in games and "Spot the Tell" in games and "Boss battles" in games
+    game = c.get("/game")  # the game itself is where it always was
+    assert game.status_code == 200 and 'id="game"' in game.text
+
+
+def test_the_home_page_leads_with_the_checker_and_no_longer_carries_the_map():
+    from web.main import app
+
+    c = TestClient(app)
+    for html in (c.get("/").text, c.post("/check", data={"message": "Pay with gift cards today or you will be arrested. IRS notice."}).text):
+        assert 'id="map"' not in html and "Your scam resilience" not in html
+        assert html.index("<h1") < html.index('id="check-form"') < html.index('id="demo-bubble"')  # the form comes before the demo
+        assert html.index("<textarea") < html.index("data-example") < html.index('<button class="big">')  # the example chips sit right under the text box
+        assert "Start practice" not in html  # the hero no longer carries a second button: Train is a tab
+    result = c.post("/check", data={"message": "Pay with gift cards today or you will be arrested. IRS notice."}).text
+    assert re.search(r'<a class="big" href="/train">Practise this trick', result)  # after a result, practice is the Train hub

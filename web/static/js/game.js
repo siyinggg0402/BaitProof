@@ -209,5 +209,7 @@
     if (phase === "choose" && R && R.mode !== "tell") { if (k === "s") submit("scam"); else if (k === "f") submit("safe"); else if (k === "c") submit("unsure"); }
   });
 
-  hub().catch(() => show(el("p", { className: "card err", textContent: t("Couldn't load the game. Please refresh.") })));
+  // The Train page links straight into a mode (/game#rush, #daily, #tell); the hub still loads first, so Quit lands on it.
+  const direct = { "#rush": "rush", "#daily": "daily", "#tell": "tell" }[location.hash];
+  hub().then(() => direct && play(direct)).catch(() => show(el("p", { className: "card err", textContent: t("Couldn't load the game. Please refresh.") })));
 })();

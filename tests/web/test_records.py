@@ -37,7 +37,7 @@ def test_the_live_stream_path_records_too(client):
 
 def test_empty_state_and_navigation(client):
     html = client.get("/records").text
-    assert "Nothing here yet" in html and 'href="/records"' in html and 'href="/game"' in html and 'class="tabs"' in html
+    assert "Nothing here yet" in html and 'href="/records"' in html and 'href="/train"' in html and 'class="tabs"' in html
 
 
 def test_delete_one_clear_all_and_filters(client):

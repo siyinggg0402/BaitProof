@@ -1,12 +1,24 @@
 {% extends "base.html" %}
-{% block title %}{{ _("Practice") }} · Baitproof{% endblock %}
+{% block title %}{{ _("Train") }} · Baitproof{% endblock %}
 {% block content %}
-<div class="narrow">
-  <span class="pill rise"><b>{{ _("1 MIN") }}</b> {{ _("Four short questions") }}</span>
-  <h1 class="rise d1">{{ _("Quick practice") }}</h1>
-  <p class="lead rise d2">{{ _("Getting one wrong is how we learn. Every miss shows you the giveaway, so there are no wrong turns here.") }}</p>
-</div>
-<section class="card rise d3 narrow" id="stage" aria-live="polite"><p>{{ _("Picked from the tricks you meet most and the ones you find hardest.") }}</p><button class="big" id="start">{{ _("Start practice") }}</button></section>
+<h1 class="rise t-h1">{{ _("Train") }}</h1>
+<p class="lead t-lead rise d1">{{ _("A minute of practice makes the next scam easier to spot.") }}</p>
+
+<section class="tsec rise d2" id="practice" aria-labelledby="quick-h">
+  <div class="tsec-head"><h2 id="quick-h">{{ _("Quick practice") }}</h2><span class="pill"><b>{{ _("1 MIN") }}</b> {{ _("Four short questions") }}</span></div>
+  <div class="card quick" id="stage" aria-live="polite"><div><p>{{ _("Getting one wrong is how we learn. Every miss shows you the giveaway, so there are no wrong turns here.") }}</p><p class="sub">{{ _("Picked from the tricks you meet most and the ones you find hardest.") }}</p></div><button class="big" id="start">{{ _("Start practice") }}</button></div>
+</section>
+
+<section class="tsec rise d3" id="games" aria-labelledby="games-h">
+  <div class="tsec-head"><h2 id="games-h">{{ _("Games") }}</h2><span class="muted">{{ _("Short rounds that earn XP, streaks and badges.") }}</span></div>
+  <div class="mode-grid games">
+    <a class="mode-card hot" href="/game#rush"><span class="mode-emoji" aria-hidden="true">📥</span><span class="mode-title">{{ _("Inbox Rush") }}</span><span class="mode-desc">{{ _("8 messages. Scam, fine, or check first? Aimed at the tricks you find hardest.") }}</span><span class="mode-tag">{{ _("Quick play") }}</span></a>
+    <a class="mode-card" href="/game#daily"><span class="mode-emoji" aria-hidden="true">📅</span><span class="mode-title">{{ _("Daily Challenge") }}</span><span class="mode-desc">{{ _("The same 6 messages for everyone today. +50 XP the first time.") }}</span></a>
+    <a class="mode-card" href="/game#tell"><span class="mode-emoji" aria-hidden="true">🔍</span><span class="mode-title">{{ _("Spot the Tell") }}</span><span class="mode-desc">{{ _("Tap the exact words that give a scam away.") }}</span></a>
+    <a class="mode-card" href="/game"><span class="mode-emoji" aria-hidden="true">⚔️</span><span class="mode-title">{{ _("Boss battles") }}</span><span class="mode-desc">{{ _("One boss per trick. Beat it to earn a badge.") }}</span></a>
+  </div>
+</section>
+
 {% include "_map.html" %}
 {% endblock %}
 {% block scripts %}<script src="/static/js/train.js"></script>{% endblock %}

@@ -74,10 +74,14 @@ html.big body{font-size:22px}html.big .lead{font-size:1.2rem}
 .filters button[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
 .map li[hidden]{display:none}
 
-/* hero */
-.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:34px;align-items:center;padding-block:18px 8px}
-.cta-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
-.trust{display:flex;flex-wrap:wrap;gap:6px 18px;margin:22px 0 0;padding:0;list-style:none;color:var(--muted);font-size:.82rem}
+/* home: the checker comes first (a short headline, then the form); the demo sits beside it on a wide screen only */
+.home{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,.7fr);gap:8px 44px;align-items:start}
+.home h1,.t-h1{font-size:clamp(1.9rem,4.4vw,3rem);margin:.05em 0 .3em}
+.home .lead,.t-lead{font-size:1.05rem;margin-bottom:1.1em}
+.home #check-form{margin:0}
+.home-demo{padding-top:12px}
+.trust-note{margin:18px 0 0;color:var(--muted);font-size:.85rem}.trust-note b{background:var(--brand-soft);color:var(--brand);border-radius:999px;padding:2px 9px;font-size:.68rem;letter-spacing:.06em;margin-right:6px}
+.trust{display:flex;flex-wrap:wrap;gap:6px 18px;margin:14px 0 0;padding:0;list-style:none;color:var(--muted);font-size:.82rem}
 .trust li::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--ok);margin-right:8px;vertical-align:middle}
 
 /* cards */
@@ -93,13 +97,12 @@ html.big body{font-size:22px}html.big .lead{font-size:1.2rem}
 .btn.sec,a.sec{background:var(--surface);color:var(--ink);border-color:var(--line-2);box-shadow:var(--shadow)}
 .btn.sec:hover,a.sec:hover{background:var(--surface);border-color:var(--ink)}
 button:disabled{opacity:.5;cursor:default;transform:none!important}
-.hero .btn{margin-top:6px}
 .ghost,.speak{display:inline-flex;align-items:center;min-height:38px;padding:0 14px;border:1px solid var(--line-2);border-radius:10px;background:var(--surface);color:var(--ink);font:550 .85rem var(--sans);cursor:pointer;margin:6px 6px 0 0;transition:border-color .2s,background .2s,transform .15s var(--ease)}
 .ghost:hover,.speak:hover{border-color:var(--brand);background:var(--brand-soft);transform:translateY(-1px)}
 label{display:block;font-weight:650;margin-bottom:10px}
 textarea,input{width:100%;font:inherit;padding:14px 16px;border:1px solid var(--line-2);border-radius:12px;background:var(--bg);color:var(--ink);transition:border-color .2s,box-shadow .2s}
 textarea:focus,input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 4px color-mix(in srgb,var(--brand) 18%,transparent)}
-.examples{display:flex;flex-wrap:wrap;align-items:center;margin-top:8px}.examples span{font-size:.82rem;color:var(--muted);margin:6px 6px 0 0}
+.examples{display:flex;flex-wrap:wrap;align-items:center;margin-top:10px}.examples span{font-size:.82rem;color:var(--muted);margin:6px 6px 0 0}
 
 /* hero demo (decorative, looped) */
 .mock{border:1px solid var(--line);border-radius:20px;background:var(--surface);box-shadow:var(--shadow-up);overflow:hidden}
@@ -189,7 +192,8 @@ progress.xpbar::-moz-progress-bar{background:linear-gradient(90deg,var(--brand),
 .toggles{display:flex;flex-wrap:wrap;gap:6px 22px;margin-top:10px;font-size:.88rem}
 .mode-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:18px 0}
 .mode-card{position:relative;text-align:left;display:flex;flex-direction:column;gap:6px;padding:18px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);color:var(--ink);font:inherit;cursor:pointer;box-shadow:var(--shadow);transition:transform .2s var(--ease),border-color .2s,box-shadow .2s}
-.mode-card:hover:enabled{transform:translateY(-3px);border-color:var(--brand);box-shadow:var(--shadow-up)}.mode-card:disabled{opacity:.55;cursor:default}
+a.mode-card{text-decoration:none}
+.mode-card:hover:enabled,a.mode-card:hover{transform:translateY(-3px);border-color:var(--brand);box-shadow:var(--shadow-up)}.mode-card:disabled{opacity:.55;cursor:default}
 .mode-card.hot{background:linear-gradient(160deg,var(--brand-soft),var(--surface));border-color:color-mix(in srgb,var(--brand) 40%,var(--line))}
 .mode-emoji{font-size:1.8rem}.mode-title{font:700 1.1rem var(--sans)}.mode-desc{color:var(--muted);font-size:.88rem}.mode-tag{position:absolute;top:12px;right:12px;font:700 .68rem var(--sans);letter-spacing:.05em;text-transform:uppercase;background:var(--brand);color:var(--brand-ink);padding:3px 10px;border-radius:99px}
 .boss-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-top:12px}
@@ -222,7 +226,13 @@ progress.round-prog::-moz-progress-bar{background:var(--brand)}progress.clock::-
 .confetti i:nth-child(3n){background:var(--brand)}.confetti i:nth-child(3n+1){background:var(--violet)}.confetti i:nth-child(3n+2){background:#F59E0B}
 .confetti i:nth-child(1){left:54%;animation-delay:0.12s;transform:rotate(37deg)}.confetti i:nth-child(2){left:10%;animation-delay:0.24s;transform:rotate(74deg)}.confetti i:nth-child(3){left:63%;animation-delay:0.36s;transform:rotate(111deg)}.confetti i:nth-child(4){left:19%;animation-delay:0.48s;transform:rotate(148deg)}.confetti i:nth-child(5){left:72%;animation-delay:0.60s;transform:rotate(185deg)}.confetti i:nth-child(6){left:28%;animation-delay:0.00s;transform:rotate(222deg)}.confetti i:nth-child(7){left:81%;animation-delay:0.12s;transform:rotate(259deg)}.confetti i:nth-child(8){left:37%;animation-delay:0.24s;transform:rotate(296deg)}.confetti i:nth-child(9){left:90%;animation-delay:0.36s;transform:rotate(333deg)}.confetti i:nth-child(10){left:46%;animation-delay:0.48s;transform:rotate(10deg)}.confetti i:nth-child(11){left:2%;animation-delay:0.60s;transform:rotate(47deg)}.confetti i:nth-child(12){left:55%;animation-delay:0.00s;transform:rotate(84deg)}.confetti i:nth-child(13){left:11%;animation-delay:0.12s;transform:rotate(121deg)}.confetti i:nth-child(14){left:64%;animation-delay:0.24s;transform:rotate(158deg)}.confetti i:nth-child(15){left:20%;animation-delay:0.36s;transform:rotate(195deg)}.confetti i:nth-child(16){left:73%;animation-delay:0.48s;transform:rotate(232deg)}.confetti i:nth-child(17){left:29%;animation-delay:0.60s;transform:rotate(269deg)}.confetti i:nth-child(18){left:82%;animation-delay:0.00s;transform:rotate(306deg)}
 @keyframes fall{to{transform:translateY(105vh) rotate(540deg);opacity:.9}}
-@media(max-width:560px){.choices{grid-template-columns:1fr}.choice{flex-direction:row;justify-content:center;padding:14px}.choice kbd{display:none}.hint{display:none}.mode-grid{grid-template-columns:1fr}.hud-id h1{font-size:1.25rem}}
+@media(max-width:560px){.mode-grid.games .mode-card{display:grid;grid-template-columns:auto 1fr;column-gap:14px;align-items:center;padding:14px 16px}.mode-grid.games .mode-emoji{grid-row:1/3;font-size:1.6rem}.mode-grid.games .mode-tag{position:static;grid-column:2;justify-self:start;margin-top:2px}.choices{grid-template-columns:1fr}.choice{flex-direction:row;justify-content:center;padding:14px}.choice kbd{display:none}.hint{display:none}.mode-grid{grid-template-columns:1fr}.hud-id h1{font-size:1.25rem}}
+/* Train hub: quick practice, then games, then the resilience map */
+.tsec{margin:26px 0 0}.tsec-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 14px;margin-bottom:10px}.tsec-head h2{margin:0}
+.card.quick{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px 28px;margin:0}
+.card.quick>div:first-child{flex:1 1 22em}.card.quick p{margin:0}.card.quick .sub{margin-top:4px;color:var(--muted);font-size:.92rem}.card.quick button.big{margin-top:0}
+.card.quick .step{flex:1 1 100%;max-width:720px}
+.mode-grid.games{margin:0}
 /* resilience */
 .g1{stop-color:var(--brand)}.g2{stop-color:var(--violet)}
 .scorebox{display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin:4px 0 12px}
@@ -272,8 +282,8 @@ footer.wrap{color:var(--faint);font-size:.8rem;padding-block:0 40px}
 html.js .reveal{opacity:0;transform:translateY(18px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
 html.js .reveal.in{opacity:1;transform:none}
 
-@media(max-width:820px){.hero{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}.mock-body{min-height:0}}
-@media(max-width:560px){nav .cta .full{display:none}nav .cta .short{display:inline}nav{gap:0}#textsize{margin-right:2px;padding:0 10px}.bar{padding-left:12px}.card.result{padding:0}nav a,nav button{white-space:nowrap;font-size:.82rem}body{font-size:17px}.map li{grid-template-columns:1fr auto}.lvl{grid-column:1/-1}.ring{width:100px;height:100px}nav a{padding:0 10px}.brand span{display:none}.card{padding:18px}}
+@media(max-width:820px){.home{grid-template-columns:1fr}.home-demo{display:none}.grid2{grid-template-columns:1fr}.mock-body{min-height:0}}
+@media(max-width:560px){main{padding-top:26px}.home h1{margin-bottom:.25em}.home .lead{margin-bottom:.9em}.home .card{padding:16px}.home textarea{padding:12px 14px}nav .cta .full{display:none}nav .cta .short{display:inline}nav{gap:0}#textsize{margin-right:2px;padding:0 10px}.bar{padding-left:12px}.card.result{padding:0}nav a,nav button{white-space:nowrap;font-size:.82rem}body{font-size:17px}.map li{grid-template-columns:1fr auto}.lvl{grid-column:1/-1}.ring{width:100px;height:100px}nav a{padding:0 10px}.brand span{display:none}.card{padding:18px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}html.js .reveal{opacity:1;transform:none}}
 
 /* Chinese (Simplified and Traditional). The sizes above are tuned for Latin letters; Chinese characters are denser and square, so text gets a
@@ -287,6 +297,7 @@ html.js .reveal.in{opacity:1;transform:none}
 :lang(zh) .brand,:lang(zh) .result .banner,:lang(zh) .kpi b,:lang(zh) .ring strong,:lang(zh) .share .bigpct{letter-spacing:0}
 :lang(zh) .result .banner{line-height:1.45}
 :lang(zh) .muted,:lang(zh) .examples span,:lang(zh) .trust,:lang(zh) .mode-desc,:lang(zh) .tile-sub,:lang(zh) .hint,:lang(zh) .lvl,:lang(zh) .kpi span,:lang(zh) footer.wrap{font-size:.9rem}
+:lang(zh) .trust-note{font-size:.92rem}:lang(zh) .trust-note b{font-size:.78rem;letter-spacing:.02em}
 :lang(zh) .pill{font-size:.86rem}:lang(zh) .pill b,:lang(zh) .badge,:lang(zh) .mode-tag{font-size:.78rem;letter-spacing:.02em}
 :lang(zh) .panel b{font-size:.86rem;letter-spacing:.04em;text-transform:none}
 :lang(zh) .chips li,:lang(zh) .chip,:lang(zh) .badge-chip,:lang(zh) .filters button,:lang(zh) .mock-tags span{font-size:.88rem}

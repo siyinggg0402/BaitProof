@@ -21,7 +21,7 @@ SCAM_EN = "Pay with gift cards today or you will be arrested. IRS notice."
 SAME_IN_CHINESE = {"WhatsApp", "+{n} XP", "+50 XP", "{a} / {b} XP"}  # a brand and numbers: written the same in every language
 SIMPLIFIED_ONLY = re.compile("[骗这个们来说对错还没关发开练习记录]")
 # English wording of the interface that must never show on a Chinese page
-LEFTOVER = ["Check it", "Check a message", "Practice", "Practise", "Records", "My records", "Delete", "Read aloud", "The giveaway", "What to do", "The evidence",
+LEFTOVER = ["Check it", "Check a message", "Practice", "Practise", "Train", "Games", "Records", "My records", "Delete", "Read aloud", "The giveaway", "What to do", "The evidence",
             "Red flag", "Reassuring", "Tricks found", "Challenge family", "Start practice", "Paste the message", "Your scam resilience", "Needs work", "Getting there",
             "Loading your game", "Quick practice", "Can you spot", "Take the challenge", "Family challenge", "Connect Telegram", "Not connected", "Website",
             "How I decided", "Was this right", "Your data", "Larger text", "Offline mode", "Private by design", "Example only", "Try an example"]
@@ -57,7 +57,7 @@ def new_challenge(c):
 # ------------------------------------------------------------------------------------------------ choosing the language
 def test_english_is_the_default_and_the_page_declares_its_language(client):
     html = client.get("/").text
-    assert html_lang(html) == "en" and 'id="i18n"' not in html and "Check a message" in html
+    assert html_lang(html) == "en" and 'id="i18n"' not in html and "Paste the message here" in html
 
 
 def test_the_lang_cookie_chooses_the_language():
@@ -126,13 +126,13 @@ def test_english_pages_have_no_chinese_chrome(client):
         html = client.get(url).text
         assert html_lang(html) == "en", url
         assert not CJK.search(visible(html)), (url, CJK.findall(visible(html))[:5])
-    assert "Check a message" in client.get("/").text and "Start practice" in client.get("/train").text
+    assert "Paste the message here" in client.get("/").text and "Start practice" in client.get("/train").text
 
 
 def test_simplified_pages_are_in_chinese():
     c = lang_client("zh")
     cid = new_challenge(c)
-    want = {"/": ["检查一条消息", "帮我检查", "更难被骗", "你的防骗能力", "挑战家人"], "/train": ["快速练习", "开始练习"], "/game": ["正在载入你的游戏"],
+    want = {"/": ["把消息贴在这里", "帮我检查", "更难被骗", "挑战家人", "查一查"], "/train": ["练习", "快速练习", "开始练习", "游戏", "收件箱快答", "你的防骗能力"], "/game": ["正在载入你的游戏"],
             "/records": ["我的记录", "删除我的全部记录", "连接 Telegram"], f"/challenge/{cid}": ["你能识破骗局吗？", "开始挑战"], f"/card/{cid}?s=3": ["接受挑战", "更多分享方式"]}
     for url, phrases in want.items():
         html = c.get(url).text
@@ -150,7 +150,7 @@ def test_traditional_pages_use_traditional_characters():
         assert html_lang(html) == "zh-Hant", url
         assert not SIMPLIFIED_ONLY.search(text), (url, SIMPLIFIED_ONLY.findall(text)[:5])
     assert "騙" in c.get("/").text and "骗" not in c.get("/").text and "更難被騙" in c.get("/").text
-    assert "練習" in c.get("/train").text and "我的記錄" in c.get("/records").text
+    assert "練習" in c.get("/train").text and "遊戲" in c.get("/train").text and "我的記錄" in c.get("/records").text
 
 
 def test_titles_and_share_tags_follow_the_language():
@@ -359,13 +359,14 @@ def test_the_resilience_map_and_its_api_are_translated():
     assert lang_client("zh-Hant").get("/api/map").json()["tactics"][0]["level_text"] == "還沒練過"
     html = lang_client("zh").get("/train").text
     assert "催你马上行动" in html and "还没练过" in html and "需要加强" in html
+    assert "你的防骗能力" not in lang_client("zh").get("/").text  # the map lives on the Train page only
 
 
 def test_the_due_pill_in_chinese():
     from core.storage import model
 
     model.record_result("urgency-pressure", "incorrect")
-    assert "种套路该复习了" in lang_client("zh").get("/").text and "due for a refresher" in lang_client("en").get("/").text
+    assert "种套路该复习了" in lang_client("zh").get("/train").text and "due for a refresher" in lang_client("en").get("/train").text
 
 
 def test_error_messages_follow_the_language():

@@ -7,7 +7,7 @@
       <strong id="score">{{ map.score }}</strong>
     </div>
     <div><p><b>{{ _("Baitproof score.") }}</b> {{ _("It grows as you practise and fades if you stop, so a little often works best.") }}</p>
-      {% if map.due %}<a class="pill due" href="/train"><b>{{ map.due }}</b> {{ _('trick is due for a refresher' if map.due == 1 else 'tricks are due for a refresher') }}</a>{% endif %}</div>
+      {% if map.due %}<a class="pill due" href="/train#practice"><b>{{ map.due }}</b> {{ _('trick is due for a refresher' if map.due == 1 else 'tricks are due for a refresher') }}</a>{% endif %}</div>
   </div>
   <div class="filters" role="group" aria-label="{{ _('Filter tricks') }}"><button type="button" data-filter="all" aria-pressed="true">{{ _("All") }}</button><button type="button" data-filter="weak" aria-pressed="false">{{ _("Needs work") }}</button><button type="button" data-filter="learning" aria-pressed="false">{{ _("Getting there") }}</button><button type="button" data-filter="strong" aria-pressed="false">{{ _("Strong") }}</button></div>
   <ul class="map" id="map">

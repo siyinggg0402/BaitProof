@@ -46,7 +46,6 @@ if (form && window.fetch && window.ReadableStream) {
       slot.replaceChildren(...doc.body.childNodes);
       live.hidden = true; btn.disabled = false;
       slot.scrollIntoView({ behavior: "smooth", block: "start" });
-      fetch("/api/map").then((r) => r.json()).then(renderMap);
     } catch (_) { fallback(); }
   });
 }

@@ -35,7 +35,8 @@ def zh_pass(page, base, no_overflow, expect_401) -> None:
     assert not page.evaluate("document.getElementById('lang').open"), "a click elsewhere closes the language menu"
     switch_language(page, "zh", "zh-Hans")
     no_overflow("zh-home")
-    assert "让你的家人" in page.inner_text("h1") and "查一查" in page.inner_text(".tabs") and "练习" in page.inner_text(".tabs")
+    assert "让你的家人" in page.inner_text("h1") and "查一查" in page.inner_text(".tabs") and "练习" in page.inner_text(".tabs") and "记录" in page.inner_text(".tabs")
+    assert page.locator(".tabs a").count() == 3 and "游戏" not in page.inner_text(".tabs")
     assert page.is_visible(".tabs") and not page.is_visible("nav .navlink")
 
     # check a Chinese scam (offline rules): the verdict, the evidence and the live steps are all Chinese
@@ -58,7 +59,9 @@ def zh_pass(page, base, no_overflow, expect_401) -> None:
     # practice
     page.goto(base + "/train")
     no_overflow("zh-train")
-    assert "快速练习" in page.inner_text("h1")
+    assert "练习" in page.inner_text("h1") and "快速练习" in page.inner_text("#practice h2") and "游戏" in page.inner_text("#games h2")
+    assert "收件箱快答" in page.inner_text("#games") and "你的防骗能力" in page.inner_text("main")
+    assert "练习" in page.inner_text(".tabs a[aria-current=page]")
     page.click("#start")
     for i in range(4):
         page.wait_for_selector(".step .opt, .step textarea")
@@ -155,8 +158,35 @@ def zh_pass(page, base, no_overflow, expect_401) -> None:
     assert "我的記錄" in page.inner_text("h1")
     switch_language(page, "en", "en")
     chrome = page.inner_text("h1") + page.inner_text(".kpis") + page.inner_text(".tabs") + page.inner_text("#tg")  # (the records themselves keep the language they were written in)
-    assert "My records" in chrome and "Practice" in chrome and not re.search("[一-鿿]", chrome), chrome
+    assert "My records" in chrome and "Train" in chrome and not re.search("[一-鿿]", chrome), chrome
     no_overflow("en-after-zh")
+
+
+def desktop_pass(browser, base, problems) -> None:
+    ctx = browser.new_context(viewport={"width": 1280, "height": 720})
+    page = ctx.new_page()
+    page.on("console", lambda m: problems.append(f"desktop console {m.type}: {m.text}") if m.type in ("error", "warning") else None)
+    page.on("pageerror", lambda e: problems.append(f"desktop pageerror: {e}"))
+    for url in ("/", "/train", "/game", "/records"):
+        page.goto(base + url)
+        assert [a.strip() for a in page.locator("nav .navlink").all_inner_texts()] == ["Check", "Train", "Records"], url
+        assert page.locator("nav .navlink").first.is_visible() and not page.is_visible(".tabs"), url
+        assert page.is_visible("#textsize") and page.is_visible("nav .cta") and page.is_visible("#lang summary"), url  # "Aa", the family challenge and the language menu stay
+        assert page.evaluate("document.documentElement.scrollWidth") <= 1280, url
+    page.goto(base)
+    assert page.is_visible(".home-demo") and page.is_visible("#message") and page.locator("#map").count() == 0
+    btn = page.evaluate("document.querySelector('#check-form button.big').getBoundingClientRect().bottom")
+    assert btn <= 720, btn  # the whole form is above the fold on a laptop
+    page.click("nav .navlink:has-text('Train')")
+    page.wait_for_selector("#games")
+    assert page.inner_text("nav .navlink[aria-current=page]").strip() == "Train"
+    page.click("#games a:has-text('Spot the Tell')")
+    page.wait_for_selector(".words .w")  # straight into the mode
+    assert page.inner_text("nav .navlink[aria-current=page]").strip() == "Train"
+    page.goto(base + "/game")  # the game's own address still opens the game hub
+    page.wait_for_selector(".mode-card")
+    assert page.locator(".boss-grid .tile").count() == 12
+    ctx.close()
 
 
 def main() -> int:
@@ -199,6 +229,15 @@ def main() -> int:
             # Check flow
             page.goto(base)
             no_overflow("home")
+            assert page.locator(".tabs a").count() == 3 and [a.strip() for a in page.locator(".tabs a").all_inner_texts()] == ["Check", "Train", "Records"]
+            assert page.inner_text(".tabs a[aria-current=page]").strip() == "Check"
+            assert not page.is_visible(".home-demo"), "the demo is for wide screens only"
+            assert page.locator("#map").count() == 0, "the resilience map lives on the Train page now"
+            # the form is the first thing on the phone: the text box, the example chips and the button all sit above the fold (and above the tab bar)
+            box = page.evaluate("""() => { const r = (s) => document.querySelector(s).getBoundingClientRect();
+                return { ta: r('#message').bottom, ex: r('.examples').top, btn: r('#check-form button.big').bottom, h: innerHeight }; }""")
+            assert 0 <= box["ex"] - box["ta"] < 30, box  # the chips sit right under the text box
+            assert box["btn"] <= 844 - 80, box  # the button is visible without scrolling, clear of the bottom tab bar
             page.click("text=Parcel fee")
             assert "dhl-fee-pay" in page.input_value("#message")
             page.click("button.big:has-text('Check it')")
@@ -206,6 +245,7 @@ def main() -> int:
             assert "SCAM" in page.inner_text("#result .banner"), page.inner_text("#result .banner")
             assert "Added to your practice" in page.inner_text("#result")
             no_overflow("result")
+            assert page.locator("#map").count() == 0 and "Your scam resilience" not in page.inner_text("main")
             steps = page.locator("#live-steps li").count()
             assert steps >= 5 and not page.is_visible("#live"), steps  # the live view showed the gates, then got out of the way
             res = page.inner_text("#result").lower()  # inner_text applies CSS text-transform
@@ -213,6 +253,15 @@ def main() -> int:
             page.click("#result [data-feedback=up]")
             page.wait_for_selector("#result [data-fb-note]:has-text('Thanks')")
             assert page.is_disabled("#result [data-feedback=down]")
+
+            # "Practise this trick" goes to the Train hub: quick practice, the games and the resilience map, with Train as the current tab
+            page.click("#result a.big:has-text('Practise this trick')")
+            page.wait_for_selector("#practice")
+            assert page.url.endswith("/train")
+            no_overflow("train-hub")
+            assert page.is_visible("#practice #start") and page.is_visible("#games") and page.is_visible("#map")
+            assert page.locator("#games a.mode-card").count() == 4 and "Inbox Rush" in page.inner_text("#games") and "Quick practice" in page.inner_text("#practice")
+            assert page.inner_text(".tabs a[aria-current=page]").strip() == "Train"
 
             # operator dashboard: login, then numbers without any message text
             page.goto(base + "/admin")
@@ -279,6 +328,14 @@ def main() -> int:
             no_overflow("card")
             page.screenshot(path=os.path.join(tempfile.gettempdir(), "e2e_card.png"))
 
+            # ---- the Train page opens a game straight away (/game#rush), and Quit lands on the game hub; Train stays the current tab
+            page.goto(base + "/train")
+            page.click("#games a:has-text('Inbox Rush')")
+            page.wait_for_selector(".choice")
+            assert page.url.endswith("/game#rush") and page.inner_text(".tabs a[aria-current=page]").strip() == "Train"
+            page.click("button.ghost.quit")
+            page.wait_for_selector(".mode-card")
+
             # ---- game: hub, Inbox Rush by keyboard, boss, spot-the-tell
             page.goto(base + "/game")
             page.wait_for_selector(".mode-card")
@@ -336,6 +393,9 @@ def main() -> int:
 
             # ---- Chinese pass: switch language with the header menu, then check, practise, play, records and challenge at phone width
             zh_pass(page, base, no_overflow, expect_401)
+
+            # ---- a laptop: the menu in the header, the form above the fold with the demo beside it, no tab bar
+            desktop_pass(b, base, problems)
             b.close()
     finally:
         srv.terminate()

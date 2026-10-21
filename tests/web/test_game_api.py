@@ -1,3 +1,5 @@
+import re
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -17,7 +19,8 @@ def start(c, mode="rush", trick=""):
 
 def test_page_and_state(client):
     html = client.get("/game").text
-    assert 'id="game"' in html and "/static/js/game.js" in html and 'href="/game"' in html
+    assert 'id="game"' in html and "/static/js/game.js" in html
+    assert re.search(r'href="/train"\s+aria-current="page"', html)  # the game lives under the Train tab: it is the current one here
     s = client.get("/api/game/state").json()
     assert s["level"] == 1 and len(s["tricks"]) == 12 and s["badges"] == []
 
