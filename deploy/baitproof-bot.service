@@ -1,0 +1,22 @@
+[Unit]
+Description=Baitproof Telegram bot
+After=network.target baitproof.service
+
+[Service]
+User=baitproof
+WorkingDirectory=/opt/baitproof
+EnvironmentFile=/opt/baitproof/.env
+# Same data directory as the web app: a chat linked with a code shares the website profile.
+Environment=BAITPROOF_MULTIUSER=1
+Environment=BAITPROOF_DB=/var/lib/baitproof/baitproof.sqlite
+Environment=BAITPROOF_LOG_DIR=/var/lib/baitproof/logs
+ExecStart=/opt/baitproof/.venv/bin/python -m bot.telegram_bot
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/baitproof
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
