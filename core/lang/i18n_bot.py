@@ -2,11 +2,15 @@
 
 BOT_ZH: dict[str, str] = {
     "Hi! I'm Baitproof 🛡️\n\nForward or paste any message you're unsure about and I'll tell you if it's a scam, show you the one giveaway, and add that trick to your practice.\n\n"
+    "/quiz is a quick game: scam or not? (/quiz daily is today's Daily Challenge.)\n"
+    "/challenge makes a link to send your family, to see if they can spot the scam too.\n\n"
     "/link CODE connects this chat to your Baitproof web profile, so everything you check here shows up in your records.\n"
     "/history shows your latest checks, /score your Baitproof score, /unlink disconnects.\n"
     "/lang chooses the language: /lang en, /lang zh (简体中文) or /lang zh-Hant (繁體中文).\n"
     "I keep the tricks I see, not your messages.":
         "你好！我是 Baitproof 🛡️\n\n把你拿不准的消息转发或粘贴给我，我会告诉你是不是骗局，指出最关键的一个破绽，并把这种套路加入你的练习。\n\n"
+        "/quiz 是个快速小游戏：是不是骗局？（/quiz daily 是今天的每日挑战。）\n"
+        "/challenge 会生成一个链接，发给家人，看看他们能不能也识破骗局。\n\n"
         "/link 验证码：把这个聊天和你的 Baitproof 网站账号连起来，这里检查的内容都会出现在你的记录里。\n"
         "/history 查看最近的检查，/score 查看你的 Baitproof 分数，/unlink 断开连接。\n"
         "/lang 选择语言：/lang en、/lang zh（简体中文）或 /lang zh-Hant（繁體中文）。\n"
@@ -35,4 +39,18 @@ BOT_ZH: dict[str, str] = {
     "Language set to English.": "已切换为简体中文。",
     "Send /lang en, /lang zh or /lang zh-Hant.": "请发送 /lang en、/lang zh 或 /lang zh-Hant。",
     "telegram": "Telegram", "web": "网站",
+    # ---- quiz and family challenge (the rest of the game's wording is reused from i18n_ui.py)
+    "Quick quiz": "快速测验",
+    "Challenge my family": "挑战我的家人",
+    "“Check first” means you'd phone the sender on a number you already trust.": "“先核实”是指你会用自己已有的号码打电话给对方确认。",
+    "Why it's fine: {tell}": "为什么没问题：{tell}",
+    "That quiz expired. Send /quiz to start a new one.": "这个测验已过期。发送 /quiz 开始新的一局。",
+    "Sorry, I didn't understand that button.": "抱歉，我不明白这个按钮。",
+    "You're playing fast! Please wait a few minutes before starting another quiz.": "你玩得太快啦！请等几分钟，再开始新的测验。",
+    "You've made a few challenges already. Please wait a bit before making another one.": "你已经创建了好几个挑战了。请稍等一会儿，再创建新的。",
+    "The family challenge needs a web address, but BAITPROOF_URL isn't set on this bot yet. Please ask whoever runs it to set it.":
+        "家人挑战需要一个网址，但这个机器人还没有设置 BAITPROOF_URL。请让运营这个机器人的人设置一下。",
+    "Here's your family challenge. Forward the next message to a parent, grandparent or friend 👇": "这是你的家人挑战。把下面这条消息转发给爸爸妈妈、爷爷奶奶或朋友吧 👇",
+    "Can you spot the scam? 🕵️ It takes 2 minutes and needs no account: {url}\nScammers go after families like ours, so I'd feel better if you tried it. 🛡️":
+        "你能识破骗局吗？🕵️ 只要2分钟，不用注册：{url}\n骗子专挑我们这样的家庭下手，你试一下我才放心。🛡️",
 }

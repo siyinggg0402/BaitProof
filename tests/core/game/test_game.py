@@ -86,7 +86,9 @@ def test_a_rush_round_mixes_scams_genuine_and_check_first():
     assert len(r.items) == 8 and truths.count(SCAM) >= 4 and SAFE in truths and UNSURE in truths and len({i.id for i in r.items}) == 8
 
 
-def test_rush_prefers_the_tricks_you_are_weakest_at_and_your_own_scams():
+def test_rush_prefers_the_tricks_you_are_weakest_at_and_your_own_scams(monkeypatch):
+    real, seeds = engine.random.Random, iter(range(15))  # fifteen fixed seeds: the selection is random by design, and an unseeded version of this test failed ~3% of runs
+    monkeypatch.setattr(engine.random, "Random", lambda *a: real(next(seeds)))
     its = mini_pool() + [item(50 + n, SCAM, "otp-credential-phish") for n in range(3)] + [item(60, SCAM, "advance-fee", source="yours")]
     for _ in range(3):
         model.record_result("otp-credential-phish", "incorrect")
