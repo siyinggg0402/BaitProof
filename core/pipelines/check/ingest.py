@@ -14,17 +14,7 @@ from core.storage import library
 from .knowledge import AMBIGUOUS_BRANDS, BRANDS, INJECTION_RE, RAILS, VICTIM_RE, ZH_BRAND_NAMES
 
 MAX_LEN = 4000
-STOPWORDS = frozenset("the and you your to is a of for in on it i we are be this that with at my me can will please have has not from or if as so by an".split())
-
-
-def looks_english(text: str) -> bool:
-    words = re.findall(r"[^\W\d_]+", text.lower())
-    letters = [c for c in text if c.isalpha()]
-    if not words or not letters:
-        return False
-    foreign = sum(ord(c) > 0x24F for c in letters) / len(letters)  # non-Latin scripts
-    return foreign < 0.1 and sum(w in STOPWORDS for w in words) / len(words) >= 0.15
-AMOUNT_RE = Dual(r"[$€£]\s?\d[\d,.]*|\b\d[\d,.]*\s?(?:dollars|usd|eur)\b|\bRM\s?\d[\d,.]*|\bS\$\s?\d[\d,.]*", ZH.AMOUNT, MS.AMOUNT)
+AMOUNT_RE = Dual(r"[$€£₹]\s?\d[\d,.]*|\bRs\.? ?\d[\d,.]*|\bINR\.? ?\d[\d,.]*|\b\d[\d,.]*\s?(?:dollars|usd|eur|rupees)\b|\bRM\s?\d[\d,.]*|\bS\$\s?\d[\d,.]*", ZH.AMOUNT, MS.AMOUNT)
 
 
 @dataclass
@@ -36,6 +26,7 @@ class Entities:
     phones: list[str] = field(default_factory=list)  # digits only; checked locally, never sent to any service
     phone_raw: dict[str, str] = field(default_factory=dict)  # digits -> the text as written (for quoting)
     brand_quotes: dict[str, str] = field(default_factory=dict)  # Chinese brand key -> the name as written (for quoting)
+    emails: list[str] = field(default_factory=list)  # addresses as written: an email's domain is NOT a link to that website
 
 
 @dataclass
@@ -54,13 +45,16 @@ def ingest(raw: str) -> Ingested:
     text = re.sub(r"[ \t]+", " ", raw.replace("\x00", "")).strip()[:MAX_LEN]
     if not text:
         raise ValueError("empty message")
-    hosts = list(dict.fromkeys(library.host_of(m.group(0)) for m in library.URL_RE.finditer(text)))
+    email_spans = [m.span() for m in library.EMAIL_RE.finditer(text)]
+    hosts = list(dict.fromkeys(library.host_of(m.group(0)) for m in library.URL_RE.finditer(text)
+                               if not any(a <= m.start() < b for a, b in email_spans)))  # "claims@yahoo.com" is an address, not a link to yahoo.com
     low = text.lower()
     simp = L.to_simplified(text) if L.CJK.search(text) else ""  # Chinese brand names are matched in Simplified so Traditional text counts too
     lang = L.detect(text)
     L.CURRENT.set(lang)  # the Malay/Indonesian twin patterns key off this
     ent = Entities(
         hosts=hosts,
+        emails=[library.EMAIL_RE.search(text[a:b]).group(0).lower() for a, b in email_spans],
         amounts=AMOUNT_RE.findall(text),
         rails={k: m.group(0) for k, p in RAILS.items() if (m := p.search(text))},
         brands=list(dict.fromkeys([b for b in BRANDS if b not in AMBIGUOUS_BRANDS and re.search(rf"\b{b}\b", low)]

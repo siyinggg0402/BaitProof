@@ -105,6 +105,7 @@ ZH: dict[str, str] = {
     "The AI reviewer thinks it follows the “{label}” scam script": "AI审阅者认为它符合“{label}”骗局套路",
     "The message tries to give the checker instructions, which real messages never do": "这条消息在给检查器下指令，正常消息不会这样",
     "Web note (unverified): {note}": "网上资料（未经证实）：{note}",
+    "Wants you to reply to a free email address while claiming to be an organisation or offering a prize, job or loan": "要你回复到一个免费邮箱，却自称是机构，或在给你奖品、工作或贷款",
     "Every link goes to a long-established website that exists": "所有链接都指向存在已久的正规网站",
     "It reads as a normal {label}: it informs you and asks for nothing risky": "这像是一条正常的{label}：只是通知你，没有要求任何有风险的事",
     "It asks for nothing risky: no money, codes, passwords, links or installs, and it doesn't rush you": "它没有要求任何有风险的事：不要钱、不要验证码和密码、没有链接或安装，也没有催你",

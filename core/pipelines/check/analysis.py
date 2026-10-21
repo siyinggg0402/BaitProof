@@ -2,6 +2,7 @@
 Every tactic carries a QUOTE so the grounding gate can verify it."""
 from __future__ import annotations
 
+import re
 
 from core.ai import fewshot, llm
 from core.ai.prompts import CHECK_SYSTEM, CRITIC_SYSTEM
@@ -18,7 +19,7 @@ from .evidence import Ledger
 from .ingest import Ingested
 from .intent import Intent
 from .intent import CONSEQUENCE
-from .knowledge import PREMIUM_RE, RULES
+from .knowledge import FREE_MAIL, PREMIUM_RE, RULES
 from .tools import Findings, registered_domain as tools_registered
 
 
@@ -27,18 +28,40 @@ _WARNING = Dual(None, ZH.WARNING_SENTENCE, MS.WARNING_SENTENCE)  # warnings and 
 STRONG_RULE_TACTICS = {"remote-access-request"}  # a pattern hit that is near-conclusive on its own
 
 
+FREE_MAIL_SCRIPTS = {"prize-lottery", "inheritance-advance-fee", "job-task", "investment", "government-rebate", "claim-approved", "overpayment", "charity-appeal"}
+
+
+# Words that mean the message is about money, an account or something to claim or verify. "Right now" next to one of these is pressure; next to
+# "leaving" or "the phone" it is just a friend talking.
+TRANSACTIONAL = re.compile(r"\b(?:pay\w*|account|card|loan|bills?|dues?|prize|cashback|claim\w*|verif\w+|transactions?|identity|suspen\w+|penalt\w+|disconnect\w*|customs|insurance|payout|"
+                           r"salary|cv|resume|details|information|password|login|otp|code|bank|refund|legal|unauthori[sz]ed|suspicious|offer|reward|winner|won|fee|charge\w*|balance|"
+                           r"upgrade|activate|expire\w*|block\w*|locked|delivery|parcel|order|invest\w*|profit|transfer|deposit|crypto|bitcoin|gift ?cards?)\b", re.I)
+
+
+def _something_is_asked(ing: Ingested, intent: Intent) -> bool:
+    """Is the message about something that matters: a risky request, a link, a number to call, a consequence, or money / an account / a claim / a verification?"""
+    return bool(intent.high_risk or "click" in intent.asks or ("call" in intent.asks and (ing.entities.phones or ing.entities.hosts)) or CONSEQUENCE.search(ing.text)
+                or TRANSACTIONAL.search(ing.text))
+
+
 def rule_evidence(ing: Ingested, intent: Intent, f: Findings, ledger: Ledger) -> None:
     """Independent (non-model) evidence from phrase rules, the domain/rail tools and the intent diagnosis."""
     L = ing.reply
     T = lambda s, **kw: tr(s, L, **kw)  # noqa: E731
+    asked = _something_is_asked(ing, intent)
+    # "don't tell" and friends are the heart of a family-emergency or impersonation scam, but also how friends gossip: they need a request, a claimed
+    # identity, a known script or a payment method next to them to count as more than a hint.
+    risky_context = asked or bool(intent.claimed_kind or intent.scenario or ing.entities.rails)
     scan = _WARNING.sub(" ", ing.text)  # "请勿将验证码告知他人" warns against the very thing it names
     for tid, pats in RULES.items():
         for p in pats:
             if m := p.search(scan):
                 q = m.group(0)[:80]
                 strength = "strong" if tid in STRONG_RULE_TACTICS else "medium"
-                if tid == "urgency-pressure" and not STRONG_URGENCY.search(ing.text):
-                    strength = "weak"  # a lone "urgent" is how friends write too; deadlines with consequences are what scams use
+                if tid == "urgency-pressure" and not (STRONG_URGENCY.search(ing.text) and asked):
+                    strength = "weak"  # "leaving right now" and a lone "urgent" are how friends write too; a deadline matters when it is attached to a request
+                if tid == "emotional-manipulation" and not risky_context:
+                    strength = "weak"
                 ledger.add("rule", "pattern", "scam", strength,
                            T("“{q}” is a known scam phrase ({label})", q=q, label=tactic_text(tid, "label", L, TACTICS).lower()), q, tid)
                 break
@@ -101,9 +124,13 @@ def rule_evidence(ing: Ingested, intent: Intent, f: Findings, ledger: Ledger) ->
     if intent.opener:
         ledger.add("intent", "opener", "scam", "weak", T("It reads like the first step of a scam: an out-of-the-blue message that invites you to reply or move to another app"),
                    intent.opener, None)
-    if "secrecy" in intent.pressure_kinds:
+    if "secrecy" in intent.pressure_kinds and risky_context:  # without a request, identity or script it is gossip, and the phrase rule has already noted it as a hint
         ledger.add("intent", "pressure:secrecy", "scam", "medium", T("Tells you to keep it secret, so you can't check with anyone"),
                    intent.evidence.get("pressure:secrecy", ""), "emotional-manipulation")
+    free = [e for e in ing.entities.emails if e.rsplit("@", 1)[-1] in FREE_MAIL]
+    if free and (intent.claimed_kind in ("authority", "organisation") or intent.scenario in FREE_MAIL_SCRIPTS):
+        ledger.add("intent", "free-mail-contact", "scam", "medium", T("Wants you to reply to a free email address while claiming to be an organisation or offering a prize, job or loan"),
+                   free[0], None)
     if intent.model_scenario:
         ledger.add("model", "scenario", "scam", "weak", T("The AI reviewer thinks it follows the “{label}” scam script", label=T(scenarios.SCENARIOS[intent.model_scenario].label)))
     if ing.injection:

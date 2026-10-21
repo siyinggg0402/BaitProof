@@ -155,3 +155,45 @@ def test_a_premium_content_sms_dressed_as_an_order_update_is_never_cleared():
 ])
 def test_a_stranger_who_claims_a_mutual_acquaintance_is_an_opener_and_is_never_cleared(text):
     assert check_message(text, store=False, log=False).verdict is not V.SAFE
+
+
+# ---- found on the validation split of real SMS (rules only), fixed in general
+def test_a_free_email_address_is_not_a_link_and_a_prize_that_asks_you_to_write_to_one_is_not_safe():
+    for t in ["YOUR MOBILE NUMBER HAS WON 3.6 CRORE FROM SAMSUNG UK AWARD TO RECEIVE YOUR PRIZE,SEND UR NAME, MOBILE,N0,ADDRES, AGE,SEX, OCCUP TO samsungzoneuk@outlook.com",
+              "Your Number has won 365,000 pounds and two mobile phones in the ongoing COCACOLA/UK PROMO. Contact MR. Billy: cocacolaclaimsoffice@yahoo.com +447014233755"]:
+        ing = ingest(t)
+        assert ing.entities.hosts == [] and ing.entities.emails
+        r = check_message(t, store=False, log=False)
+        assert r.verdict is not V.SAFE
+        assert not any(e.source in ("domain_check", "established-links") and e.supports == "safe" for e in r.evidence)  # outlook.com being real says nothing about the sender
+
+
+def test_an_ordinary_email_address_in_an_ordinary_message_is_not_an_alarm():
+    r = check_message("Hi Sam, please send the minutes to anna@gmail.com when you can.", store=False, log=False)
+    assert r.verdict not in (V.SCAM, V.LIKELY_SCAM)
+
+
+@pytest.mark.parametrize("text", [
+    "Yup, leaving right now, be back soon",
+    "If you r @ home then come down within 5 min",
+    "I cant pick the phone right now. Pls send a message",
+    "I dont thnk its a wrong calling between us..hope u understand",
+    "Yes its possible but dint try. Pls dont tell to any one k",
+])
+def test_urgency_and_secrecy_words_in_casual_chat_that_asks_for_nothing_are_not_flagged(text):
+    assert check_message(text, store=False, log=False).verdict not in (V.SCAM, V.LIKELY_SCAM)
+
+
+@pytest.mark.parametrize("text", [
+    "ATM BLOCK:Dear customer, Due to our system upgrade your ATM card has just been BL0CKED. To Re-Activate call customer care for help 8927307655 now.",
+    "URGENT! Dear FL1PKART Customer, We are trying to contact you. Last weekends draw shows that you w0n a Rs.10,00,000 prize GUARANTEED. Call 8536074310. Claim Code K52. Valid 12hrs only.",
+])
+def test_digit_for_letter_disguises_do_not_hide_a_scam(text):
+    assert check_message(text, store=False, log=False).verdict in (V.SCAM, V.LIKELY_SCAM)
+
+
+def test_deleet_keeps_numbers_and_the_same_length():
+    from core.lang.text import deleet
+
+    assert deleet("BL0CKED w0n FL1PKART").lower() == "blocked won flipkart" and deleet("Pay 5000 to 0906 123 456 by 5pm") == "Pay 5000 to 0906 123 456 by spm"
+    assert len(deleet("a1b2c3 4U")) == len("a1b2c3 4U")

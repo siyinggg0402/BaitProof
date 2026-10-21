@@ -127,7 +127,7 @@ def test_model_reanalyses_with_new_facts_and_stale_opinions_are_dropped(net, mon
 
 def test_second_look_disagreement_makes_the_model_unsure(monkeypatch):
     fake(monkeypatch, analysis=SAFE, second=SCAM_FLAG)
-    r = check_message("Please act now, we need the small fee for the hall.")  # one independent flag -> not 'high' -> second look
+    r = check_message("Please note the processing fee for the hall is due.")  # one independent flag -> not 'high' -> second look
     assert steps(r, "second-look") and "second look" in steps(r, "loop")[0].detail
     # First look said safe (which alone made confidence 'low'); the second look disagreed, so the model no longer counts as a
     # 'safe' voice. The one independent red flag stands at medium confidence instead of being talked down.

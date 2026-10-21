@@ -76,7 +76,7 @@ def test_critic_downgrades_safe(monkeypatch):
 
 def test_low_confidence_never_feeds_flywheel(monkeypatch):
     _fake_llm(monkeypatch, {"verdict": "safe", "tactics": []})
-    r = check_message("Please act now, the club meets Saturday.")  # 1 red flag, model disagrees -> low confidence
+    r = check_message("The fraud department meets the club on Saturday.")  # 1 red flag (a known phrase), model disagrees -> low confidence
     assert r.verdict == V.LIKELY_SCAM and r.confidence == "low"
     assert not r.added_to_training and library.user_examples() == []
 

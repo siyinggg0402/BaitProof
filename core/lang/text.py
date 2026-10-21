@@ -117,6 +117,38 @@ def Z(p: str, flags: int = re.I | re.S) -> re.Pattern:
     return re.compile(zpat(p), flags)
 
 
+_LEET = str.maketrans("013457", "oieast")
+_MIXED_TOKEN = re.compile(r"(?=[A-Za-z0-9]*[A-Za-z])(?=[A-Za-z0-9]*[013457])[A-Za-z0-9]+")
+
+
+@lru_cache(maxsize=4096)
+def deleet(text: str) -> str:
+    """The same text with digit-for-letter disguises undone INSIDE words that mix letters and digits ('BL0CKED' -> 'BLOCKED', 'w0n' -> 'won').
+    Same length as the input, so a match found here sits at the same place in the original. Plain numbers, phone numbers and prices are untouched."""
+    return _MIXED_TOKEN.sub(lambda m: m.group(0).translate(_LEET), text)
+
+
+class _Hit:
+    """A match found in the de-leeted text, reading back the ORIGINAL words (so quotes stay verbatim)."""
+    __slots__ = ("_m", "_src")
+
+    def __init__(self, m, src: str) -> None:
+        self._m, self._src = m, src
+
+    def span(self, n: int = 0):
+        return self._m.span(n)
+
+    def start(self, n: int = 0) -> int:
+        return self._m.start(n)
+
+    def end(self, n: int = 0) -> int:
+        return self._m.end(n)
+
+    def group(self, n: int = 0) -> str:
+        a, b = self._m.span(n)
+        return self._src[a:b]
+
+
 class Dual:
     """An English pattern with a Chinese twin and a Malay/Indonesian twin. The Chinese one runs only on text that contains Chinese characters, the
     Malay one only while the message being checked is detected as Malay/Indonesian, so English behaviour (and every English number we have
@@ -146,10 +178,17 @@ class Dual:
             m = rx.search(text, pos)
             if m is not None and (best is None or m.start() < best.start()):
                 best = m
+        if best is None and (alt := deleet(text)) != text:  # scammers write "BL0CKED" and "w0n" to dodge filters; the words are still there
+            for rx in self._twins(alt):
+                m = rx.search(alt, pos)
+                if m is not None and (best is None or m.start() < best.start()):
+                    best = _Hit(m, text)
         return best
 
     def finditer(self, text: str):
         ms = [m for rx in self._twins(text) for m in rx.finditer(text)]
+        if not ms and (alt := deleet(text)) != text:
+            ms = [_Hit(m, text) for rx in self._twins(alt) for m in rx.finditer(alt)]
         return iter(sorted(ms, key=lambda m: m.start()))
 
     def findall(self, text: str) -> list:

@@ -81,6 +81,8 @@ ZH_BRAND_NAMES = ZH.BRAND_NAMES  # Chinese name -> brand key
 # Brand words that are also ordinary words or short names: only an exact host token counts, and mentions in the text don't count.
 AMBIGUOUS_BRANDS = {"apple", "uber", "steam", "booking", "ups", "ato", "zoom", "chase", "outlook", "twitter", "target", "square", "shell", "dpd", "nhs", "irs",
                     "jd", "boc", "ccb", "uob", "dbs", "cpf", "grab", "iras", "fubon", "posb"}
+FREE_MAIL = {"gmail.com", "googlemail.com", "yahoo.com", "yahoo.co.uk", "ymail.com", "outlook.com", "hotmail.com", "hotmail.co.uk", "live.com", "msn.com", "aol.com",
+             "icloud.com", "proton.me", "protonmail.com", "gmx.com", "mail.com", "yandex.com", "zoho.com", "qq.com", "163.com", "126.com", "sina.com", "rediffmail.com"}
 BAD_TLDS = (".xyz", ".top", ".click", ".icu", ".info", ".online", ".site", ".shop", ".live", ".vip", ".cc", ".ink", ".work", ".buzz")
 SHORTENERS = {"bit.ly", "tinyurl.com", "t.co", "goo.gl", "is.gd", "cutt.ly", "rb.gy"}
 LEET = str.maketrans({"0": "o", "3": "e", "4": "a", "5": "s", "7": "t", "@": "a", "$": "s"})
