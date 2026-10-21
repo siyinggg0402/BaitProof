@@ -41,7 +41,7 @@ def test_rules_alone_never_call_a_chinese_seed_scam_safe_and_flag_no_genuine_see
     seeds = library.seed_examples("zh")
     verdicts = [(e, check_message(e["text"], store=False, log=False).verdict) for e in seeds]
     assert not [e["id"] for e, v in verdicts if e["is_scam"] and v is V.SAFE]
-    assert not [e["id"] for e, v in verdicts if not e["is_scam"] and v in (V.SCAM, V.LIKELY_SCAM)]
+    assert not [e["id"] for e, v in verdicts if not e["is_scam"] and v in (V.SCAM, V.LIKELY_SCAM)]  # includes the "check first" ones: not flagged, only not cleared
     caught = sum(v in (V.SCAM, V.LIKELY_SCAM) for e, v in verdicts if e["is_scam"])
     assert caught / sum(e["is_scam"] for e in seeds) >= 0.85, caught
 
@@ -63,3 +63,12 @@ def test_chinese_messages_split_into_clauses_for_spot_the_tell():
 def test_clause_level_tell_scoring(picked, expect):
     it = gp.Item("x", "您好，您的账户异常，请点击 http://a.top 验证，否则冻结。", "scam", ["lookalike-link"], tell_phrase="http://a.top")
     assert gp.words(it.text)[2].startswith("请点击") and gp.tell_score_clauses(it, picked) == expect
+
+
+def test_the_chinese_bank_has_check_first_messages_so_a_chinese_round_can_use_all_three_answers():
+    unsure = [e for e in library.seed_examples("zh") if e.get("truth") == "unsure"]
+    assert len(unsure) >= 5 and all(not e["is_scam"] and not e["tactics"] and e["tell"] and e["action"] for e in unsure)
+    pool = gp.build_pool("zh")
+    assert sum(i.truth == "unsure" for i in pool if i.source == "seed") == len(unsure)
+    assert not any(i.truth == "unsure" for i in gp.build_pool("en") if detect(i.text) == "zh")
+    assert all(e.get("truth") != "unsure" for e in library.seed_examples())  # the English bank keeps its own "unsure" items in the authored bank

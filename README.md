@@ -10,8 +10,7 @@ Built for the Nebius x NVIDIA Global AI Hackathon 2026, track **Personal AI**.
 | | |
 |---|---|
 | **Check** | Paste or forward a message (web or Telegram). Get a verdict (scam / likely scam / not sure / looks fine), the one giveaway quoted from the message, what to do next, and a "How I decided" trace. |
-| **Practice** | Short drills on the tricks *you* are weakest at: spot the trick, find the tell, what would you do, safe reply. Feeds a per-trick mastery model and a Baitproof score. |
-| **Game** | Inbox Rush, Daily Challenge, Spot the Tell, Boss fights (one per trick) and *Your Inbox*, built from scams you actually received. XP, levels, combo, lives, streaks, badges. |
+| **Train** | Short drills on the tricks *you* are weakest at: spot the trick, find the tell, what would you do, safe reply. Feeds a per-trick mastery model and a Baitproof score. The game modes live on the same tab: Inbox Rush, Daily Challenge, Spot the Tell, Boss fights (one per trick) and *Your Inbox*, built from scams you actually received. XP, levels, combo, lives, streaks, badges. |
 | **Records** | Everything you checked on the website **and in Telegram**, in one place, with the verdict and the giveaway. Link Telegram with a one-time code. Delete one record or all of them. |
 | **Challenge family** | Send a link; your parent plays a few rounds with no account and you see how they did. Shareable result card. |
 | **Your language** | A language switcher (English / 简体中文 / 繁體中文) on the website, `/lang` in Telegram. The explanation comes back in the language **you** read, whatever language the scam is in. |
@@ -128,7 +127,7 @@ pip install "python-telegram-bot>=21"
 # .env: TELEGRAM_BOT_TOKEN, TELEGRAM_BOT_USERNAME, BAITPROOF_URL
 python -m bot.telegram_bot
 ```
-Paste or forward a message to the bot for the same gated verdict. Commands: `/start`, `/link CODE`, `/unlink`, `/history`, `/score`, `/lang en|zh|zh-Hant`, `/help`.
+Paste or forward a message to the bot for the same gated verdict. Commands: `/start`, `/quiz` (a five-question "scam or not?" round with buttons, graded by the same game engine as the website; `/quiz daily` is the Daily Challenge), `/challenge` (a forwardable "can you spot the scam?" link for a parent), `/link CODE`, `/unlink`, `/history`, `/score`, `/lang en|zh|zh-Hant`, `/help`. After a check that adds a trick to your practice the bot offers a quick quiz and a family challenge. Quiz messages defang scam links so quoting one never makes it tappable.
 **Link it to the web:** open **Records**, press *Connect Telegram*, and send the 6-character code (valid once, 10 minutes) to the bot. From then on every check made in Telegram appears in your web Records and trains the same profile. Anything you check in Telegram is saved to Records and the bot tells you so. The logic is in `bot/handlers.py` (no Telegram import, unit-tested); only the thin connector `bot/telegram_bot.py` needs a token to run.
 
 ## Game mode

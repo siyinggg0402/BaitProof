@@ -50,8 +50,8 @@ def build_pool(lang: str = "en") -> list[Item]:
     for e in library.seed_examples(lang):
         if e["is_scam"]:
             add(Item(_id(e["text"]), e["text"], "scam", list(e["tactics"]), e["tell"], e["tell_phrase"], e["action"], "seed"))
-        else:
-            add(Item(_id(e["text"]), e["text"], "safe", [], e["tell"] or safe_tell, "", e["action"], "seed"))
+        else:  # a seed may say truth="unsure": could be real or fake (the "check first" answer)
+            add(Item(_id(e["text"]), e["text"], e.get("truth") or "safe", [], e["tell"] or safe_tell, "", e["action"], "seed"))
     for b in (fewshot.load_authored() if lang == "en" else []):
         truth = "scam" if b.verdict in fewshot.SCAMMY else b.verdict
         why = b.why[:1].upper() + b.why[1:] + "." if b.why else ""
