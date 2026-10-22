@@ -84,6 +84,7 @@ PURPOSES: dict[str, Purpose] = {p.id: p for p in [
     _p("other", "something else", "neutral", "anything that fits none of the above", "n/a"),
 ]}
 
+NEEDS_PROOF = {"marketing-offer", "transaction-alert", "invoice-or-bill", "account-notice"}  # copied by scams so often that "safe" needs independent confirmation
 PRIORITY_RISKY = ["request-secret", "request-install-access", "request-payment", "claim-prize-reward", "offer-job-or-investment", "urgent-account-warning",
                   "emotional-plea", "first-contact-opener", "callback-request"]
 PRIORITY_NORMAL = ["one-time-code", "delivery-update", "appointment-booking", "transaction-alert", "invoice-or-bill", "account-notice",

@@ -6,3 +6,9 @@ one-to-one common Traditional-to-Simplified character pairs, and one variant (å¸
 
 core/lang/data/zh_s2t.json is derived from STCharacters.txt and TWVariants.txt of the same project and package (Apache License 2.0), reduced to
 one-to-one common characters.
+
+The phishing blocklist (core/pipelines/check/blocklist.py) downloads, at run time, phishing-domains-ACTIVE.txt from the Phishing.Database project
+(https://github.com/Phishing-Database/Phishing.Database, MIT License, Copyright (c) 2018-2025 Mitchell Krog). The list is not included in this
+repository; it is kept in a local cache folder (data/cache/, git-ignored).
+
+Offline phone-number rules come from the `phonenumbers` package (a Python port of Google's libphonenumber, Apache License 2.0), installed from PyPI.

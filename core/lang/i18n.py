@@ -90,6 +90,10 @@ ZH: dict[str, str] = {
     "The phone number is {why}": "这个电话号码{why}",
     "an area code tied to 'one-ring' scams": "属于常见的“响一声”诈骗区号",
     "a premium-rate number that can charge you heavily": "是可能收取高额费用的增值电话",
+    "a UK '070' personal number, which scammers use to look like a mobile": "是英国的“070”个人号码，骗子常用它冒充手机号",
+    "The link {host} is on a public list of known phishing websites": "链接 {host} 在公开的钓鱼网站名单上",
+    "The website {host} got its first security certificate only {age} days ago": "网站 {host} 的第一张安全证书仅是 {age} 天前签发的",
+    "The website {host} has had security certificates on record for {years} years": "网站 {host} 的安全证书记录已有 {years} 年",
     "Asks for payment by {rail}, which can't be taken back": "要求用{rail}付款，这种方式无法追回",
     "Asks you to hand over a code that is the key to your account": "要你交出验证码，而它是你账户的钥匙",
     "Asks you to pay while rushing you": "一边催你，一边要你付款",
@@ -162,6 +166,7 @@ ZH: dict[str, str] = {
     "the AI isn't sure and nothing else explains it": "AI也拿不准，其他检查也解释不了",
     "asks for something sensitive or is hard to judge": "涉及敏感要求，或者难以判断",
     "can't judge this language with built-in rules alone": "仅凭内置规则无法判断这种语言",
+    "it reads like an ordinary {label}, but nothing independent confirms it, so I can't call it safe": "这看起来像一条普通的{label}，但没有独立的证据能证实，所以我不能说它安全",
     "can't fully check this language with built-in rules, so I can't call it safe": "内置规则无法完整检查这种语言，所以我不能说它是安全的",
     "contains a link that can't be verified": "含有无法核实的链接",
     "built-in rules alone can't vouch that a message is safe": "只靠内置规则，无法担保一条消息安全",
@@ -190,10 +195,12 @@ ZH: dict[str, str] = {
 }
 
 from core.lang.i18n_bot import BOT_ZH  # noqa: E402  (website, game and bot strings live in their own files)
+from core.lang.i18n_inputs import INPUTS_ZH  # noqa: E402
 from core.lang.i18n_ui import UI_ZH  # noqa: E402
 
 ZH.update(UI_ZH)
 ZH.update(BOT_ZH)
+ZH.update(INPUTS_ZH)
 
 TACTICS_ZH = {
     "urgency-pressure": {"label": "催你马上行动", "blurb": "他们说你必须立刻行动，让你来不及多想。", "tell": "正规公司会给你时间。只给几个小时的期限，是施压的手段。",

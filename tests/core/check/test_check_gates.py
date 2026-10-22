@@ -109,3 +109,30 @@ def test_safe_is_withheld_for_a_language_the_rules_cannot_read(monkeypatch):
     assert any("can't fully check this language" in s.detail for s in es.trace)
     en = check_message("Hi, see you tomorrow at the cafe at three, ok? Hugs.", store=False, log=False)
     assert en.verdict == V.SAFE  # English (and Chinese) have rules, so a model 'safe' with a clean second review still stands
+
+
+# ---- stricter "safe" for the message types scams copy most (found on real financial notices: a generic deal and a payment receipt were once called safe)
+def test_a_promotion_the_model_calls_safe_is_only_not_sure_without_independent_confirmation(monkeypatch):
+    _fake_llm(monkeypatch, {"verdict": "safe", "purpose": "marketing-offer", "tactics": [], "the_tell": "", "action": ""})
+    r = check_message("Limited-time deal: Buy now and get 50% discount on all products.", store=False, log=False)
+    assert r.verdict == V.UNSURE and any("ordinary advert or offer" in s.detail for s in r.trace)
+
+
+def test_a_payment_receipt_the_model_calls_safe_is_only_not_sure(monkeypatch):
+    _fake_llm(monkeypatch, {"verdict": "safe", "purpose": "invoice-or-bill", "tactics": [], "the_tell": "", "action": ""})
+    r = check_message("Your BDT 4000 electricity bill has been paid. Thank you for your payment.", store=False, log=False)
+    assert r.verdict == V.UNSURE
+
+
+def test_an_everyday_notice_with_a_verified_official_link_can_still_be_safe(monkeypatch):
+    monkeypatch.setenv("BAITPROOF_NET_TOOLS", "0")
+    _fake_llm(monkeypatch, {"verdict": "safe", "purpose": "transaction-alert", "tactics": [], "the_tell": "", "action": ""})
+    r = check_message("Barclays: 18.40 paid to Tesco, card ending 2291. Details: https://www.barclays.co.uk/help", store=False, log=False)
+    assert any(e.source == "domain_check" and e.supports == "safe" for e in r.evidence)  # the link really is Barclays'
+    assert r.verdict == V.SAFE
+
+
+def test_a_recognised_normal_login_code_is_still_safe_without_a_link(monkeypatch):
+    _fake_llm(monkeypatch, {"verdict": "safe", "purpose": "one-time-code", "tactics": [], "the_tell": "", "action": ""})
+    r = check_message("Your code is 482913. It expires in 10 minutes. Never share it.", store=False, log=False)
+    assert r.verdict == V.SAFE and any(e.source == "purpose:one-time-code" for e in r.evidence)

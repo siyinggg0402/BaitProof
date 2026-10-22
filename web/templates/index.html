@@ -7,7 +7,23 @@
     <p class="lead rise d1">{{ _("Paste any suspicious message. Baitproof tells you if it's a scam and shows you the giveaway.") }}</p>
     <form method="post" action="/check" class="card rise d1" id="check-form">
       <label for="message">{{ _("Paste the message here") }}</label>
-      <textarea id="message" name="message" rows="4" required maxlength="4000" placeholder="{{ _('e.g. “Your parcel is on hold. Pay a $1.99 fee within 24 hours…”') }}">{{ text }}</textarea>
+      <textarea id="message" name="message" rows="3" required maxlength="4000" placeholder="{{ _('e.g. “Your parcel is on hold. Pay a $1.99 fee within 24 hours…”') }}">{{ text }}</textarea>
+      <input type="hidden" name="source" id="source" value="{{ source }}">
+      {# Other ways in: shown by inputs.js only when something works (no script, no buttons). The server decides what it can do; the browser decides how to listen. #}
+      <div class="inputs" id="inputs" role="group" aria-label="{{ _('Add the message another way') }}" data-audio="{{ 1 if caps.audio else 0 }}" hidden>
+        <div class="in-buttons">
+          {% if caps.image %}<button type="button" class="inbtn" id="shot-btn"><span class="ico" aria-hidden="true">📷</span><span>{{ _("Screenshot") }}</span></button>{% endif %}
+          <button type="button" class="inbtn" id="speak-btn" hidden><span class="ico" aria-hidden="true">🎤</span><span class="lbl">{{ _("Speak") }}</span></button>
+          {% if lang == 'en' %}<select id="speak-lang" aria-label="{{ _('Language you will speak') }}" hidden><option value="en-US">English</option><option value="ms-MY">Bahasa Melayu</option></select>{% endif %}
+        </div>
+        <div class="in-privacy">
+          {% if caps.image %}<p><span aria-hidden="true">📷</span> {{ _("The AI reads your screenshot to get the text. We don't keep the picture.") }}</p>{% endif %}
+          {% if caps.audio %}<p id="priv-server" hidden><span aria-hidden="true">🎤</span> {{ _("Your voice note is turned into text on our server and is not kept.") }}</p>{% endif %}
+          <p id="priv-browser" hidden><span aria-hidden="true">🎤</span> {{ _("Your browser's speech service turns your voice into text. Baitproof never receives the audio.") }}</p>
+        </div>
+      </div>
+      <input type="file" id="shot-file" class="sr-only" accept="image/*" tabindex="-1" aria-hidden="true">
+      <div class="in-status" id="input-status" role="status" aria-live="polite"></div>
       <div class="examples"><span>{{ _("Try an example:") }}</span>
         <button type="button" class="ghost" data-example="{{ _("Hi grandma, it's me. I'm in trouble and need cash. Please buy four $100 gift cards and send me the numbers. Don't tell Mom.") }}">{{ _("Grandchild in trouble") }}</button>
         <button type="button" class="ghost" data-example="{{ _("DHL: Your parcel is on hold. Pay the $1.99 fee within 24 hours or it will be returned. Pay now: dhl-fee-pay.xyz/track") }}">{{ _("Parcel fee") }}</button>
@@ -34,4 +50,4 @@
 <section class="card live" id="live" hidden aria-live="polite"><h2>{{ _("Checking your message…") }}</h2><ol class="live-steps" id="live-steps"></ol></section>
 <div id="result-slot">{% if result %}{% include "_result.html" %}{% endif %}</div>
 {% endblock %}
-{% block scripts %}<script src="/static/js/examples.js"></script><script src="/static/js/check.js"></script>{% endblock %}
+{% block scripts %}<script src="/static/js/examples.js"></script><script src="/static/js/check.js"></script><script src="/static/js/inputs.js"></script>{% endblock %}

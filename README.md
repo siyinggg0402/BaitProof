@@ -12,6 +12,7 @@ Built for the Nebius x NVIDIA Global AI Hackathon 2026, track **Personal AI**.
 | **Check** | Paste or forward a message (web or Telegram). Get a verdict (scam / likely scam / not sure / looks fine), the one giveaway quoted from the message, what to do next, and a "How I decided" trace. |
 | **Train** | Short drills on the tricks *you* are weakest at: spot the trick, find the tell, what would you do, safe reply. Feeds a per-trick mastery model and a Baitproof score. The game modes live on the same tab: Inbox Rush, Daily Challenge, Spot the Tell, Boss fights (one per trick) and *Your Inbox*, built from scams you actually received. XP, levels, combo, lives, streaks, badges. |
 | **Records** | Everything you checked on the website **and in Telegram**, in one place, with the verdict and the giveaway. Link Telegram with a one-time code. Delete one record or all of them. |
+| **Screenshot, voice, links** | Send a **screenshot** (website: button, drag-and-drop or paste; Telegram: just send the photo) and a vision model reads the message, which is put in the text box so you can see and correct it before it is checked. Speak instead (browser speech recognition on the website, a local speech model for Telegram voice notes). Every result has a **Links** panel: official site, fake look-alike, short link (expanded safely to where it goes), new or non-existent site; hidden links (`hxxp`, `[.]`, spoken "dot", Chinese 。) are un-hidden, and QR codes in screenshots are decoded. |
 | **Challenge family** | Send a link; your parent plays a few rounds with no account and you see how they did. Shareable result card. |
 | **Your language** | A language switcher (English / 简体中文 / 繁體中文) on the website, `/lang` in Telegram. The explanation comes back in the language **you** read, whatever language the scam is in. |
 
@@ -41,7 +42,7 @@ The model proposes; deterministic gates decide.
 - **Grounding and precondition gates.** A red flag whose quote is not in the message is dropped; a tactic needs its precondition to exist (no "fake link" without a link, no "asks for money" without an ask).
 - **Arbiter.** Strong independent evidence means scam. Safe must be earned: no risky purpose, no unresolved links, a second look agreeing, and evidence that is not just the model. Model-only suspicion needs two consistent looks before it becomes "likely scam". Otherwise the honest answer is "not sure".
 - **Confidence loop.** When the verdict depends on the model, a bounded loop (max 3 rounds, 10 model calls, 25 s) asks a planner which open question matters most, runs the allowed tools in parallel, and re-analyses, stopping as soon as the verdict is settled.
-- **Tools** behind a gate (allow-list, arguments must come from the message, public hostnames only, budget, timeouts, never contacts the scammer's server): official-domain check against a 70-brand table with look-alike detection, payment-rail check, phone check, domain age (RDAP), DNS sanity check, **company verification through Wikidata** (no key needed), and Tavily brand lookup when a key is set.
+- **Tools** behind a gate (allow-list, arguments must come from the message, public hostnames only, budget, timeouts, never contacts the scammer's server): official-domain check against a 70-brand table with look-alike detection, payment-rail check, phone check (offline rules for every country via `phonenumbers`: premium-rate, UK 070 "personal" and "one-ring" Caribbean numbers), a **public phishing blocklist** ([Phishing.Database](https://github.com/Phishing-Database/Phishing.Database), MIT, kept as a local file and refreshed daily, so no address is sent anywhere to be checked), domain age (RDAP, with the **certificate-transparency log** on crt.sh as a second clock when the registry cannot say), DNS sanity check, **company verification through Wikidata** (no key needed), where a **short link** really goes, and Tavily brand lookup when a key is set.
 - **Critic** looks again, with the verified facts, before anything is called safe.
 - **Flywheel gate.** Only confident scams with independent evidence enter the training library, and only as tactics plus an abstracted, scrubbed example.
 
@@ -127,7 +128,7 @@ pip install "python-telegram-bot>=21"
 # .env: TELEGRAM_BOT_TOKEN, TELEGRAM_BOT_USERNAME, BAITPROOF_URL
 python -m bot.telegram_bot
 ```
-Paste or forward a message to the bot for the same gated verdict. Commands: `/start`, `/quiz` (a five-question "scam or not?" round with buttons, graded by the same game engine as the website; `/quiz daily` is the Daily Challenge), `/challenge` (a forwardable "can you spot the scam?" link for a parent), `/link CODE`, `/unlink`, `/history`, `/score`, `/lang en|zh|zh-Hant`, `/help`. After a check that adds a trick to your practice the bot offers a quick quiz and a family challenge. Quiz messages defang scam links so quoting one never makes it tappable.
+Paste or forward a message to the bot for the same gated verdict. Commands: `/start`, `/quiz` (a five-question "scam or not?" round with buttons, graded by the same game engine as the website; `/quiz daily` is the Daily Challenge), `/challenge` (a forwardable "can you spot the scam?" link for a parent), `/link CODE`, `/unlink`, `/history`, `/score`, `/lang en|zh|zh-Hant`, `/help`. After a check that adds a trick to your practice the bot offers a quick quiz and a family challenge. Quiz messages defang scam links so quoting one never makes it tappable. Updates are handled concurrently (`BAITPROOF_BOT_CONCURRENCY`, default 16), so one slow screenshot read does not block other chats; each chat's profile stays isolated (tested).
 **Link it to the web:** open **Records**, press *Connect Telegram*, and send the 6-character code (valid once, 10 minutes) to the bot. From then on every check made in Telegram appears in your web Records and trains the same profile. Anything you check in Telegram is saved to Records and the bot tells you so. The logic is in `bot/handlers.py` (no Telegram import, unit-tested); only the thin connector `bot/telegram_bot.py` needs a token to run.
 
 ## Game mode
@@ -143,16 +144,21 @@ uvicorn web.main:app --reload           # http://localhost:8000
 pytest                                   # offline, deterministic, never calls the API
 python -m tests.e2e.browser              # real-browser click-through (needs Chrome + playwright)
 python -m scripts.data.seed_demo              # optional: believable mid-training state for the demo
+pip install -r requirements-extras.txt  # optional: voice notes to text (faster-whisper) and QR codes in screenshots (OpenCV)
 ```
 The share card renders Chinese when a CJK font is installed (`fonts-noto-cjk` on Linux, which `deploy/setup_vm.sh` installs) and falls back to the English card otherwise.
 All settings are listed, with defaults, in [.env.example](.env.example).
 
 ## Safety & privacy
+- **Screenshots** are the one thing we cannot scrub first: the picture goes unmodified to the vision model on Nebius, so names and numbers in it are seen by the model. EXIF and location data are stripped before sending, the picture is never stored, and the log gets only a small event (size, time, tokens), never the image or the text. `BAITPROOF_VISION=0` turns the feature off, and the website says this where you upload.
+- **Voice**: Telegram voice notes are transcribed **on our own server** with a local model (faster-whisper) and never sent anywhere (the model downloads once from Hugging Face). On the website the browser's own speech service does the listening (in Chrome it is Google's), and Baitproof never receives the audio.
+- **Short links**: only a known URL shortener is contacted, with one HEAD request that reads where it points, and never the destination itself, so we never touch a scammer's server. The shortener (and anyone who controls that link) can see one hit from our IP. `BAITPROOF_NET_TOOLS=0` turns it off.
 - Cautious verdicts: "looks safe" always carries "…but verify via an official channel"; any red flag downgrades a safe verdict.
 - "I already paid" messages get victim support, not analysis, and are never stored.
 - We store **tactics and an abstracted example**, not messages. Emails, phone numbers (including mainland-China mobiles), resident ID numbers, card numbers and link paths are scrubbed deterministically before anything is stored or sent to a model; with the AI configured the example is also rewritten without names. In offline mode names in free text can survive scrubbing (limitation).
 - **Records** keep the verdict and giveaway; the 120-character preview of the message is redacted, optional (`BAITPROOF_STORE_PREVIEW`, switchable per profile) and deletable per record or all at once.
 - Logs contain no message text. No telemetry. Third-party datasets are never committed.
+- The phishing blocklist is a file on the server (`data/cache/`, git-ignored): a link is looked up there, never sent to a service. Of the network tools, only the domain name is ever sent (to the public RDAP registry, DNS, and the crt.sh certificate log), never the message, and the scammer's own server is never contacted. `BAITPROOF_NET_TOOLS=0` turns every network tool off; `BAITPROOF_BLOCKLIST=0` turns the list off.
 - Encouraging tone: a miss is always "here's the tell you missed". Content is victim-facing only.
 
 ## Repository layout
@@ -162,11 +168,12 @@ core/lang/       text.py (language detection, Simplified/Traditional-agnostic pa
                  i18n.py + i18n_ui.py + i18n_bot.py (English text -> Simplified; Traditional is derived), data/ (OpenCC character tables)
 core/storage/    db.py, library.py, model.py (personal model + score), history.py (records), links.py (Telegram link codes)
 core/ai/         llm.py (Nebius client), prompts.py, verify.py (Tavily), fewshot.py
-core/pipelines/  train.py, challenge.py, check/ (the gated pipeline: engine, gates, evidence, intent, scenarios, tools, planner, preconditions)
+core/inputs/     image.py (screenshots: vision model, QR), audio.py (voice notes: faster-whisper), errors.py
+core/pipelines/  train.py, challenge.py, check/ (the gated pipeline: engine, gates, evidence, intent, scenarios, tools, blocklist, planner, preconditions, links, linkinfo, localize)
 core/game/       pool.py, state.py (XP, levels, badges), engine.py (rounds, grading)
 core/obs/        run, logger (JSONL), metrics, health
 web/             main.py (app setup), pages.py (templates), ui.py (translation helpers), deps.py (profiles, rate limit, headers),
-                 routes/ (check, records, practice, game, language, admin), templates/, static/{css,js,img}
+                 routes/ (check, inputs, records, practice, game, language, admin), uploads.py (streaming image/audio upload), templates/, static/{css,js,img}
 bot/             Telegram front-end (handlers.py is the tested logic)
 data/            seeds/ (curated scams + genuine messages, en and zh), fewshot/ (reference bank), external/ (downloaded, ignored)
 scripts/         eval/ (offline, live, compare, real, multilingual, prompt_lab), data/ (fetch, seed_demo), ops/ (verify_setup, logs_report), common.py

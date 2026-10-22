@@ -65,26 +65,37 @@ def rule_evidence(ing: Ingested, intent: Intent, f: Findings, ledger: Ledger) ->
                 ledger.add("rule", "pattern", "scam", strength,
                            T("“{q}” is a known scam phrase ({label})", q=q, label=tactic_text(tid, "label", L, TACTICS).lower()), q, tid)
                 break
+    for url, dest in f.shorts.items():  # a short link hides its destination; once we know it, say so
+        if dest:
+            ledger.add("tool", "expand_link", "neutral", "weak", T("This short link really goes to {dest}", dest=dest), url)
+    Q = lambda h: f.via.get(h, h)  # noqa: E731  (a host we learned from a short link is quoted as that short link: it is the words in the message)
     for host, why in f.hard_hosts.items():
-        ledger.add("tool", "domain_check", "scam", "strong", T("The link {host} {why}", host=host, why="; ".join(why_text(w, L) for w in why)), host, "lookalike-link")
+        ledger.add("tool", "domain_check", "scam", "strong", T("The link {host} {why}", host=host, why="; ".join(why_text(w, L) for w in why)), Q(host), "lookalike-link")
     for host, why in f.soft_hosts.items():
-        ledger.add("tool", "domain_check", "scam", "weak", T("The link {host} {why}", host=host, why="; ".join(why_text(w, L) for w in why)), host, "lookalike-link")
+        ledger.add("tool", "domain_check", "scam", "weak", T("The link {host} {why}", host=host, why="; ".join(why_text(w, L) for w in why)), Q(host), "lookalike-link")
     for host, brand in f.official_hosts.items():
-        ledger.add("tool", "domain_check", "safe", "medium", T("The link {host} goes to {brand}'s real website", host=host, brand=brand.title()), host)
+        ledger.add("tool", "domain_check", "safe", "medium", T("The link {host} goes to {brand}'s real website", host=host, brand=brand.title()), Q(host))
     for host, age in f.ages.items():
         if age is None:
             continue
         if age < 30:
-            ledger.add("tool", "domain_age", "scam", "medium", T("The website {host} was registered only {age} days ago", host=host, age=age), host, "lookalike-link")
+            ledger.add("tool", "domain_age", "scam", "medium", T("The website {host} was registered only {age} days ago", host=host, age=age), Q(host), "lookalike-link")
         elif age < 180:
-            ledger.add("tool", "domain_age", "scam", "weak", T("The website {host} was registered only {age} days ago (under six months)", host=host, age=age), host, "lookalike-link")
+            ledger.add("tool", "domain_age", "scam", "weak", T("The website {host} was registered only {age} days ago (under six months)", host=host, age=age), Q(host), "lookalike-link")
         elif age >= 730:
-            ledger.add("tool", "domain_age", "safe", "weak", T("The website {host} has existed for {years} years", host=host, years=age // 365), host)
+            ledger.add("tool", "domain_age", "safe", "weak", T("The website {host} has existed for {years} years", host=host, years=age // 365), Q(host))
+    for host, days in f.certs.items():  # only where the domain registry could not say: the certificate log is a second, weaker clock
+        if days is None or f.ages.get(host) is not None:
+            continue
+        if days < 14:
+            ledger.add("tool", "cert_history", "scam", "weak", T("The website {host} got its first security certificate only {age} days ago", host=host, age=days), Q(host), "lookalike-link")
+        elif days >= 730:
+            ledger.add("tool", "cert_history", "safe", "weak", T("The website {host} has had security certificates on record for {years} years", host=host, years=days // 365), Q(host))
     for host, st in f.dns.items():
         if st == "nxdomain":
-            ledger.add("tool", "dns_check", "scam", "weak", T("The website address {host} doesn't exist (any more)", host=host), host)
+            ledger.add("tool", "dns_check", "scam", "weak", T("The website address {host} doesn't exist (any more)", host=host), Q(host))
         elif st == "private":
-            ledger.add("tool", "dns_check", "scam", "medium", T("{host} points to an internal address, which a real website never does", host=host), host)
+            ledger.add("tool", "dns_check", "scam", "medium", T("{host} points to an internal address, which a real website never does", host=host), Q(host))
     for org, sites in f.brand_sites.items():
         official = {tools_registered(h) for h in sites}
         labels = {r.split(".")[0] for r in official}  # amazon.co.uk and amazon.com are the same brand
@@ -94,12 +105,13 @@ def rule_evidence(ing: Ingested, intent: Intent, f: Findings, ledger: Ledger) ->
                 continue
             reg = tools_registered(host)
             if reg in official or reg.split(".")[0] in labels:
-                ledger.add("tool", "brand_lookup", "safe", "medium" if src == "wikidata" else "weak", T("{src} lists {host} as {org}'s website", src=src.capitalize(), host=host, org=org.title()), host)
+                ledger.add("tool", "brand_lookup", "safe", "medium" if src == "wikidata" else "weak", T("{src} lists {host} as {org}'s website", src=src.capitalize(), host=host, org=org.title()), Q(host))
             else:
-                ledger.add("tool", "brand_lookup", "scam", "weak", T("{src} lists {site} as {org}'s website, but this link goes to {host}", src=src.capitalize(), site=sites[0], org=org.title(), host=host), host, "lookalike-link")
+                ledger.add("tool", "brand_lookup", "scam", "weak", T("{src} lists {site} as {org}'s website, but this link goes to {host}", src=src.capitalize(), site=sites[0], org=org.title(), host=host), Q(host), "lookalike-link")
     for num, kind in f.phones.items():
-        if kind in ("caribbean", "premium"):
-            why = T("an area code tied to 'one-ring' scams") if kind == "caribbean" else T("a premium-rate number that can charge you heavily")
+        if kind in ("caribbean", "premium", "personal"):
+            why = {"caribbean": T("an area code tied to 'one-ring' scams"), "premium": T("a premium-rate number that can charge you heavily"),
+                   "personal": T("a UK '070' personal number, which scammers use to look like a mobile")}[kind]
             ledger.add("tool", "phone_check", "scam", "medium", T("The phone number is {why}", why=why), ing.entities.phone_raw.get(num, ""))
     for r in f.irreversible_rails:
         ledger.add("tool", "payment_rail", "scam", "strong", T("Asks for payment by {rail}, which can't be taken back", rail=T(r.replace('-', ' '))),
@@ -135,6 +147,17 @@ def rule_evidence(ing: Ingested, intent: Intent, f: Findings, ledger: Ledger) ->
         ledger.add("model", "scenario", "scam", "weak", T("The AI reviewer thinks it follows the “{label}” scam script", label=T(scenarios.SCENARIOS[intent.model_scenario].label)))
     if ing.injection:
         ledger.add("rule", "injection", "scam", "medium", T("The message tries to give the checker instructions, which real messages never do"))
+    # The public phishing list is community-curated and carries some well-known sites where a bad page was once hosted (measured: 382 of the top million websites,
+    # such as file and paste hosts). So a hit is graded, not absolute: medium on its own; strong when anything else about the message or the link is also wrong,
+    # or the site is under a year old; weak when the site is over ten years old. A real brand's own site is never overruled by a list entry.
+    ledger.discard("blocklist_check")  # regraded every round: the site's age may have arrived since
+    others = ledger.independent_scam()
+    for host in f.listed:
+        if host in f.official_hosts:
+            continue
+        age = f.age_of(host)
+        strength = "weak" if age is not None and age >= 3650 else ("strong" if others or (age is not None and age < 365) else "medium")
+        ledger.add("tool", "blocklist_check", "scam", strength, T("The link {host} is on a public list of known phishing websites", host=host), Q(host), "lookalike-link")
     for note in f.web_notes:  # untrusted web text: shown, never weighed
         ledger.add("tool", "reputation", "neutral", "weak", T("Web note (unverified): {note}", note=note[:200]))
 

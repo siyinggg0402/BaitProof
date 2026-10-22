@@ -233,7 +233,7 @@ def test_open_questions_only_propose_calls_the_gate_would_allow(monkeypatch):
 
 def test_answered_questions_are_not_asked_again(monkeypatch):
     ing, it, f, g, L = _qs(True, monkeypatch)
-    f.done |= {("domain_age", "acme-secure.top"), ("dns_check", "acme-secure.top"), ("reputation", "acme-secure.top"), ("brand_lookup", "acme bank"), ("official_site_wikidata", "acme bank")}
+    f.done |= {("domain_age", "acme-secure.top"), ("cert_history", "acme-secure.top"), ("dns_check", "acme-secure.top"), ("reputation", "acme-secure.top"), ("brand_lookup", "acme bank"), ("official_site_wikidata", "acme bank")}
     assert planner.open_questions(ing, it, f, g) == []
 
 

@@ -7,6 +7,8 @@
     {% else %}<path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/>{% endif %}</svg></span>
     <span>{{ result.headline.split(' ', 1)[1] }}</span></div>
   <div class="body">
+    {% if result.source == 'screenshot' %}<p class="src"><span aria-hidden="true">📷</span> {{ _("Read from a screenshot") }}</p>
+    {% elif result.source == 'voice' %}<p class="src"><span aria-hidden="true">🎤</span> {{ _("Heard from a voice note") }}</p>{% endif %}
     {% if result.tell %}<div class="panel"><b>{{ _("The giveaway") }}</b>{{ result.tell }}</div>{% endif %}
     {% if result.action %}<div class="panel"><b>{{ _("What to do") }}</b>{{ result.action }}</div>{% endif %}
     {% if result.tactics %}<ul class="chips" aria-label="{{ _('Tricks found') }}">{% for t in result.tactics %}<li title="{{ t.quote }}">{{ labels[t.id] }}</li>{% endfor %}</ul>{% endif %}
@@ -17,6 +19,20 @@
         <li class="ev-{{ e.supports }}"><span class="ev-tag">{{ _({'scam': 'Red flag', 'safe': 'Reassuring', 'neutral': 'Note'}[e.supports]) }}</span>
           <span class="ev-body">{{ e.claim }}<small>{{ _({'rule': 'Known pattern', 'intent': 'What it asks', 'tool': 'Checked', 'model': 'AI reviewer'}[e.kind]) }} · {{ _(e.strength) }}{% if e.kind == 'model' %} · {{ _("counts for less") }}{% endif %}</small></span></li>
       {% endfor %}</ul></details>
+    {% endif %}
+    {% if result.links %}
+    <section class="panel links" aria-label="{{ _('Links in this message') }}"><b>{{ _("Links in this message") }}</b>
+      <p class="links-note">{{ _("Shown as plain text on purpose, so a bad link can't be tapped by mistake.") }}</p>
+      <ul class="lk">{% for l in result.links %}{% set st = l.status if l.status in ['official', 'known_phishing', 'lookalike', 'shortener', 'suspicious', 'established'] else 'unverified' %}
+        <li class="lk-{{ st }}">
+          <div class="lk-top"><code class="lk-host">{{ l.host }}</code>
+            <span class="lk-chip"><span aria-hidden="true">{{ {'official': '✓', 'established': '✓', 'known_phishing': '✕', 'lookalike': '✕', 'suspicious': '!', 'shortener': '↪', 'unverified': '?'}[st] }}</span>
+              {{ _({'official': 'Official site', 'known_phishing': 'Known phishing site', 'lookalike': 'Fake lookalike', 'shortener': 'Short link', 'suspicious': 'Suspicious', 'unverified': 'Not verified', 'established': 'Long-established site'}[st]) }}</span></div>
+          {% if l.label %}<p class="lk-label">{{ l.label }}</p>{% endif %}
+          {% if l.expanded_to %}{% set goes %}<code class="lk-host">{{ l.expanded_to }}</code>{% endset %}<p class="lk-goes">{{ _h("Really goes to {host}", host=goes) }}</p>{% endif %}
+          {% if l.notes %}<ul class="lk-notes">{% for n in l.notes %}<li>{{ n }}</li>{% endfor %}</ul>{% endif %}
+        </li>{% endfor %}
+      </ul></section>
     {% endif %}
     <details class="trace"><summary>{{ _("How I decided ({level})", level=_(result.confidence + " confidence")) }}</summary>
       <ol>{% for s in result.trace %}<li class="st-{{ s.status }}"><strong>{{ STAGES.get(s.stage, s.stage) }}</strong>{% if s.ms %} <small>{{ s.ms }} ms</small>{% endif %}: {{ s.detail }}</li>{% endfor %}</ol></details>

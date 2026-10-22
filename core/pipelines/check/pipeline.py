@@ -15,7 +15,7 @@ from core.obs.logger import fingerprint
 from core.obs.metrics import cost_usd
 from core.storage import library, model
 
-from . import analysis, engine, gates, intent as intent_stage
+from . import analysis, engine, gates, intent as intent_stage, linkinfo, localize
 from .ingest import ingest
 from .trace import Trace
 
@@ -38,10 +38,13 @@ def reply_language(text: str, lang: str | None) -> str:
     return d if d in ("zh", "zh-Hant") else "en"
 
 
-def check_message(text: str, store: bool = True, on_event=None, log: bool = True, lang: str | None = None) -> CheckResult:
+def check_message(text: str, store: bool = True, on_event=None, log: bool = True, lang: str | None = None, *, source: str = "text", read_text: str = "") -> CheckResult:
     """Run one check. Never crashes on internal errors (returns a cautious 'not sure'), always logs one structured event.
-    `lang` is the language to answer in (en | zh | zh-Hant); by default the message's own."""
+    `lang` is the language to answer in (en | zh | zh-Hant); by default the message's own.
+    `source` says how the message reached us (text | screenshot | voice) and `read_text` is what we read or heard, handed back on the result so the
+    user can see and correct it; neither changes the verdict, and the log keeps `source` only (never the text)."""
     run = obs.start()
+    run.meta["source"] = source
     reply = reply_language(text, lang)
     trace = Trace(on_event, reply)
     try:
@@ -55,6 +58,7 @@ def check_message(text: str, store: bool = True, on_event=None, log: bool = True
                              tell=tr("I couldn't finish checking this message.", reply),
                              action=tr("I can't be sure. If it asks for money, codes or a rush, check first using an official number or website you already trust.", reply), trace=trace.steps)
     result.check_id = run.id
+    result.source, result.read_text = source, read_text
     if log:
         _log(text, result, run)
     return result
@@ -100,6 +104,8 @@ def _check(text: str, store: bool, tr_: Trace, run: obs.Run, reply: str = "en") 
 
     if d.verdict == Verdict.SAFE and case.votes:
         concern = analysis.critic(ing, it, f)
+        if concern and not localize.in_script(concern, reply):
+            concern = (localize.translate([concern], reply) or [T("a second reviewer was worried")])[0]
         if concern:
             d = gates.Decision(Verdict.UNSURE, "low", [T("second opinion: {concern}", concern=concern)])
             ledger.add("model", "critic", "scam", "weak", T("A second reviewer was worried: {concern}", concern=concern))
@@ -108,6 +114,7 @@ def _check(text: str, store: bool, tr_: Trace, run: obs.Run, reply: str = "en") 
             ledger.add("model", "critic", "safe", "weak", T("A second reviewer looked for risk signals and found none"))
             tr_.add("critic", "pass", "second reviewer found nothing")
 
+    tell, action = localize.explain_in(reply, tell, action, ledger)  # the model's sentences, in the reader's language (or "" to use the static text below)
     tactics = ledger.tactic_hits()
     verdict, first = d.verdict, (tactics[0].id if tactics else None)
     if not tell and first:
@@ -130,6 +137,12 @@ def _check(text: str, store: bool, tr_: Trace, run: obs.Run, reply: str = "en") 
         added = ids
     tr_.add("flywheel", "pass" if added else "skip", why)
 
+    try:
+        links = linkinfo.build(ing, f, reply)
+    except Exception:  # the panel is a convenience: never let it break a check
+        links = []
+    run.meta["links"] = len(links)
+    run.meta["short_links_followed"] = sum(1 for d in f.shorts.values() if d)
     run.meta["evidence"] = [{"kind": e.kind, "source": e.source, "supports": e.supports, "strength": e.strength, "tactic": e.tactic} for e in ledger.items]
     return CheckResult(verdict=verdict, headline=T(HEADLINES[verdict]), tell=tell, action=action, tactics=tactics, added_to_training=added, evidence=ledger.items,
-                       used_ai=bool(case.votes), confidence=d.confidence, trace=tr_.steps, lang=reply, message_lang=ing.lang)
+                       used_ai=bool(case.votes), confidence=d.confidence, trace=tr_.steps, lang=reply, message_lang=ing.lang, links=links)

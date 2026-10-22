@@ -6,3 +6,4 @@ playwright>=1.40     # the real-browser end-to-end test (tests/e2e), which drive
 ruff>=0.4            # lint: ruff check
 pyarrow>=15          # only for `python -m scripts.data.fetch --multilingual`
 python-telegram-bot>=21  # only to run the Telegram bot (python -m bot.telegram_bot)
+qrcode>=7       # generates a test QR code image (tests/core/inputs; the QR test is skipped without it)

@@ -19,7 +19,7 @@ if (form && window.fetch && window.ReadableStream) {
     live.scrollIntoView({ behavior: "smooth", block: "nearest" });
     const fallback = () => { btn.disabled = false; live.hidden = true; form.submit(); };
     try {
-      const res = await fetch("/api/check/stream", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: msg }) });
+      const res = await fetch("/api/check/stream", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: msg, source: document.getElementById("source")?.value || "text" }) });
       if (!res.ok || !res.body) return fallback();
       const reader = res.body.getReader(), dec = new TextDecoder();
       let buf = "", doneId = null;

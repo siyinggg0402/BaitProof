@@ -6,6 +6,7 @@ bot/telegram_bot.py only turns these into Telegram calls."""
 from __future__ import annotations
 
 import hashlib
+import inspect
 import logging
 import os
 import re
@@ -14,12 +15,15 @@ import time
 from collections import OrderedDict
 from dataclasses import dataclass, field
 
+from core import obs
 from core.domain import privacy
 from core.game import engine
 from core.game import state as game_state
+from core.inputs import audio, image
+from core.inputs.errors import InputError
 from core.lang import i18n
 from core.lang.i18n import tactic_text, tr
-from core.domain.schemas import CheckResult, Verdict
+from core.domain.schemas import CheckResult, LinkInfo, Verdict
 from core.domain.tactics import TACTICS
 from core.pipelines import challenge
 from core.pipelines.check import check_message
@@ -28,7 +32,8 @@ from core.storage import db, history, links, model
 log = logging.getLogger(__name__)
 
 WELCOME = ("Hi! I'm Baitproof 🛡️\n\nForward or paste any message you're unsure about and I'll tell you if it's a scam, "
-           "show you the one giveaway, and add that trick to your practice.\n\n"
+           "show you the one giveaway, and add that trick to your practice.\n"
+           "You can also send a screenshot or a voice note.\n\n"
            "/quiz is a quick game: scam or not? (/quiz daily is today's Daily Challenge.)\n"
            "/challenge makes a link to send your family, to see if they can spot the scam too.\n\n"
            "/link CODE connects this chat to your Baitproof web profile, so everything you check here shows up in your records.\n"
@@ -103,19 +108,44 @@ def _too_many_attempts(chat_id: int) -> bool:
 
 
 def format_result(r: CheckResult) -> str:
+    """The verdict, the giveaway and what to do; then (when the message had links) the link report, and the tricks added to practice.
+    If it ever has to be cut to fit Telegram's limit, the end of the giveaway goes first: the link report and the practice line stay."""
     L = r.lang
-    lines = [r.headline]
-    if r.tell:
-        lines += ["", tr("The giveaway: {tell}", L, tell=r.tell)]
+    sections = [r.headline]
+    if r.tell:  # the giveaway often quotes the scam's link: keep it readable but not tappable
+        sections.append(tr("The giveaway: {tell}", L, tell=_defang(r.tell)))
     if r.action:
-        lines += ["", tr("What to do: {action}", L, action=r.action)]
+        sections.append(tr("What to do: {action}", L, action=_defang(r.action)))
+    tail = []
+    if r.links:
+        tail.append(format_links(r.links, L))
     if r.added_to_training:
-        lines += ["", tr("📚 Added to your practice: {tricks}", L, tricks=_sep(L).join(tactic_text(t, "label", L, TACTICS) for t in r.added_to_training))]
-    return "\n".join(lines)[:4000]
+        tail.append(tr("📚 Added to your practice: {tricks}", L, tricks=_sep(L).join(tactic_text(t, "label", L, TACTICS) for t in r.added_to_training)))
+    end = "".join("\n\n" + s for s in tail)
+    return "\n\n".join(sections)[: 4000 - len(end)] + end
 
 
 def _sep(lang: str) -> str:
     return ", " if i18n.norm(lang) == "en" else "、"
+
+
+def _checked(linked: bool, text: str, L: str | None, source: str = "text") -> tuple[CheckResult, Reply]:
+    """Check `text` and record it. `source` says how the message reached us (text | screenshot | voice); for the last two `text` is what was READ or
+    HEARD, and that is what the record's (redacted) preview comes from. Returns the result and the reply that shows it."""
+    extra = {}
+    if source != "text":  # tell the pipeline where the text came from, if this version of it knows how to take that
+        accepted = inspect.signature(check_message).parameters
+        extra = {k: v for k, v in (("source", source), ("read_text", text)) if k in accepted}
+    result = check_message(text, lang=L, **extra)
+    if source != "text":  # and if it does not, say it here
+        if result.source == "text":
+            result.source = source
+        result.read_text = result.read_text or text
+    history.add(result, "telegram", text)  # the record: verdict, tricks, giveaway and a short redacted preview, never the raw message
+    out = format_result(result)
+    if linked and web_url():
+        out += "\n\n" + tr("🗂 Saved to your records: {url}", result.lang, url=web_url("/records"))
+    return result, Reply(out[:4000], _practice_buttons(result.lang) if result.added_to_training else [])
 
 
 def on_check(chat_id: int, text: str, lang_hint: str | None = None) -> list[Reply]:
@@ -124,12 +154,7 @@ def on_check(chat_id: int, text: str, lang_hint: str | None = None) -> list[Repl
     L = chat_lang(lang_hint)
     if not text.strip():
         return [Reply(tr("Send me the message you want checked.", L or "en"))]
-    result = check_message(text, lang=L)
-    history.add(result, "telegram", text)  # the record: verdict, tricks, giveaway and a short redacted preview, never the raw message
-    out = format_result(result)
-    if linked and web_url():
-        out += "\n\n" + tr("🗂 Saved to your records: {url}", result.lang, url=web_url("/records"))
-    return [Reply(out[:4000], _practice_buttons(result.lang) if result.added_to_training else [])]
+    return [_checked(linked, text, L)[1]]
 
 
 def on_text(chat_id: int, text: str, lang_hint: str | None = None) -> str:
@@ -242,18 +267,20 @@ RATE: dict[str, list[float]] = {}
 _LOCK = threading.RLock()  # the engine's rounds and the game state are read-modify-write, so one tap at a time
 
 
-def _rate_limited(kind: str, chat_id: int, limit: tuple[int, float]) -> bool:
-    """True if this chat has already started `limit[0]` of these within `limit[1]` seconds. Only allowed starts are counted."""
+def _rate_limited(kind: str, chat_id: int, limit: tuple[int, float], count: bool = True) -> bool:
+    """True if this chat has already started `limit[0]` of these within `limit[1]` seconds. Only allowed starts are counted
+    (`count=False` just looks, for a check made before the work starts)."""
     now, (n, window) = time.time(), limit
     with _LOCK:
         recent = [t for t in RATE.get(f"{kind}:{chat_id}", []) if now - t < window]
         if len(recent) >= n:
             RATE[f"{kind}:{chat_id}"] = recent
             return True
-        RATE[f"{kind}:{chat_id}"] = recent + [now]
-        if len(RATE) > 5000:  # forget chats that have been quiet for longer than any window
-            for k in [k for k, v in RATE.items() if not v or now - v[-1] > 3600]:
-                RATE.pop(k, None)
+        if count:
+            RATE[f"{kind}:{chat_id}"] = recent + [now]
+            if len(RATE) > 5000:  # forget chats that have been quiet for longer than any window
+                for k in [k for k, v in RATE.items() if not v or now - v[-1] > 3600]:
+                    RATE.pop(k, None)
         return False
 
 
@@ -421,3 +448,167 @@ def on_callback(chat_id: int, data: str | None, lang_hint: str | None = None) ->
     except Exception:  # a tap must never crash the bot
         log.exception("button tap failed")
         return CallbackResult(toast=tr("Something went wrong. Please try again.", chat_lang(lang_hint) or "en"))
+
+
+# ---------------------------------------------------------------- screenshots, voice notes and the link report
+# A picture or a voice note is turned into text by core.inputs and then checked like any pasted message. Neither the picture nor the audio is
+# ever stored: they live in memory for the length of one call. Reading costs money (a vision model, a speech model), so each chat gets a modest
+# hourly allowance of each. The words that were read are shown back (with every link made untappable) so the person can see what was understood.
+IMAGE_LIMIT = (20, 3600.0)  # picture reads per chat per hour
+VOICE_LIMIT = (20, 3600.0)  # voice notes per chat per hour
+QUOTE_MAX = 700  # characters of the read text shown back
+LINKS_SHOWN = 5  # links listed in a reply; the rest are counted
+LINK_ICON = {"official": "✅", "known_phishing": "🚫", "lookalike": "⚠️", "shortener": "🔗", "suspicious": "🚫", "unverified": "❓", "established": "🏛️"}
+_DOMAIN_DOT = re.compile(r"(?<=\w)\.(?=[^\W\d_]{2,}(?![^\W\d_]))")  # a dot before an ending of 2+ letters: how a bare domain such as dhl-parcel.ru looks (not 'e.g.' or '2.99')
+
+
+def _defang(text: str) -> str:
+    """Words from a scam (read from a screenshot, or heard) may hold links. Break each one, and each bare domain that Telegram would also make
+    tappable, with invisible spaces. The text still reads the same."""
+    return _DOMAIN_DOT.sub("." + ZWSP, _inert(text))
+
+
+def _defang_all(text: str) -> str:
+    """For a host or a URL on its own: every dot and the '//' are broken (this also covers an address made of numbers)."""
+    return text.replace("://", ":" + ZWSP + "//").replace(".", "." + ZWSP)
+
+
+def _short(text: str, n: int = QUOTE_MAX) -> str:
+    t = text.strip()
+    return t if len(t) <= n else t[:n].rstrip() + "…"
+
+
+def _mb(n: int) -> str:
+    return f"{n / 1_000_000:g}"
+
+
+def format_links(found: list[LinkInfo], L: str) -> str:
+    """The 'Links' part of a reply: one short line per link, an emoji for what we found, the address (never tappable) and a few words on it."""
+    lines = [tr("🔗 Links", L)]
+    for k in found[:LINKS_SHOWN]:
+        line = f"{LINK_ICON.get(k.status, '❓')} {_defang_all(k.host)}"
+        if k.label:
+            line += " — " + _defang(k.label[:90])
+        if k.expanded_to:
+            line += " " + tr("→ really goes to {host}", L, host=_defang_all(k.expanded_to[:120]))
+        lines.append(line)
+    if len(found) > LINKS_SHOWN:
+        lines.append(tr("…and {n} more link(s)", L, n=len(found) - LINKS_SHOWN))
+    return "\n".join(lines)
+
+
+def note_failure(where: str, e: BaseException) -> None:
+    """Something unexpected went wrong while reading a picture or a voice note: say so in the logs (the kind of error only, never the content)."""
+    log.error("could not handle %s", where, exc_info=e)
+    obs.emit({"kind": "error", "where": f"bot.{where}", "type": type(e).__name__})
+
+
+def sorry(chat_id: int, lang_hint: str | None = None) -> Reply:
+    """The polite reply when something unexpected breaks. It must work even if the database is the thing that broke."""
+    try:
+        bind_chat(chat_id)
+        L = chat_lang(lang_hint)
+    except Exception:
+        L = i18n.norm(lang_hint) if lang_hint else None
+    return Reply(tr("Sorry, I couldn't read that. Please send the text.", L or "en"))
+
+
+def _read_reply(head: str, text: str, L: str, sender: str = "", qr: list[str] | None = None, note: str = "") -> str:
+    """'I read this:' and the words, then any caution from the reader."""
+    lines = [head]
+    if sender.strip():
+        lines.append(tr("From: {sender}", L, sender=_defang(sender.strip()[:80])))
+    if text:
+        lines += ["", "“" + _defang(_short(text)) + "”"]
+    lines += [tr("QR code in the picture: {url}", L, url=_defang_all(u[:200])) for u in (qr or [])[:3]]
+    if note:
+        lines += ["", tr(note, L)]
+    return "\n".join(lines)[:4000]
+
+
+def _image_blocked(chat_id: int, size: int | None, L: str, count: bool) -> Reply | None:
+    """The reply that explains why a picture cannot be read right now, or None if it can. `size` may be None (Telegram did not say)."""
+    if not image.available():
+        return Reply(tr("Reading screenshots needs the AI, which is not switched on here. Paste the text instead.", L))
+    if size is not None and size > image.MAX_BYTES:
+        return Reply(tr("That picture is too big (the limit is {mb} MB). Please send a smaller one, or paste the text.", L, mb=_mb(image.MAX_BYTES)))
+    if _rate_limited("image", chat_id, IMAGE_LIMIT, count):
+        return Reply(tr("You've sent a lot of pictures. Please wait a while, or paste the text instead.", L))
+    return None
+
+
+def _voice_blocked(chat_id: int, size: int | None, seconds: float | None, L: str, count: bool) -> Reply | None:
+    if not audio.available():
+        return Reply(tr("Voice notes are not switched on here. Send the text or a screenshot instead.", L))
+    if size is not None and size > audio.MAX_BYTES:
+        return Reply(tr("That voice note is too big (the limit is {mb} MB). Please send a shorter one, or the text.", L, mb=_mb(audio.MAX_BYTES)))
+    if seconds is not None and seconds > audio.MAX_SECONDS:
+        return Reply(tr("That voice note is too long (the limit is {n} seconds). Please send a shorter one, or the text.", L, n=audio.MAX_SECONDS))
+    if _rate_limited("voice", chat_id, VOICE_LIMIT, count):
+        return Reply(tr("You've sent a lot of voice notes. Please wait a while, or send the text instead.", L))
+    return None
+
+
+def image_precheck(chat_id: int, file_size: int | None, lang_hint: str | None = None) -> list[Reply]:
+    """Before downloading a picture from Telegram: [] to go ahead, or the reply that says why not (not switched on, too big, too many)."""
+    bind_chat(chat_id)
+    stop = _image_blocked(chat_id, file_size, chat_lang(lang_hint) or "en", count=False)
+    return [stop] if stop else []
+
+
+def voice_precheck(chat_id: int, file_size: int | None, seconds: float | None, lang_hint: str | None = None) -> list[Reply]:
+    """The same for a voice note, which also has a length limit."""
+    bind_chat(chat_id)
+    stop = _voice_blocked(chat_id, file_size, seconds, chat_lang(lang_hint) or "en", count=False)
+    return [stop] if stop else []
+
+
+def on_image(chat_id: int, data: bytes, lang_hint: str | None = None) -> list[Reply]:
+    """A screenshot (the bytes of the picture): what was read from it, then the normal check. A picture that cannot be read well enough is not
+    checked: the person is asked for a clearer one, or the text. The picture itself is dropped when this returns."""
+    linked = bind_chat(chat_id)
+    L = chat_lang(lang_hint)
+    stop = _image_blocked(chat_id, len(data), L or "en", count=True)
+    if stop:
+        return [stop]
+    try:
+        reading = image.read_image(bytes(data), lang=L or "en")
+        text = reading.text.strip()
+        qr = [u for u in dict.fromkeys(reading.qr_urls) if u and u not in text]  # a link hidden in a QR code is checked like a written one
+        R = L or (i18n.norm(reading.language) if reading.language else "en")  # the language to speak in when no check is made
+        if not text and not qr:
+            return [Reply(tr("I couldn't find any words in that picture. Please send a clearer one, or paste the text.", R))]
+        head = tr("📷 I read this from your screenshot:", R)
+        if not reading.legible:
+            said = _read_reply(head, text, R, reading.sender, qr, reading.note)
+            return [Reply((said + "\n\n" + tr("The picture was hard to read, so please check this matches what you see.", R) + "\n"
+                           + tr("I haven't checked it yet. Please send a clearer picture, or paste the text.", R))[:4000])]
+        result, checked = _checked(linked, "\n".join([t for t in (text, *qr) if t]), L, "screenshot")
+        return [Reply(_read_reply(tr("📷 I read this from your screenshot:", result.lang), text, result.lang, reading.sender, qr, reading.note)), checked]
+    except InputError as e:
+        return [Reply(tr(e.message, L or "en"))]
+    except Exception as e:  # a vision model that is down, a bug: never a stack trace in the chat
+        note_failure("image", e)
+        return [Reply(tr("Sorry, I couldn't read that. Please send the text.", L or "en"))]
+
+
+def on_voice(chat_id: int, data: bytes, mime: str = "", lang_hint: str | None = None) -> list[Reply]:
+    """A voice note (the bytes of the audio and its type, e.g. audio/ogg): what was heard, then the normal check. Dropped when this returns."""
+    linked = bind_chat(chat_id)
+    L = chat_lang(lang_hint)
+    stop = _voice_blocked(chat_id, len(data), None, L or "en", count=True)
+    if stop:
+        return [stop]
+    try:
+        heard = audio.transcribe(bytes(data), mime=mime)
+        text = heard.text.strip()
+        R = L or (i18n.norm(heard.language) if heard.language else "en")
+        if not text:
+            return [Reply(tr("I couldn't hear any words in that voice note. Please try again, or send the text.", R))]
+        result, checked = _checked(linked, text, L, "voice")
+        return [Reply(_read_reply(tr("🎙️ I heard:", result.lang), text, result.lang)), checked]
+    except InputError as e:
+        return [Reply(tr(e.message, L or "en"))]
+    except Exception as e:
+        note_failure("voice", e)
+        return [Reply(tr("Sorry, I couldn't read that. Please send the text.", L or "en"))]

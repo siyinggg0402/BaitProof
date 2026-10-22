@@ -99,6 +99,15 @@ def arbitrate(ledger: Ledger, intent: Intent, f: Findings, model_verdict: Verdic
         d = Decision(Verdict.LIKELY_SCAM, "medium" if d.confidence == "high" else d.confidence, d.reasons + [T("only the AI raised these flags, so 'likely' rather than 'scam'")],
                      model_dependent=True)
 
+    if d.verdict == Verdict.SAFE:
+        # Everyday message types that scams copy all the time (a promotion, a payment alert, a bill, an account notice). The rules finding "it asks for
+        # nothing" is not proof, and a model's "safe" alone is how two real scams (a generic deal, a payment receipt) were once called safe. Needs
+        # something independent that positively confirms it: a verified official link, a long-established site, or a recognised normal message type.
+        imitated = [p for p in dict.fromkeys((intent.purpose, intent.model_purpose)) if p in intents.NEEDS_PROOF]
+        confirmed = any(e.kind != "model" and e.source != "benign-intent" for e in ledger.safe())
+        if imitated and not confirmed:
+            d = Decision(Verdict.UNSURE, "low", [T("it reads like an ordinary {label}, but nothing independent confirms it, so I can't call it safe", label=T(intents.PURPOSES[imitated[0]].label))])
+
     if d.verdict == Verdict.SAFE and not english:
         # Our rules cannot read this language, so nothing independent has checked the message: a model's "safe" stands alone. Measured on
         # machine-translated SMS (Indonesian, Japanese, Korean, Hindi, Arabic) that let 1-2 scams in 40 through, so "safe" is withheld.

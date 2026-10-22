@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import contextvars
+import inspect
 import json
 import queue
 import re
@@ -18,31 +19,54 @@ from core.storage import history
 from web import results
 from web.deps import limit_expensive, request_lang
 from web.pages import page, templates
+from web.routes.inputs import capabilities_now
 
 router = APIRouter()
+
+SOURCES = ("text", "screenshot", "voice")  # how the message reached us
+
+
+def clean_source(value: str | None) -> str:
+    v = (value or "text").strip().lower()
+    if v not in SOURCES:
+        raise HTTPException(422, "That way of adding a message is not supported.")
+    return v
+
+
+def run_check(text: str, lang: str, source: str = "text", on_event=None):
+    """check_message, told where the message came from (the result then says so). Falls back to setting the fields itself on a core that does not take them yet."""
+    params = inspect.signature(check.check_message).parameters
+    extra = {k: v for k, v in (("source", source), ("read_text", text)) if source != "text" and k in params}
+    r = check.check_message(text, store=True, on_event=on_event, log=True, lang=lang, **extra)
+    if source != "text":
+        r.source, r.read_text = source, r.read_text or text
+    return r
 
 
 @router.get("/", response_class=HTMLResponse)
 def index(request: Request):
-    return page(request, "index.html", result=None, text="")
+    return page(request, "index.html", result=None, text="", source="text", caps=capabilities_now())
 
 
 @router.post("/check", response_class=HTMLResponse, dependencies=[Depends(limit_expensive)])
-def do_check(request: Request, message: str = Form(...)):
+def do_check(request: Request, message: str = Form(...), source: str = Form("text")):
+    source = clean_source(source)
     if not message.strip():
         raise HTTPException(400, "Paste a message to check.")
-    result = check.check_message(message, lang=request_lang(request))
+    result = run_check(message, request_lang(request), source)
     history.add(result, "web", message)
-    return page(request, "index.html", result=result, text=message[:4000])
+    return page(request, "index.html", result=result, text=message[:4000], source=source, caps=capabilities_now())
 
 
 class StreamIn(BaseModel):
     message: str
+    source: str = "text"  # text | screenshot | voice
 
 
 @router.post("/api/check/stream", dependencies=[Depends(limit_expensive)])
 async def check_stream(request: Request, body: StreamIn):
     """Live view: Server-Sent Events, one per gate as it runs, then 'done' with the id of the finished check."""
+    source = clean_source(body.source)
     text = body.message.strip()
     if not text:
         raise HTTPException(400, "Paste a message to check.")
@@ -52,7 +76,7 @@ async def check_stream(request: Request, body: StreamIn):
 
     def work() -> None:
         try:
-            r = ctx.run(check.check_message, text, True, lambda step: q.put(("step", step.model_dump())), True, lang)
+            r = ctx.run(run_check, text, lang, source, lambda step: q.put(("step", step.model_dump())))
             ctx.run(results.put, r)
             ctx.run(history.add, r, "web", text)
             q.put(("done", r.check_id))

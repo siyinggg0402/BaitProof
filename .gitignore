@@ -11,3 +11,6 @@ logs/
 data/external/*
 !data/external/README.md
 .ruff_cache/
+
+# Local copy of the public phishing list (re-downloaded daily)
+data/cache/

@@ -45,6 +45,16 @@ class TraceStep(BaseModel):
     ms: int = 0  # time since the previous step
 
 
+class LinkInfo(BaseModel):
+    """What we found out about one link in the message, in the reply language, for the 'Links' panel."""
+    host: str
+    status: str  # official | known_phishing | lookalike | shortener | suspicious | unverified | established
+    label: str = ""  # a short phrase, e.g. "Looks like DHL but isn't"
+    notes: list[str] = Field(default_factory=list)  # plain-language facts ("registered 3 days ago")
+    expanded_to: str = ""  # for a short link: the host it really goes to
+    age_days: int | None = None
+
+
 class CheckResult(BaseModel):
     verdict: Verdict
     headline: str
@@ -59,6 +69,9 @@ class CheckResult(BaseModel):
     check_id: str = ""
     lang: str = "en"  # the language the answer is written in (en | zh | zh-Hant), chosen by the user
     message_lang: str = "en"  # the language the checked message is in
+    links: list[LinkInfo] = Field(default_factory=list)
+    source: str = "text"  # text | screenshot | voice: how the message reached us
+    read_text: str = ""  # for a screenshot or voice note: what we read or heard (the user can see and correct it)
 
 
 class Drill(BaseModel):

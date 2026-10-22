@@ -67,7 +67,9 @@ def add_security_headers(app: FastAPI) -> None:
         resp = await call_next(request)
         if pid := getattr(request.state, "new_profile", None):
             resp.set_cookie("bp", pid, max_age=31536000, httponly=True, samesite="lax", secure=request.url.scheme == "https")
-        resp.headers["Content-Security-Policy"] = "default-src 'self'; style-src 'self'; script-src 'self'; frame-ancestors 'none'"
+        # img-src adds blob: for the preview of a screenshot the visitor just picked (made in their own browser, never sent anywhere)
+        resp.headers["Content-Security-Policy"] = "default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' blob:; frame-ancestors 'none'"
+        resp.headers["Permissions-Policy"] = "microphone=(self), camera=(), geolocation=()"  # only our own pages may ask for the microphone (voice input)
         resp.headers["X-Content-Type-Options"] = "nosniff"
         resp.headers["Referrer-Policy"] = "same-origin"
         if resp.headers.get("content-type", "").startswith("text/html"):

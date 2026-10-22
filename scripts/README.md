@@ -13,6 +13,7 @@ Run everything from the repo root as `python -m scripts.<group>.<name>`. Nothing
 | `scripts.data.fetch [--multilingual]` | Download the third-party evaluation data into `data/external/` (never committed). | free |
 | `scripts.data.seed_demo` | Put the local database in a believable mid-training state for the demo. | free |
 | `scripts.ops.verify_setup [--list]` | Check the Nebius endpoint, the Nemotron model id and (if set) Tavily. Never prints the key. | one tiny call |
+| `scripts.ops.refresh_blocklist [--status]` | Download the public phishing-site list (Phishing.Database, MIT) to `data/cache/`, or show how fresh it is. The app also does this daily. | one 11 MB download |
 | `scripts.ops.logs_report [--hours 24] [--tail 20]` | Health, latency, spend and gate trips from `logs/events.jsonl`. | free |
 
 `scripts/common.py` holds what the evaluations share: the plain-model baseline prompt, verdict normalisation, the results table, and `offline()`,

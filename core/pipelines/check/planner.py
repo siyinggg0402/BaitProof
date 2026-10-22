@@ -10,6 +10,7 @@ from core.ai.prompts import PLANNER_SYSTEM
 from .evidence import Ledger
 from .ingest import Ingested
 from .intent import Intent
+from .knowledge import SHORTENERS
 from .tools import SPECS, Findings, ToolGate
 
 MAX_CALLS_PER_ROUND = 3
@@ -25,9 +26,14 @@ class Question:
 def open_questions(ing: Ingested, it: Intent, f: Findings, gate: ToolGate) -> list[Question]:
     """What would we still like to know? Only questions some available tool (or a re-check) could actually answer."""
     qs: list[Question] = []
-    unofficial = [h for h in f.hosts if h not in f.official_hosts]
+    for url, dest in f.shorts.items():  # a short link says nothing about itself: where it goes comes first
+        if not dest and gate.available("expand_link", url, f.done):
+            qs.append(Question(f"short:{url}", f"Where does the short link {url[:60]} really go?", [("expand_link", url)]))
+    unofficial = [h for h in f.hosts if h not in f.official_hosts and h not in SHORTENERS]  # a shortener's own age and reputation are beside the point
     for h in unofficial:
-        calls = [(t, h) for t in ("domain_age", "dns_check", "reputation") if gate.available(t, h, f.done)]
+        # cert_history is asked alongside domain_age (not after it): the registry often has no answer for a country domain, and a second round just to find
+        # that out would use up the loop's round limit. Its evidence is only used when the registry gave no age.
+        calls = [(t, h) for t in ("domain_age", "dns_check", "cert_history", "reputation") if gate.available(t, h, f.done)]
         if calls:
             qs.append(Question(f"host:{h}", f"Is {h} a trustworthy website?", calls))
     org = it.claimed if it.claimed_kind in ("organisation", "authority") else (ing.entities.brands[0] if ing.entities.brands else "")

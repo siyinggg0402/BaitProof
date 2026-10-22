@@ -10,6 +10,8 @@ EnvironmentFile=/opt/baitproof/.env
 Environment=BAITPROOF_MULTIUSER=1
 Environment=BAITPROOF_DB=/var/lib/baitproof/baitproof.sqlite
 Environment=BAITPROOF_LOG_DIR=/var/lib/baitproof/logs
+# The downloaded phishing list (about 15 MB, refreshed daily) also has to live where the service may write.
+Environment=BAITPROOF_CACHE_DIR=/var/lib/baitproof/cache
 ExecStart=/opt/baitproof/.venv/bin/python -m bot.telegram_bot
 Restart=on-failure
 RestartSec=5

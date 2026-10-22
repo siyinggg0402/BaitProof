@@ -37,9 +37,11 @@ def pipeline_verdict(text: str) -> str:
 
 @contextmanager
 def offline(net: bool = False):
-    """Rules only: blank the model key (dotenv does not override a variable that is already set), and optionally the network tools too."""
-    keep = {k: os.environ.get(k) for k in ("NEBIUS_API_KEY", "BAITPROOF_NET_TOOLS")}
+    """Rules only: blank the model key (dotenv does not override a variable that is already set), and optionally the network tools too. The downloaded
+    phishing list is switched off as well, so a number never depends on which day the list was fetched."""
+    keep = {k: os.environ.get(k) for k in ("NEBIUS_API_KEY", "BAITPROOF_NET_TOOLS", "BAITPROOF_BLOCKLIST")}
     os.environ["NEBIUS_API_KEY"] = ""
+    os.environ["BAITPROOF_BLOCKLIST"] = "0"
     if net:
         os.environ["BAITPROOF_NET_TOOLS"] = "0"
     try:

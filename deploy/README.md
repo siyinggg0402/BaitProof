@@ -32,6 +32,10 @@ sudo -u baitproof nano /opt/baitproof/.env      # never commit this file
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME` | optional, from @BotFather |
 | `TAVILY_API_KEY` | optional (review-style web checks) |
 
+Optional: voice notes (Telegram) and QR codes in screenshots need two extra packages. On the VM: `sudo -u baitproof /opt/baitproof/.venv/bin/pip install -r /opt/baitproof/requirements-extras.txt`. The first voice note downloads a ~145 MB speech model (once; set `BAITPROOF_STT=0` to skip voice entirely). Screenshots work without any extra package, using the vision model on Token Factory.
+
+The public phishing list (about 11 MB, from Phishing.Database) downloads by itself shortly after the app starts and then daily, into `/var/lib/baitproof/cache`. To have it at once: `sudo -u baitproof env BAITPROOF_CACHE_DIR=/var/lib/baitproof/cache /opt/baitproof/.venv/bin/python -m scripts.ops.refresh_blocklist`. Set `BAITPROOF_BLOCKLIST=0` to turn it off.
+
 Then re-run `bash /opt/baitproof/deploy/setup_vm.sh <repo-url> [domain]` (it starts the bot once the token is set), or just `sudo systemctl restart baitproof baitproof-bot`.
 
 ## 5. Check it works

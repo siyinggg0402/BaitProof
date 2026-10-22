@@ -10,6 +10,8 @@ Environment=BAITPROOF_MULTIUSER=1
 Environment=BAITPROOF_DB=/var/lib/baitproof/baitproof.sqlite
 # The service can only write under /var/lib/baitproof (ProtectSystem below), so the event log must live there too: otherwise logging is silently dropped.
 Environment=BAITPROOF_LOG_DIR=/var/lib/baitproof/logs
+# The downloaded phishing list (about 15 MB, refreshed daily) also has to live where the service may write.
+Environment=BAITPROOF_CACHE_DIR=/var/lib/baitproof/cache
 ExecStart=/opt/baitproof/.venv/bin/uvicorn web.main:app --host 127.0.0.1 --port 8000 --proxy-headers --forwarded-allow-ips=127.0.0.1
 Restart=on-failure
 # hardening

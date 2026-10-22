@@ -1,0 +1,45 @@
+"""Chinese (Simplified) text for screenshots, voice notes and links: English text -> Simplified Chinese. Merged into core.lang.i18n.ZH."""
+
+INPUTS_ZH: dict[str, str] = {
+    "a second reviewer was worried": "第二位审阅者有顾虑",
+    # ---- why a screenshot could not be read (InputError.message)
+    "Reading screenshots needs the AI, which is not switched on here. Paste the text instead.": "读取截图需要用到AI，这里没有开启。请直接粘贴文字。",
+    "The screenshot reader is not answering right now. Try again in a moment, or paste the text.": "截图读取器暂时没有响应。请稍后再试，或者直接粘贴文字。",
+    "That image file is too big. Try a smaller screenshot.": "这张图片太大了。请换一张小一点的截图。",
+    "That file is not a picture I can read. Send a PNG, JPG, WebP or GIF screenshot.": "这个文件不是我能读取的图片。请发送 PNG、JPG、WebP 或 GIF 截图。",
+    "I couldn't open that image. Try taking the screenshot again.": "我打不开这张图片。请重新截一次图。",
+    "I couldn't find any message text in that image. Try a clearer screenshot, or paste the text.": "我在这张图片里没有找到消息文字。请换一张更清晰的截图，或者直接粘贴文字。",
+    # ---- cautions that come with a reading (ImageReading.note)
+    "There is a QR code in this image. Do not scan QR codes from a message you did not expect.": "这张图片里有二维码。不要扫描来路不明的消息里的二维码。",
+    "A link in this image was hard to read. Check it letter by letter against your screenshot before you trust it.": "图片里有个链接很难看清。在相信它之前，请对照你的截图逐个字符核对。",
+    "Parts of this image were hard to read, so the text below may have mistakes. Compare it with your screenshot.": "图片的部分内容很难看清，下面的文字可能有错。请和你的截图对照一下。",
+    "Part of the message looks cut off, so the text below may be incomplete.": "消息好像被截断了，下面的文字可能不完整。",
+    "This screenshot is very long, so some of it may have been missed. Compare the text below with your screenshot.": "这张截图很长，可能有些内容没有读到。请把下面的文字和你的截图对照一下。",
+    # ---- voice notes (InputError.message)
+    "Voice notes are not switched on here. Send the text or a screenshot instead.": "这里没有开启语音消息。请发送文字或截图。",
+    "That voice note is too big. Send a shorter one.": "这段语音太大了。请发一段短一点的。",
+    "That voice note is too long. Send one under a minute.": "这段语音太长了。请发一段一分钟以内的。",
+    "That is not a voice note I can play. Send an audio recording.": "这不是我能播放的语音。请发送一段录音。",
+    "I couldn't play that voice note. Try recording it again.": "我播放不了这段语音。请重新录一次。",
+    "I couldn't hear any words in that voice note. Try again, a bit closer to the microphone.": "我没有在这段语音里听到话语。请再试一次，离麦克风近一点。",
+    "The voice reader could not start. Send the text or a screenshot instead.": "语音识别没能启动。请发送文字或截图。",
+    # ---- what we found out about a link (shown in the Links panel and in the evidence)
+    "This short link really goes to {dest}": "这个短链接实际指向 {dest}",
+    "The real website of {brand}": "{brand} 的官方网站",
+    "Looks like {official} but isn't": "看起来像 {official}，但不是",
+    "A short link that goes to {dest}": "指向 {dest} 的短链接",
+    "A short link: it hides where it really goes": "短链接：隐藏了它真正指向的地方",
+    "Looks suspicious": "看起来可疑",
+    "A long-established website": "存在已久的网站",
+    "Not verified": "无法核实",
+    "This address {why}": "这个网址{why}",
+    "This is where the short link really goes": "这是短链接真正指向的地方",
+    "Registered {n} days ago": "{n} 天前注册",
+    "Registered about {n} years ago": "约 {n} 年前注册",
+    "This website address doesn't exist (any more)": "这个网址不存在（或已失效）",
+    "It points to an internal address, which a real website never does": "它指向内部地址，正规网站不会这样",
+    "Known phishing website": "已知的钓鱼网站",
+    "It is on a public list of known phishing websites": "它在公开的钓鱼网站名单上",
+    "First security certificate issued {n} days ago": "第一张安全证书是 {n} 天前签发的",
+    "Security certificates on record for about {n} years": "安全证书记录已有约 {n} 年",
+}

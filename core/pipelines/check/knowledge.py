@@ -84,5 +84,8 @@ AMBIGUOUS_BRANDS = {"apple", "uber", "steam", "booking", "ups", "ato", "zoom", "
 FREE_MAIL = {"gmail.com", "googlemail.com", "yahoo.com", "yahoo.co.uk", "ymail.com", "outlook.com", "hotmail.com", "hotmail.co.uk", "live.com", "msn.com", "aol.com",
              "icloud.com", "proton.me", "protonmail.com", "gmx.com", "mail.com", "yandex.com", "zoho.com", "qq.com", "163.com", "126.com", "sina.com", "rediffmail.com"}
 BAD_TLDS = (".xyz", ".top", ".click", ".icu", ".info", ".online", ".site", ".shop", ".live", ".vip", ".cc", ".ink", ".work", ".buzz")
-SHORTENERS = {"bit.ly", "tinyurl.com", "t.co", "goo.gl", "is.gd", "cutt.ly", "rb.gy"}
+# Link shorteners: the address says nothing about where the link goes. A short link is looked into (expand_link) by reading where it redirects to.
+SHORTENERS = {"bit.ly", "tinyurl.com", "t.co", "goo.gl", "is.gd", "cutt.ly", "rb.gy", "ow.ly", "shorturl.at", "t.ly", "s.id", "lnkd.in", "buff.ly", "reurl.cc", "tiny.cc",
+              "rebrand.ly", "bl.ink", "v.gd", "tiny.one", "shorturl.asia", "clck.ru", "u.nu", "x.co", "ift.tt", "dlvr.it", "adf.ly", "bit.do", "t2m.io", "short.io",
+              "snip.ly", "ouo.io", "url.cn", "t.cn", "dwz.cn", "suo.im", "ppt.cc", "lihi.cc", "pse.is", "lihi1.com", "lnk.to", "qrco.de", "l.ead.me", "kutt.it", "trib.al", "amzn.to"}
 LEET = str.maketrans({"0": "o", "3": "e", "4": "a", "5": "s", "7": "t", "@": "a", "$": "s"})

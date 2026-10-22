@@ -10,15 +10,19 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 import core  # noqa: F401  (loads .env)
 from core.ai import llm
+from core.inputs import audio
+from core.pipelines.check import blocklist
 from web import ui
 from web.deps import add_security_headers, bind_profile, request_lang
 from web.pages import BASE, page, templates
-from web.routes import admin, check, game, language, practice, records
+from web.routes import admin, check, game, inputs, language, practice, records
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     llm.warmup()  # avoid the model's cold start landing on the first visitor
+    audio.warmup()  # the same for the speech model, when server speech-to-text is installed (a no-op otherwise)
+    blocklist.start_background()  # keeps the local copy of the public phishing list fresh (a no-op when the network tools are off)
     yield
 
 
@@ -35,7 +39,7 @@ async def translated_errors(request: Request, exc: StarletteHTTPException):
     return await http_exception_handler(request, exc)
 
 
-for router in (language.router, check.router, records.router, practice.router):
+for router in (language.router, check.router, inputs.router, records.router, practice.router):
     app.include_router(router)
 app.include_router(admin.mount(templates))
 app.include_router(game.mount(page))

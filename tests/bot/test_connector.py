@@ -196,6 +196,16 @@ def test_render_builds_a_real_inline_keyboard_and_switches_link_previews_off():
     assert "link_preview_options" not in render(Reply("see https://example.com", preview=True))
 
 
+def test_the_bot_handles_updates_concurrently(monkeypatch):
+    from telegram.ext import Application
+
+    started = []
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "123456:dummy-token-for-a-test")
+    monkeypatch.setattr(Application, "run_polling", lambda self, *a, **k: started.append(self))
+    telegram_bot.main()
+    assert started[0].update_processor.max_concurrent_updates == telegram_bot.MAX_CONCURRENT_UPDATES > 1
+
+
 def test_main_registers_the_new_commands_and_the_button_handler(monkeypatch):
     pytest.importorskip("telegram")
     from telegram.ext import Application, CallbackQueryHandler, CommandHandler, MessageHandler
@@ -207,4 +217,4 @@ def test_main_registers_the_new_commands_and_the_button_handler(monkeypatch):
     handlers_ = [h for group in started[0].handlers.values() for h in group]
     commands = {c for h in handlers_ if isinstance(h, CommandHandler) for c in h.commands}
     assert commands >= {"start", "help", "score", "link", "unlink", "history", "lang", "quiz", "play", "challenge"}
-    assert sum(isinstance(h, CallbackQueryHandler) for h in handlers_) == 1 and sum(isinstance(h, MessageHandler) for h in handlers_) == 1
+    assert sum(isinstance(h, CallbackQueryHandler) for h in handlers_) == 1 and sum(isinstance(h, MessageHandler) for h in handlers_) == 3  # text, pictures, voice

@@ -25,6 +25,7 @@ def net(monkeypatch):
         calls.append(("dns_check", h))
         return {"host": h, "status": AGE["dns"]}
     AGE.update(days=5, dns="nxdomain")
+    monkeypatch.setitem(tools.SPECS, "cert_history", tools.Spec("cert_history", "host", lambda h: {"host": h, "domain": h, "certs": 0, "first_days": None, "many": False}, "certs", net=True))
     monkeypatch.setitem(tools.SPECS, "domain_age", tools.Spec("domain_age", "host", age, "age", net=True))
     monkeypatch.setitem(tools.SPECS, "dns_check", tools.Spec("dns_check", "host", dns, "dns", net=True))
     return calls

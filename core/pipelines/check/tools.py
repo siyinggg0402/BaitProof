@@ -4,26 +4,32 @@ Every call, whoever proposed it (the deterministic planner or the model), passes
   * the tool is in the registry and the argument really came from the message (never model-invented);
   * network tools only run when enabled, keyed where needed, inside a budget, and with a timeout;
   * we never contact the scammer's own server (no fetching their links: that would expose us and can be tracked).
-    Only public registries / DNS / Tavily are asked *about* a domain; web text comes back as untrusted notes.
+    Only public registries / DNS / certificate logs / Tavily are asked *about* a domain; web text comes back as untrusted notes.
+    The phishing blocklist is a local file: asking it sends nothing anywhere.
+    The one tool that touches a link (expand_link) talks only to a known link SHORTENER (bit.ly and the like), reads where it redirects to, and
+    stops there: the destination it names is never contacted.
 Results land in `Findings`, which analysis turns into ledger evidence."""
 from __future__ import annotations
 
 import concurrent.futures as cf
+import http.client
 import ipaddress
 import json
 import os
 import re
 import socket
+import ssl
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Callable
-from urllib.parse import quote, urlparse
+from urllib.parse import quote, urljoin, urlparse
 from urllib.request import Request, urlopen
 
 from core import obs
 from core.ai import verify
 
+from . import blocklist
 from .ingest import Ingested
 from .knowledge import AMBIGUOUS_BRANDS, BAD_TLDS, BRANDS, LEET, OFFICIAL_ALT, SHORTENERS
 from .trace import Trace
@@ -52,14 +58,23 @@ def registered_domain(host: str) -> str:
     return ".".join(labels[-2:])
 
 
+def _host_of_url(url: str) -> str:
+    u = url.strip()
+    return (urlparse(u if "//" in u else "//" + u).hostname or "").lower()
+
+
 def net_enabled() -> bool:
     return os.getenv("BAITPROOF_NET_TOOLS", "1") == "1"
 
 
-def _http_json(url: str, timeout: float = 5.0, max_bytes: int = 300_000) -> dict:
+def _http_bytes(url: str, timeout: float = 5.0, max_bytes: int = 300_000) -> bytes:
     req = Request(url, headers={"User-Agent": "Baitproof/1.0 (scam-defense; +https://github.com)", "Accept": "application/rdap+json, application/json"})
     with urlopen(req, timeout=timeout) as r:  # noqa: S310 (fixed https registry host; argument is a validated hostname)
-        return json.loads(r.read(max_bytes))
+        return r.read(max_bytes)
+
+
+def _http_json(url: str, timeout: float = 5.0, max_bytes: int = 300_000) -> dict:
+    return json.loads(_http_bytes(url, timeout, max_bytes))
 
 
 # ---------------------------------------------------------------- tools (each returns a small dict)
@@ -95,8 +110,34 @@ def payment_rail(rail: str) -> dict:
     return {"rail": rail, "irreversible": rail in IRREVERSIBLE}
 
 
-def phone_check(number: str) -> dict:
-    """Local only: the number is never sent anywhere. Flags area codes tied to 'one-ring' and premium-rate scams."""
+try:
+    import phonenumbers
+    from phonenumbers import PhoneNumberType as PNT
+except ImportError:  # the offline phone rules are an upgrade, not a need: without the package the older prefix rules still run
+    phonenumbers = None
+NATIONAL_REGIONS = ("GB", "SG", "MY", "AU", "US")  # how a number written without a country code may be read (the places our users are, and the US)
+
+
+def _readings(number: str) -> list[tuple[int, str, int]]:
+    """Every way `number` reads as a VALID number: [(country code, national digits, type)]. A number with a '+' has one reading; one without is tried
+    against the regions we serve, and a country-code-first form ('447012...') is tried with the '+' put back."""
+    plus = number.startswith("+")
+    digits = number.lstrip("+")
+    tries = [(number, None)] if plus else [(digits, r) for r in NATIONAL_REGIONS]
+    if not plus and not digits.startswith("0"):
+        tries.append(("+" + digits, None))
+    out: list[tuple[int, str, int]] = []
+    for raw, region in tries:
+        try:
+            n = phonenumbers.parse(raw, region)
+        except phonenumbers.NumberParseException:
+            continue
+        if phonenumbers.is_valid_number(n):
+            out.append((n.country_code, str(n.national_number), phonenumbers.number_type(n)))
+    return out
+
+
+def _phone_check_prefix(number: str) -> dict:
     d = number.lstrip("+")
     npa = d[1:4] if d.startswith("1") and len(d) == 11 else (d[:3] if len(d) == 10 else "")
     kind = "unknown"
@@ -105,6 +146,31 @@ def phone_check(number: str) -> dict:
     elif d.startswith(("1900", "190", "449", "09", "0870", "0871", "0872", "0873")) or npa == "900":
         kind = "premium"
     elif npa in TOLLFREE:
+        kind = "tollfree"
+    return {"number": number, "kind": kind}
+
+
+def phone_check(number: str) -> dict:
+    """Local only: the number is never sent anywhere. With the `phonenumbers` package (offline rules for every country) a valid number is classified:
+    'caribbean' (area codes tied to 'one-ring' scams), 'premium' (a premium-rate number that can charge heavily), 'personal' (UK 070 "personal numbers",
+    which scammers use to look like a mobile), 'tollfree', or 'unknown'. A number written without a country code that could be read two ways is only
+    called premium or personal if every valid reading says so. The older prefix rules still run as well and only ever ADD a finding: scam messages are
+    sloppy (a 12-digit '0871...' is not a valid number, but it is still an 0871 number), and measured on 1,019 real scam texts, dropping them lost 13 catches."""
+    old = _phone_check_prefix(number)
+    if phonenumbers is None:
+        return old
+    reads = _readings(number)
+    types = {t for _, _, t in reads}
+    kind = "unknown"
+    if any(cc == 1 and nat[:3] in CARIBBEAN for cc, nat, _ in reads):
+        kind = "caribbean"
+    elif types == {PNT.PREMIUM_RATE}:
+        kind = "premium"
+    elif types == {PNT.PERSONAL_NUMBER}:
+        kind = "personal"
+    elif old["kind"] in ("caribbean", "premium"):
+        kind = old["kind"]
+    elif PNT.TOLL_FREE in types or old["kind"] == "tollfree":
         kind = "tollfree"
     return {"number": number, "kind": kind}
 
@@ -209,10 +275,168 @@ def reputation(host: str) -> dict:
     return {"host": host, "notes": verify.enrich([host], limit=1)}
 
 
+def blocklist_check(host: str) -> dict:
+    """Is this address on a public list of known phishing sites? Answered from a local copy of the list (see blocklist.py): the address is not sent anywhere.
+    The exact name is looked up, and so is its registered domain (so a throwaway subdomain of a listed site is caught), except on sites where anyone can host
+    a page, where only the exact name counts. A link shortener (the real list carries bit.ly and a few others, because phishers use them) and an open
+    hosting platform are never judged by the list: the shortener's destination is looked up once it is known. status: listed | clean | exempt | unavailable
+    (no list on this machine yet)."""
+    if not blocklist.available():
+        return {"host": host, "status": "unavailable", "listed": ""}
+    if host in SHORTENERS or blocklist.exempt(host):
+        return {"host": host, "status": "exempt", "listed": ""}
+    names = [host]
+    reg = registered_domain(host)
+    if reg != host and reg not in blocklist.SHARED_HOSTING:
+        names.append(reg)
+    hit = blocklist.lookup(names)
+    return {"host": host, "status": "listed" if hit else "clean", "listed": hit}
+
+
+CERT_TIMEOUT = 8.0
+CERT_MAX_BYTES = 500_000
+CERT_CACHE_SECONDS = 24 * 3600  # a domain's first certificate does not change
+CERT_CACHE_MAX = 512
+CERT_PAUSE_SECONDS = 300  # crt.sh is a free service that often answers "too many requests" or times out: after a failure, leave it alone for a while
+_cert_cache: dict[str, tuple[float, dict]] = {}
+_cert_pause = {"until": 0.0}
+
+
+def cert_history(host: str) -> dict:
+    """When did a security (HTTPS) certificate first appear for this website's registered domain? Certificate Transparency logs are public by design and
+    searchable through crt.sh (free, no key): they are the record of every certificate issued, so they show when a site started being run, even where the
+    domain registry (RDAP) says nothing. Only the domain name is sent, and only to crt.sh. A domain with very many certificates (an established site)
+    overflows the size cap: that is reported as `many`, and `first_days` is then unknown rather than guessed."""
+    dom = registered_domain(host)
+    now = time.time()
+    if (hit := _cert_cache.get(dom)) and now - hit[0] < CERT_CACHE_SECONDS:
+        return {**hit[1], "host": host}
+    if now < _cert_pause["until"]:
+        raise RuntimeError("the certificate log is being left alone for a few minutes after an error")
+    try:
+        raw = _http_bytes("https://crt.sh/?output=json&q=" + quote(dom), timeout=CERT_TIMEOUT, max_bytes=CERT_MAX_BYTES)
+    except OSError:  # a timeout, an HTTP error such as 429 Too Many Requests, a refused connection
+        _cert_pause["until"] = now + CERT_PAUSE_SECONDS
+        raise
+    text = raw.decode("utf-8", "replace")
+    dates = re.findall(r'"not_before"\s*:\s*"(\d{4}-\d{2}-\d{2})', text)
+    if not dates and text.strip() not in ("", "[]"):
+        raise ValueError("unexpected answer from the certificate log")
+    many = len(raw) >= CERT_MAX_BYTES
+    first_days = None
+    if dates and not many:  # a cut-off answer may hide the earliest certificate, so no age is claimed from it
+        first = datetime.fromisoformat(min(dates)).replace(tzinfo=timezone.utc)
+        first_days = max(0, (datetime.now(timezone.utc) - first).days)
+    out = {"host": host, "domain": dom, "certs": len(dates), "first_days": first_days, "many": many}
+    if len(_cert_cache) >= CERT_CACHE_MAX:
+        _cert_cache.pop(next(iter(_cert_cache)))
+    _cert_cache[dom] = (now, out)
+    return out
+
+
+# -- expand_link: where does a short link really go?
+MAX_HOPS = 3  # at most this many requests, and only to shorteners
+HOP_TIMEOUT = 3.0  # seconds for one request (connect + answer)
+EXPAND_DEADLINE = 7.0  # seconds for the whole tool
+REDIRECTS = (301, 302, 303, 307, 308)
+_BAD_ADDR_NETS = [ipaddress.ip_network(n) for n in ("0.0.0.0/8", "100.64.0.0/10", "198.18.0.0/15", "192.0.0.0/24", "240.0.0.0/4", "fc00::/7", "fe80::/10", "64:ff9b::/96")]
+
+
+def public_address(ip: str) -> bool:
+    """True only for an address on the open internet. Private, loopback, link-local, carrier-grade NAT, proxy 'fake-ip', multicast, reserved and
+    unspecified addresses (and IPv6 forms that wrap one of them) are all refused: a short link must never be a way to make this server knock on a door
+    inside its own network (SSRF)."""
+    try:
+        a = ipaddress.ip_address(ip.split("%")[0])
+    except ValueError:
+        return False
+    if isinstance(a, ipaddress.IPv6Address) and a.ipv4_mapped:
+        a = a.ipv4_mapped
+    return bool(a.is_global and not (a.is_private or a.is_loopback or a.is_link_local or a.is_multicast or a.is_reserved or a.is_unspecified) and not any(a in n for n in _BAD_ADDR_NETS))
+
+
+def _resolve_public(host: str) -> str:
+    """The address to connect to for `host`, refusing the name unless EVERY address it resolves to is public. We then connect to that address
+    itself, so the name cannot resolve to something else a moment later (DNS rebinding)."""
+    ips = [i[4][0] for i in socket.getaddrinfo(host, 443, type=socket.SOCK_STREAM)]
+    if not ips or not all(public_address(ip) for ip in ips):
+        raise ValueError("refused: the name does not resolve to a public address")
+    return ips[0]
+
+
+class _PinnedHTTPS(http.client.HTTPSConnection):
+    """HTTPS to a chosen IP address, with the certificate still checked against the host name."""
+
+    def __init__(self, host: str, ip: str, timeout: float) -> None:
+        super().__init__(host, timeout=timeout, context=ssl.create_default_context())
+        self._ip = ip
+
+    def connect(self) -> None:
+        sock = socket.create_connection((self._ip, self.port), self.timeout)
+        self.sock = self._context.wrap_socket(sock, server_hostname=self.host)
+
+
+def _head(host: str, ip: str, target: str, timeout: float) -> tuple[int, str]:
+    """One HEAD request, redirects NOT followed. Returns (status, Location header). Nothing of the body is read."""
+    conn = _PinnedHTTPS(host, ip, timeout)
+    try:
+        conn.request("HEAD", target, headers={"User-Agent": "Baitproof/1.0 (scam-defense; reads where a short link goes)", "Accept": "*/*", "Connection": "close"})
+        r = conn.getresponse()
+        return r.status, (r.getheader("Location") or "")[:2048]
+    finally:
+        conn.close()
+
+
+def _short_url(url: str) -> tuple[str, str] | None:
+    """(host, request target) of a short link as we will ask for it (always https), or None when it is not a shortener link."""
+    u = url.strip()
+    parts = urlparse(u if "//" in u else "//" + u)
+    host = (parts.hostname or "").lower()
+    if parts.scheme not in ("", "http", "https") or host not in SHORTENERS or not is_public_hostname(host):
+        return None
+    target = (parts.path or "/") + (("?" + parts.query) if parts.query else "")
+    return host, target[:512]
+
+
+def expand_link(url: str) -> dict:
+    """Where does a SHORT link go? Ask the shortener (a HEAD request over https, redirects not followed) and read only the Location header; follow at most
+    three hops, and only while the next stop is another shortener. The destination is only NAMED, never contacted. Returns
+    {"url", "host", "dest": host it goes to ('' if we could not tell), "hops", "status": expanded | no_redirect | too_many_hops | refused}."""
+    t_end = time.monotonic() + EXPAND_DEADLINE
+    first = _short_url(url)
+    if first is None:
+        return {"url": url, "host": "", "dest": "", "hops": 0, "status": "refused"}
+    host, target = first
+    hops = 0
+    while hops < MAX_HOPS:
+        left = t_end - time.monotonic()
+        if left <= 0.2:
+            raise TimeoutError("expand_link deadline")
+        ip = _resolve_public(host)
+        hops += 1
+        status, loc = _head(host, ip, target, min(HOP_TIMEOUT, left))
+        if status not in REDIRECTS or not loc:
+            return {"url": url, "host": first[0], "dest": "", "hops": hops, "status": "no_redirect"}
+        nxt = urlparse(urljoin(f"https://{host}{target}", loc.strip()))
+        if nxt.scheme not in ("http", "https") or not nxt.hostname:
+            return {"url": url, "host": first[0], "dest": "", "hops": hops, "status": "no_redirect"}
+        try:
+            nhost = nxt.hostname.lower().rstrip(".").encode("idna").decode("ascii")  # a non-Latin name becomes its xn-- form, which domain_check flags
+        except UnicodeError:
+            return {"url": url, "host": first[0], "dest": "", "hops": hops, "status": "no_redirect"}
+        if not re.fullmatch(r"[a-z0-9._-]{1,253}", nhost):  # the scammer wrote this header: only something shaped like a host name goes any further (it ends up in the findings)
+            return {"url": url, "host": first[0], "dest": "", "hops": hops, "status": "no_redirect"}
+        if nhost in SHORTENERS and is_public_hostname(nhost):
+            host, target = nhost, ((nxt.path or "/") + (("?" + nxt.query) if nxt.query else ""))[:512]
+            continue
+        return {"url": url, "host": first[0], "dest": nhost, "hops": hops, "status": "expanded"}  # the host only: its path may carry the scammer's tracking id
+    return {"url": url, "host": first[0], "dest": "", "hops": hops, "status": "too_many_hops"}
+
+
 @dataclass(frozen=True)
 class Spec:
     name: str
-    arg: str  # what kind of argument: host | rail | phone | org
+    arg: str  # what kind of argument: host | rail | phone | org | url
     fn: Callable[[str], dict]
     desc: str  # shown to the model planner
     net: bool = False
@@ -229,6 +453,9 @@ SPECS: dict[str, Spec] = {s.name: s for s in [
     Spec("official_site_wikidata", "org", official_site_wikidata, "Ask Wikidata (free, public) for the real company's official website, to compare with the link in the message.", net=True, timeout=8),
     Spec("brand_lookup", "org", brand_lookup, "Search the web for the real website of the company the message claims to be.", net=True, timeout=10, requires="TAVILY_API_KEY"),
     Spec("reputation", "host", reputation, "Search the web for scam reports about this website.", net=True, timeout=10, requires="TAVILY_API_KEY"),
+    Spec("blocklist_check", "host", blocklist_check, "Is this website address on a public list of known phishing sites (checked on this machine; nothing is sent)."),
+    Spec("cert_history", "host", cert_history, "When the website first got a security certificate, from public Certificate Transparency logs. Use when the registry could not say how old the site is.", net=True, timeout=10),
+    Spec("expand_link", "url", expand_link, "Find out where a SHORT link (bit.ly and the like) really goes, by asking the shortener where it redirects. The destination is never visited.", net=True, timeout=9),
 ]}
 
 
@@ -243,21 +470,47 @@ class Findings:
     phones: dict[str, str] = field(default_factory=dict)  # number -> kind
     ages: dict[str, int | None] = field(default_factory=dict)  # host -> registration age in days
     dns: dict[str, str] = field(default_factory=dict)  # host -> ok | nxdomain | private
+    listed: dict[str, str] = field(default_factory=dict)  # host -> the entry on the public phishing list that matched it
+    certs: dict[str, int | None] = field(default_factory=dict)  # host -> days since its domain's first logged security certificate (None = could not tell)
     brand_sites: dict[str, list[str]] = field(default_factory=dict)  # org -> hostnames the web says are official
     brand_src: dict[str, str] = field(default_factory=dict)  # org -> 'wikidata' | 'web search'
     web_notes: list[str] = field(default_factory=list)  # UNTRUSTED: shown as neutral notes, never weighed
+    shorts: dict[str, str] = field(default_factory=dict)  # short link as written -> the host it really goes to ('' while unknown)
+    via: dict[str, str] = field(default_factory=dict)  # destination host -> the short link (as written in the message) that leads there
     done: set = field(default_factory=set)  # (tool, arg) already answered
 
     @property
     def suspicious_hosts(self) -> list[str]:
-        return list(dict.fromkeys([*self.hard_hosts, *self.soft_hosts]))
+        return list(dict.fromkeys([*self.hard_hosts, *self.soft_hosts, *self.listed]))
+
+    def resolved_shorteners(self) -> set[str]:
+        """Short-link hosts whose every link in the message we have followed to its destination: those hosts stand aside for where they lead."""
+        out = set()
+        for h in self.hosts:
+            urls = [u for u in self.shorts if _host_of_url(u) == h]
+            if h in SHORTENERS and urls and all(self.shorts[u] for u in urls):
+                out.add(h)
+        return out
+
+    def _judged_hosts(self) -> list[str]:
+        gone = self.resolved_shorteners()
+        return [h for h in self.hosts if h not in gone]
+
+    def age_of(self, host: str) -> int | None:
+        """How old the site is, in days. The domain registry is the authority when it answered; otherwise the first logged certificate, which is a floor
+        (the domain is at least that old) and nothing more, because a domain can exist long before it first gets a certificate."""
+        a = self.ages.get(host)
+        return a if a is not None else self.certs.get(host)
 
     def all_links_official(self) -> bool:
-        return bool(self.hosts) and all(h in self.official_hosts for h in self.hosts)
+        hs = self._judged_hosts()
+        return bool(hs) and all(h in self.official_hosts for h in hs)
 
     def all_links_established(self) -> bool:
-        """Every link is either a known real site, or an old, resolving domain (2+ years): a link we have positive reason to trust."""
-        return bool(self.hosts) and all(h in self.official_hosts or ((self.ages.get(h) or 0) >= 730 and self.dns.get(h) == "ok") for h in self.hosts)
+        """Every link is either a known real site, or an old, resolving domain (2+ years): a link we have positive reason to trust.
+        A short link's own age says nothing about where it goes, so it only counts once it has been followed to its destination."""
+        hs = self._judged_hosts()
+        return bool(hs) and all(h in self.official_hosts or (h not in SHORTENERS and (self.age_of(h) or 0) >= 730 and self.dns.get(h) == "ok" and h not in self.listed) for h in hs)
 
     def apply(self, tool: str, arg: str, d: dict) -> None:
         self.done.add((tool, arg))
@@ -276,20 +529,43 @@ class Findings:
             self.ages[arg] = d["age_days"]
         elif tool == "dns_check":
             self.dns[arg] = d["status"]
+        elif tool == "blocklist_check":
+            if d.get("listed"):
+                self.listed[arg] = d["listed"]
+        elif tool == "cert_history":
+            self.certs[arg] = d.get("first_days")
         elif tool in ("brand_lookup", "official_site_wikidata"):
             if d["hosts"] or arg not in self.brand_sites:  # never let an empty answer overwrite a real one
                 self.brand_sites[arg] = d["hosts"]
                 self.brand_src[arg] = "wikidata" if tool == "official_site_wikidata" else "web search"
         elif tool == "reputation":
             self.web_notes += d["notes"]
+        elif tool == "expand_link":
+            dest = d.get("dest", "")
+            self.shorts.setdefault(arg, "")
+            if dest:
+                self.shorts[arg] = dest
+                self.via.setdefault(dest, arg)
+                if dest not in self.hosts:
+                    self.hosts.append(dest)
+                short = _host_of_url(arg)
+                if short in self.resolved_shorteners() and short in self.soft_hosts:  # it no longer hides anything
+                    left = [w for w in self.soft_hosts[short] if "shortener" not in w]
+                    if left:
+                        self.soft_hosts[short] = left
+                    else:
+                        del self.soft_hosts[short]
 
     def summary(self) -> str:
-        parts = [f"{h}: {'; '.join(v)}" for h, v in {**self.soft_hosts, **self.hard_hosts}.items()]
+        parts = [f"the short link {_host_of_url(u)} really goes to {d}" for u, d in self.shorts.items() if d]
+        parts += [f"{h}: {'; '.join(v)}" for h, v in {**self.soft_hosts, **self.hard_hosts}.items()]
         parts += [f"{h} is the real website of {b}" for h, b in self.official_hosts.items()]
         parts += [f"payment method '{r}' cannot be reversed" for r in self.irreversible_rails]
         parts += [f"{h} was registered {a} days ago" for h, a in self.ages.items() if a is not None]
         parts += [f"{h} does not resolve" for h, s in self.dns.items() if s == "nxdomain"]
-        parts += [f"phone {p} looks like a {k} number" for p, k in self.phones.items() if k in ("caribbean", "premium")]
+        parts += [f"{h} is on a public list of known phishing websites" for h in self.listed]
+        parts += [f"{h} first got a security certificate {c} days ago" for h, c in self.certs.items() if c is not None and self.ages.get(h) is None]
+        parts += [f"phone {p} looks like a {k} number" for p, k in self.phones.items() if k in ("caribbean", "premium", "personal")]
         parts += [f"{self.brand_src.get(o, 'the web')} lists {', '.join(h[:3])} as {o}'s official site" for o, h in self.brand_sites.items() if h]
         return "\n".join(parts) or "no deterministic findings"
 
@@ -302,12 +578,15 @@ class ToolGate:
     def __init__(self, ing: Ingested, claimed_org: str, trace: Trace, budget: int = 6) -> None:
         self.ing, self.org, self.trace, self.budget, self.used = ing, (claimed_org or "").lower(), trace, budget, 0
         self.blocked: list[str] = []
+        self.derived: set[str] = set()  # hosts learned from a short link in the message (via expand_link): not written in the message, but it leads there
 
     # -- validation ----------------------------------------------------------------------------------------------
     def _arg_ok(self, spec: Spec, arg: str) -> bool:
         e = self.ing.entities
         if spec.arg == "host":
-            return arg in e.hosts and (not spec.net or is_public_hostname(arg))
+            return (arg in e.hosts or arg in self.derived) and (not spec.net or is_public_hostname(arg))
+        if spec.arg == "url":
+            return arg in e.urls and _short_url(arg) is not None  # a link written in the message, and one on the shortener list
         if spec.arg == "rail":
             return arg in e.rails
         if spec.arg == "phone":
@@ -369,23 +648,36 @@ class ToolGate:
         try:
             data = get()
             f.apply(spec.name, arg, data)
+            if spec.name == "expand_link" and data.get("dest"):
+                self._learn(data["dest"], f)
             obs.record_tool(tool=spec.name, ok=True, ms=int((time.perf_counter() - t0) * 1000))
         except Exception as e:  # timeout, network, parse: a failed tool is a missing fact, never a crash
             f.done.add((spec.name, arg))
             obs.record_tool(tool=spec.name, ok=False, ms=int((time.perf_counter() - t0) * 1000), error=type(e).__name__)
             self.trace.add("tools", "skip", f"{spec.name} unavailable ({type(e).__name__}); continuing without it")
 
+    def _learn(self, host: str, f: Findings) -> None:
+        """A short link led somewhere: that host may now be asked about like any link in the message, and the free local check runs at once."""
+        self.derived.add(host)
+        if ("domain_check", host) not in f.done:
+            f.apply("domain_check", host, domain_check(host))
+        if ("blocklist_check", host) not in f.done:
+            f.apply("blocklist_check", host, blocklist_check(host))
+
 
 def initial_calls(ing: Ingested) -> list[tuple[str, str]]:
-    """Round 0: everything local and free. Network lookups wait until the loop decides they're worth it."""
+    """Round 0: the local, free checks, plus finding out where a SHORT link goes. That one is a network call, but it is asked first because the answer decides
+    what the link IS (a short link says nothing about itself); the gate still holds it to the allow-list, the budget, the timeout and the offline switch."""
     e = ing.entities
-    return ([("domain_check", h) for h in e.hosts[:3]] + [("payment_rail", r) for r in e.rails] + [("phone_check", p) for p in e.phones[:2]])
+    shorts = [("expand_link", u) for u in e.urls if _host_of_url(u) in SHORTENERS][:2]
+    return ([("domain_check", h) for h in e.hosts[:3]] + [("blocklist_check", h) for h in e.hosts[:3]] + [("payment_rail", r) for r in e.rails] + [("phone_check", p) for p in e.phones[:2]] + shorts)
 
 
 def run_tools(ing: Ingested, trace: Trace, claimed_org: str = "") -> tuple[Findings, ToolGate]:
     """Round 0 of the tool layer. Returns the findings and the gate (the loop reuses it for later rounds)."""
     f = Findings(hosts=list(ing.entities.hosts[:3]))
+    f.shorts = {u: "" for u in ing.entities.urls if _host_of_url(u) in SHORTENERS}
     gate = ToolGate(ing, claimed_org, trace)
     n = gate.run(initial_calls(ing), f)
-    trace.add("tools", "flag" if f.suspicious_hosts or f.irreversible_rails else "pass", f"{n} local check(s); " + f.summary().replace("\n", " | "))
+    trace.add("tools", "flag" if f.suspicious_hosts or f.irreversible_rails else "pass", f"{n} {'check(s)' if f.shorts else 'local check(s)'}; " + f.summary().replace("\n", " | "))
     return f, gate

@@ -76,10 +76,6 @@ def detect(text: str) -> str:
     return best if best in ("en", "ms") else "other"
 
 
-def is_chinese(lang: str) -> bool:
-    return lang in ("zh", "zh-Hant")
-
-
 def to_simplified(s: str) -> str:
     return "".join(_T2S.get(c, c) for c in s)
 

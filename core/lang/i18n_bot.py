@@ -1,14 +1,16 @@
 """Chinese (Simplified) text for the Telegram bot: English text -> Simplified Chinese. Merged into core.lang.i18n.ZH."""
 
 BOT_ZH: dict[str, str] = {
-    "Hi! I'm Baitproof 🛡️\n\nForward or paste any message you're unsure about and I'll tell you if it's a scam, show you the one giveaway, and add that trick to your practice.\n\n"
+    "Hi! I'm Baitproof 🛡️\n\nForward or paste any message you're unsure about and I'll tell you if it's a scam, show you the one giveaway, and add that trick to your practice.\n"
+    "You can also send a screenshot or a voice note.\n\n"
     "/quiz is a quick game: scam or not? (/quiz daily is today's Daily Challenge.)\n"
     "/challenge makes a link to send your family, to see if they can spot the scam too.\n\n"
     "/link CODE connects this chat to your Baitproof web profile, so everything you check here shows up in your records.\n"
     "/history shows your latest checks, /score your Baitproof score, /unlink disconnects.\n"
     "/lang chooses the language: /lang en, /lang zh (简体中文) or /lang zh-Hant (繁體中文).\n"
     "I keep the tricks I see, not your messages.":
-        "你好！我是 Baitproof 🛡️\n\n把你拿不准的消息转发或粘贴给我，我会告诉你是不是骗局，指出最关键的一个破绽，并把这种套路加入你的练习。\n\n"
+        "你好！我是 Baitproof 🛡️\n\n把你拿不准的消息转发或粘贴给我，我会告诉你是不是骗局，指出最关键的一个破绽，并把这种套路加入你的练习。\n"
+        "你也可以直接发截图或语音消息给我。\n\n"
         "/quiz 是个快速小游戏：是不是骗局？（/quiz daily 是今天的每日挑战。）\n"
         "/challenge 会生成一个链接，发给家人，看看他们能不能也识破骗局。\n\n"
         "/link 验证码：把这个聊天和你的 Baitproof 网站账号连起来，这里检查的内容都会出现在你的记录里。\n"
@@ -53,4 +55,22 @@ BOT_ZH: dict[str, str] = {
     "Here's your family challenge. Forward the next message to a parent, grandparent or friend 👇": "这是你的家人挑战。把下面这条消息转发给爸爸妈妈、爷爷奶奶或朋友吧 👇",
     "Can you spot the scam? 🕵️ It takes 2 minutes and needs no account: {url}\nScammers go after families like ours, so I'd feel better if you tried it. 🛡️":
         "你能识破骗局吗？🕵️ 只要2分钟，不用注册：{url}\n骗子专挑我们这样的家庭下手，你试一下我才放心。🛡️",
+    # ---- screenshots, voice notes and the links report (the reader's own messages and notes live in i18n_inputs.py)
+    "📷 I read this from your screenshot:": "📷 我从你的截图里读到：",
+    "🎙️ I heard:": "🎙️ 我听到的是：",
+    "From: {sender}": "发件人：{sender}",
+    "QR code in the picture: {url}": "图片里的二维码链接：{url}",
+    "The picture was hard to read, so please check this matches what you see.": "这张图片不太清楚，请核对上面的内容和你看到的是否一致。",
+    "I haven't checked it yet. Please send a clearer picture, or paste the text.": "我还没有检查。请发一张更清晰的图片，或者直接粘贴文字。",
+    "I couldn't find any words in that picture. Please send a clearer one, or paste the text.": "我在这张图片里没有找到文字。请发一张更清晰的，或者直接粘贴文字。",
+    "I couldn't hear any words in that voice note. Please try again, or send the text.": "我没有在这条语音里听到文字。请再试一次，或者直接发文字。",
+    "That picture is too big (the limit is {mb} MB). Please send a smaller one, or paste the text.": "这张图片太大了（上限 {mb} MB）。请发一张小一点的，或者直接粘贴文字。",
+    "That voice note is too big (the limit is {mb} MB). Please send a shorter one, or the text.": "这条语音太大了（上限 {mb} MB）。请发一条短一点的，或者直接发文字。",
+    "That voice note is too long (the limit is {n} seconds). Please send a shorter one, or the text.": "这条语音太长了（上限 {n} 秒）。请发一条短一点的，或者直接发文字。",
+    "You've sent a lot of pictures. Please wait a while, or paste the text instead.": "你发了好多图片了。请稍等一会儿，或者直接粘贴文字。",
+    "You've sent a lot of voice notes. Please wait a while, or send the text instead.": "你发了好多语音了。请稍等一会儿，或者直接发文字。",
+    "Sorry, I couldn't read that. Please send the text.": "抱歉，我没能读懂这个。请把文字发给我。",
+    "🔗 Links": "🔗 链接",
+    "→ really goes to {host}": "→ 实际指向 {host}",
+    "…and {n} more link(s)": "…还有 {n} 个链接",
 }
