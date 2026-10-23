@@ -15,7 +15,7 @@ from core.pipelines.check import blocklist
 from web import ui
 from web.deps import add_security_headers, bind_profile, request_lang
 from web.pages import BASE, page, templates
-from web.routes import admin, check, game, inputs, language, practice, records
+from web.routes import account, admin, check, duel, family, game, inputs, language, link, practice, push, pwa, records, road
 
 
 @asynccontextmanager
@@ -39,7 +39,7 @@ async def translated_errors(request: Request, exc: StarletteHTTPException):
     return await http_exception_handler(request, exc)
 
 
-for router in (language.router, check.router, inputs.router, records.router, practice.router):
+for router in (language.router, check.router, inputs.router, records.router, practice.router, pwa.router, account.router, road.router, family.router, link.router, push.router, duel.router):
     app.include_router(router)
 app.include_router(admin.mount(templates))
 app.include_router(game.mount(page))

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}{{ _("Friends") }} · Baitproof{% endblock %}
+{% block meta %}<link rel="stylesheet" href="/static/css/social.css">{% endblock %}
+{% block content %}
+<span class="pill rise"><b>{{ _("FRIENDS") }}</b> {{ _("Who drives farthest on Scam Road?") }}</span>
+{% if not account %}
+<h1 class="rise d1">{{ _("Play with friends") }}</h1>
+<p class="lead rise d2">{{ _("Make a profile, add friends with a code or a link, and see who spots scams best. Friends see only your nickname, your avatar and your scores.") }}</p>
+<p class="rise d3"><a class="btn big" href="/me">{{ _("Make your profile") }}</a> <a class="btn sec" href="/signin">{{ _("Log in") }}</a></p>
+{% if not multiuser %}<p class="muted">{{ _("Friends work on the public site, where every visitor has their own profile. This copy has only one.") }}</p>{% endif %}
+{% else %}
+<h1 class="rise d1">{{ _("You and your friends") }}</h1>
+<p class="muted rise d1"><a href="/family">👪 {{ family_name or _("Family group") }}</a> · {{ _("Share scams with your family and race each other.") }}</p>
+{% if added %}<p class="added">{{ _("You and {name} are now friends.", name=added) }}</p>{% endif %}
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+
+<section class="card rise d2" aria-labelledby="board-h">
+  {% set base = "/friends" %}{% include "_board.html" %}
+  {% if board|length < 2 %}<p class="muted">{{ _("Add a friend to compete. Their best distance appears here, and as a flag on the road.") }}</p>{% endif %}
+  <p>{% if game == "link" %}<a class="btn big" href="/link">{{ _("Play Link Hunt") }}</a>{% else %}<a class="btn big" href="/road{{ "?daily=1" if game == "daily" else "" }}">{{ _("Drive Scam Road") if game == "road" else _("Drive the Daily Road") }}</a>{% endif %}</p>
+</section>
+
+<section class="card rise d3">
+  <h2>{{ _("Add a friend") }}</h2>
+  <form method="post" action="/friends/add" class="row">
+    <div class="grow"><label for="code">{{ _("Friend code") }}</label>
+    <input id="code" name="code" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="K7M2QX" required></div>
+    <button class="big" type="submit">{{ _("Add friend") }}</button>
+  </form>
+  <hr>
+  <h3>{{ _("Or send them yours") }}</h3>
+  {% include "_invite.html" %}
+</section>
+
+{% if push_on %}
+<section class="card rise d4" id="push-box" hidden>
+  <h2>{{ _("Notifications") }}</h2>
+  <p>{{ _("Get a nudge on this device when a friend passes your best on Scam Road.") }}</p>
+  <p class="muted" id="push-status" aria-live="polite"></p>
+  <div class="actions"><button class="btn" type="button" id="push-on">{{ _("Turn on notifications") }}</button><button class="btn sec" type="button" id="push-off" hidden>{{ _("Turn off notifications") }}</button><button class="ghost" type="button" id="push-test" hidden>{{ _("Send me a test") }}</button></div>
+</section>
+{% endif %}
+
+{% if friends %}
+<section class="card rise d4">
+  <h2>{{ _("Your friends") }}</h2>
+  <ul class="plain friends">
+    {% for f in friends %}
+    <li><span class="who"><span aria-hidden="true">{{ f.avatar }}</span> {{ f.nickname }}</span>
+      <form method="post" action="/friends/remove"><input type="hidden" name="pub" value="{{ f.pub }}"><button class="ghost" type="submit" aria-label="{{ _('Remove {name}', name=f.nickname) }}">{{ _("Remove") }}</button></form></li>
+    {% endfor %}
+  </ul>
+  <p class="muted">{{ _("Either of you can end a friendship at any time.") }}</p>
+</section>
+{% endif %}
+{% endif %}
+{% endblock %}
+{% block scripts %}<script src="/static/js/social.js"></script>{% if push_on %}<script src="/static/js/push.js"></script>{% endif %}{% endblock %}

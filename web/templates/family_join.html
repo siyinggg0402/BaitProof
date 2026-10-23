@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{{ _("Family invite") }} · Baitproof{% endblock %}
+{% block meta %}<link rel="stylesheet" href="/static/css/social.css">{% endblock %}
+{% block content %}
+{% if card %}
+<span class="pill rise"><b>{{ _("INVITE") }}</b> {{ _("Family group") }}</span>
+<h1 class="rise d1">👪 {{ _("Join {name}?", name=card.name) }}</h1>
+<p class="lead rise d2">{{ _("Share the scams you meet, learn to spot the ones your family meets, and race each other on Scam Road. Members see only your nickname, avatar and scores, plus the scams you choose to share.") }}</p>
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+<section class="card rise d3 narrow">
+  <p class="muted">{{ _("{n} people are in this group.", n=card.members) }}</p>
+  <form method="post" action="/family/join/{{ code }}" class="stack">
+    <input type="hidden" name="consent_asked" value="1">
+    <label class="check"><input type="checkbox" name="share" value="yes" checked> {{ _("Share my practice progress with the family") }}</label>
+    <p class="muted">{{ _("Your score, your streak and which tricks you have practised. Never your messages. You can change this any time.") }}</p>
+    {% if account %}
+    <button class="big" type="submit">{{ _("Join {name}", name=card.name) }}</button>
+    {% else %}
+    <label for="nick">{{ _("Pick a nickname") }}</label>
+    <input id="nick" name="nickname" value="{{ nickname or '' }}" minlength="2" maxlength="16" autocomplete="nickname" required>
+    {% set current = '' %}{% include "_avatars.html" %}
+    <button class="big" type="submit">{{ _("Make my profile and join {name}", name=card.name) }}</button>
+    <p class="muted">{{ _("Already have a profile?") }} <a href="/signin">{{ _("Log in with your key") }}</a></p>
+    {% endif %}
+  </form>
+</section>
+{% else %}
+<h1 class="rise d1">{{ _("That invite doesn't work") }}</h1>
+<p class="lead rise d2">{{ _("The link may be old, or the family made a new code. Ask them for a fresh one.") }}</p>
+<p><a class="btn big" href="/family">{{ _("Go to Family group") }}</a></p>
+{% endif %}
+{% endblock %}

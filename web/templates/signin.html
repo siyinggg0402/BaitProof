@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}{{ _("Log in") }} · Baitproof{% endblock %}
+{% block meta %}<link rel="stylesheet" href="/static/css/social.css">{% endblock %}
+{% block content %}
+<span class="pill rise"><b>{{ _("YOUR PROFILE") }}</b> {{ _("Friends, scores and signing in") }}</span>
+<h1 class="rise d1">{{ _("Log in") }}</h1>
+<p class="lead rise d2">{{ _("Type the sign-in key you got when you made your profile. This device will then use that profile, with its records, practice and friends.") }}</p>
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+<section class="card rise d3 narrow">
+  <form method="post" action="/signin" class="stack">
+    <label for="key">{{ _("Sign-in key") }}</label>
+    <input id="key" name="key" placeholder="XXXX-XXXX-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40" required>
+    <p class="muted">{{ _("Logging in replaces the profile this device is using now.") }}</p>
+    <button class="big" type="submit">{{ _("Log in") }}</button>
+  </form>
+  <p class="muted">{{ _("New here?") }} <a href="/me">{{ _("Make your profile") }}</a></p>
+</section>
+{% endblock %}

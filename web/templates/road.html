@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}{{ _("Scam Road") }} · Baitproof{% endblock %}
+{% block meta %}<link rel="stylesheet" href="/static/css/social.css"><link rel="stylesheet" href="/static/css/road.css">{% endblock %}
+{% block bodyattrs %} data-game="road"{% endblock %}
+{% block content %}
+<h1 class="sr">{{ _("Scam Road") }}</h1>
+
+<section class="road rise d2{{ ' duel' if duel_code }}" id="road" aria-label="{{ _('Scam Road game') }}" data-best="{{ best }}" data-season='{{ (season or {})|tojson|forceescape }}'{% if duel_code %} data-duel="{{ duel_code }}" data-invite="{{ invite }}"{% endif %}>
+  <canvas id="scene" aria-hidden="true"></canvas>
+
+  <div class="hud" id="hud" hidden>
+    <div class="hearts" id="hearts" role="img"></div>
+    <div class="odo" aria-live="off"><span id="odo">0</span></div>
+    <div class="hud-right"><span class="combo" id="combo" hidden></span><span class="combo daily" id="mode-chip" hidden>{{ _("Daily Road") }}</span>
+      <button type="button" id="sound" class="icon" aria-pressed="true" aria-label="{{ _('Sound is on') }}">🔊</button><button type="button" id="pause" class="icon" aria-label="{{ _('Pause') }}">⏸</button></div>
+  </div>
+  <div class="race" id="race" hidden><div class="track" id="track" aria-hidden="true"><i class="mk you" id="you-marker">🚗</i></div><p class="race-text" id="race-text"></p></div>
+  <div class="topstack">
+    <div class="msgcard" id="msg" hidden aria-live="polite"><span class="chip" id="msg-gate"></span> <span class="chip from" id="msg-from" hidden></span><p id="msg-text"></p></div>
+    <p class="toast" id="toast" role="status" hidden></p>
+  </div>
+  <div class="lanes" id="lanes" hidden role="group" aria-label="{{ _('Choose a lane') }}">
+    <button type="button" data-lane="0" class="l-scam"><span aria-hidden="true">🚨</span><b>{{ _("Scam") }}</b><kbd aria-hidden="true">1</kbd></button>
+    <button type="button" data-lane="1" class="l-check"><span aria-hidden="true">🤔</span><b>{{ _("Check first") }}</b><kbd aria-hidden="true">2</kbd></button>
+    <button type="button" data-lane="2" class="l-safe"><span aria-hidden="true">✅</span><b>{{ _("Looks fine") }}</b><kbd aria-hidden="true">3</kbd></button>
+  </div>
+
+  <div class="over" id="intro"{% if duel_code %} hidden{% endif %}>
+    <div class="sheet">
+      <img src="/static/img/finn.png" alt="" class="finn-pic" width="132" height="85">
+      <p class="kicker"><b>{{ _("3D GAME") }}</b> {{ _("Scam Road") }}</p>
+      <h2>{{ _("Ready to drive?") }}</h2>
+      <p>{{ _("A message appears on the road ahead. Steer into the lane that fits it: left for a scam, middle to check first, right if it looks fine.") }}</p>
+      <p>{{ _("Right lanes take you farther. Three wrong turns and the drive is over.") }}</p>
+      {% if season %}<p class="season-line"><span aria-hidden="true">{{ season.emoji }}</span> <b>{{ season.greeting }}</b> {{ _("The road is dressed for {name}.", name=season.name) }}</p>{% endif %}
+      <p class="keys"><kbd>←</kbd><kbd>→</kbd> {{ _("steer") }} <span class="dot">·</span> <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> {{ _("pick a lane") }} <span class="dot">·</span> {{ _("or tap the buttons") }}</p>
+      {% if best %}<p class="best">{{ _("Your best: {n} m", n=best) }}</p>{% endif %}
+      <div class="modes">
+        <button class="big" id="go" type="button">{{ _("Free drive") }}</button>
+        <button class="big alt" id="go-daily" type="button">{{ _("Daily Road") }}</button>
+      </div>
+      <p class="muted">{{ _("The Daily Road is the same for everyone today, so you can race your friends' ghosts.") }}</p>
+      {% if not account %}<p class="muted"><a href="/signin">{{ _("Log in") }}</a> {{ _("to put your distance on the friends' leaderboard.") }}</p>
+      {% elif not friends_n %}<p class="muted"><a href="/friends">{{ _("Add a friend") }}</a> {{ _("to see how far ahead they are.") }}</p>{% endif %}
+      <details class="drawer">
+        <summary>{{ _("Garage and settings") }}</summary>
+        <h3>{{ _("Your car") }}</h3><div class="chips-line" id="garage-cars"></div>
+        <h3>{{ _("Finn's hat") }}</h3><div class="chips-line" id="garage-hats"></div>
+        <p class="muted" id="garage-note"></p>
+        <h3>{{ _("Theme") }}</h3><div class="chips-line" id="themes"></div>
+        <h3>{{ _("Sound") }}</h3>
+        <label class="check"><input type="checkbox" id="opt-sound"> {{ _("Sound effects and engine") }}</label>
+        <label class="check"><input type="checkbox" id="opt-music"> {{ _("Music") }}</label>
+        <label class="check"><input type="checkbox" id="opt-vibe"> {{ _("Vibration") }}</label>
+        <label class="check"><input type="checkbox" id="easy"> {{ _("Take it easy (slower)") }}</label>
+      </details>
+    </div>
+  </div>
+
+  {% if duel_code %}
+  <div class="over" id="lobby" hidden>
+    <div class="sheet" aria-live="polite">
+      <p class="kicker"><b>{{ _("LIVE RACE") }}</b> {{ _("Same gates, same moment") }}</p>
+      <h2 id="lobby-title">{{ _("Waiting room") }}</h2>
+      <p class="code" aria-label="{{ _('Race code') }}">{{ duel_code }}</p>
+      <ul class="plain lobby-list" id="lobby-players"></ul>
+      <p class="muted" id="lobby-note"></p>
+      <div class="actions">
+        <button class="big" id="lobby-start" type="button" hidden>{{ _("Start the race") }}</button>
+        <button class="btn sec" type="button" data-copy="{{ invite }}" data-done="{{ _('Copied') }}">{{ _("Copy invite link") }}</button>
+        <button class="btn sec" id="lobby-leave" type="button">{{ _("Leave") }}</button>
+      </div>
+      <p class="muted">{{ _("Everyone answers the same 12 messages at the same time. The most right answers wins; hearts and finishing first break a tie.") }}</p>
+    </div>
+  </div>
+  <div class="over count" id="count" hidden><p id="count-num" aria-live="assertive">3</p></div>
+  <div class="over" id="duel-wait" hidden><div class="sheet" aria-live="polite"><h2>{{ _("You're across the line!") }}</h2><p id="duel-wait-note">{{ _("Waiting for the others to finish…") }}</p><ol class="board mini" id="duel-live"></ol></div></div>
+  <div class="over" id="duel-end" hidden>
+    <div class="sheet" aria-live="polite">
+      <p class="newbest" id="duel-won" hidden>🏆 {{ _("You won!") }}</p>
+      <h2 id="duel-title">{{ _("Race over") }}</h2>
+      <ol class="board mini" id="duel-board"></ol>
+      <p class="chips-row" id="duel-chips"></p>
+      <p class="muted" id="duel-record"></p>
+      <div class="actions"><button class="big" id="duel-rematch" type="button">{{ _("Race again") }}</button><a class="btn sec" href="/friends">{{ _("Friends") }}</a><a class="btn sec" href="/duel">{{ _("Live race") }}</a></div>
+    </div>
+  </div>
+  <div class="over" id="duel-gone" hidden><div class="sheet"><h2 id="duel-gone-title">{{ _("This race isn't open any more") }}</h2><p id="duel-gone-note"></p><div class="actions"><a class="big" href="/duel">{{ _("Live race") }}</a><a class="btn sec" href="/me">{{ _("Make your profile") }}</a></div></div></div>
+  {% endif %}
+
+  <div class="over" id="pause-sheet" hidden>
+    <div class="sheet"><h2>{{ _("Paused") }}</h2>
+      <button class="big" id="resume" type="button">{{ _("Keep driving") }}</button>
+      <button class="btn sec" id="quit" type="button">{{ _("End this drive") }}</button></div>
+  </div>
+
+  <div class="over" id="why" hidden>
+    <div class="sheet" aria-live="polite">
+      <h2 id="why-title"></h2>
+      <div class="panel"><b>{{ _("The giveaway") }}</b><span id="why-tell"></span></div>
+      <div class="panel"><b>{{ _("What to do") }}</b><span id="why-action"></span></div>
+      <p class="chips-row" id="why-tricks"></p>
+      <button class="big" id="why-go" type="button">{{ _("Keep driving") }}</button>
+    </div>
+  </div>
+
+  <div class="over" id="end" hidden>
+    <div class="sheet" aria-live="polite">
+      <p class="newbest" id="end-best" hidden>🏆 {{ _("New personal best!") }}</p>
+      <h2 id="end-title">{{ _("Drive over") }}</h2>
+      <p class="bigdist"><span id="end-dist">0</span></p>
+      <ul class="stats" id="end-stats"></ul>
+      <p class="added" id="end-passed" hidden></p>
+      <p class="chips-row" id="end-badges"></p>
+      <ol class="board mini" id="end-board" hidden></ol>
+      <p class="muted" id="end-login" hidden><a href="/signin">{{ _("Log in") }}</a> {{ _("to put your distance on the friends' leaderboard.") }}</p>
+      <div class="actions"><button class="big" id="again" type="button">{{ _("Drive again") }}</button><a class="btn sec" href="/friends">{{ _("Friends") }}</a><a class="btn sec" href="/train">{{ _("Train") }}</a></div>
+    </div>
+  </div>
+
+  <div class="over" id="nogl" hidden>
+    <div class="sheet"><h2>{{ _("The 3D road can't start here") }}</h2>
+      <p>{{ _("This browser or device can't show 3D graphics. Inbox Rush plays the same scam-or-not game without them.") }}</p>
+      <a class="btn big" href="/game#rush">{{ _("Play Inbox Rush") }}</a></div>
+  </div>
+  <div class="over" id="lost" hidden>
+    <div class="sheet"><h2>{{ _("Lost the road") }}</h2><p>{{ _("The connection dropped. Check it and try again.") }}</p>
+      <button class="big" id="retry" type="button">{{ _("Try again") }}</button></div>
+  </div>
+</section>
+<noscript><p class="error">{{ _("Scam Road needs JavaScript. Inbox Rush also needs it, but Check works without.") }}</p></noscript>
+{% endblock %}
+{% block scripts %}<script type="module" src="/static/js/road.js"></script>{% endblock %}

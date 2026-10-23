@@ -134,10 +134,10 @@ def render(pct: int, right: int, total: int, lang: str = "en") -> bytes:
     lang = norm(lang)
     line1 = tr("I spotted {right} of {total} scam messages.", lang, right=right, total=total)
     line2 = tr("Can you beat me?", lang)
-    if lang != "en" and cjk_font(lang, 48, line1 + line2) is None:
+    if lang in ("zh", "zh-Hant") and cjk_font(lang, 48, line1 + line2) is None:
         lang = "en"  # no installed font can draw it: the English card is better than one full of boxes
         line1, line2 = tr("I spotted {right} of {total} scam messages.", lang, right=right, total=total), tr("Can you beat me?", lang)
-    make = _font if lang == "en" else (lambda size: cjk_font(lang, size, line1 + line2))
+    make = _font if lang in ("en", "ms") else (lambda size: cjk_font(lang, size, line1 + line2))
     img = Image.new("RGB", (1200, 630), BG)
     d = ImageDraw.Draw(img)
     d.rectangle([0, 0, 1200, 14], fill=ACCENT)

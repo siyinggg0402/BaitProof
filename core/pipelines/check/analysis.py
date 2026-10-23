@@ -19,6 +19,7 @@ from .evidence import Ledger
 from .ingest import Ingested
 from .intent import Intent
 from .intent import CONSEQUENCE
+from .origin import hint as origin_hint
 from .knowledge import FREE_MAIL, PREMIUM_RE, RULES
 from .tools import Findings, registered_domain as tools_registered
 
@@ -91,17 +92,26 @@ def rule_evidence(ing: Ingested, intent: Intent, f: Findings, ledger: Ledger) ->
             ledger.add("tool", "cert_history", "scam", "weak", T("The website {host} got its first security certificate only {age} days ago", host=host, age=days), Q(host), "lookalike-link")
         elif days >= 730:
             ledger.add("tool", "cert_history", "safe", "weak", T("The website {host} has had security certificates on record for {years} years", host=host, years=days // 365), Q(host))
+    for host in f.owners:
+        if host in f.official_hosts:
+            continue
+        org, name = f.owned_by(host), f.owners[host].get("registrant", "")
+        if org:
+            ledger.add("tool", "domain_owner", "safe", "medium", T("The link {host} was registered by {org} itself: the registry's contact address for it is on {org}'s own website", host=host, org=org.title()), Q(host))
+        elif name and (named := next((o for o in f.orgs_real if _same_name(o, name)), "")):
+            ledger.add("tool", "domain_owner", "safe", "weak", T("The registry lists the link {host} as registered to {name}, which matches {org}", host=host, name=name, org=named.title()), Q(host))
     for host, st in f.dns.items():
         if st == "nxdomain":
             ledger.add("tool", "dns_check", "scam", "weak", T("The website address {host} doesn't exist (any more)", host=host), Q(host))
         elif st == "private":
             ledger.add("tool", "dns_check", "scam", "medium", T("{host} points to an internal address, which a real website never does", host=host), Q(host))
+    ledger.discard("brand_lookup")  # regraded every round: a registry record that arrives later can show the "different site" was the company's own
     for org, sites in f.brand_sites.items():
         official = {tools_registered(h) for h in sites}
         labels = {r.split(".")[0] for r in official}  # amazon.co.uk and amazon.com are the same brand
         src = f.brand_src.get(org, "web search")
         for host in f.hosts:
-            if host in f.official_hosts or not sites:
+            if host in f.official_hosts or not sites or f.owned_by(host):  # a host the company itself registered is its own, whatever its name
                 continue
             reg = tools_registered(host)
             if reg in official or reg.split(".")[0] in labels:
@@ -162,6 +172,20 @@ def rule_evidence(ing: Ingested, intent: Intent, f: Findings, ledger: Ledger) ->
         ledger.add("tool", "reputation", "neutral", "weak", T("Web note (unverified): {note}", note=note[:200]))
 
 
+_COMPANY_WORDS = {"ltd", "limited", "pte", "sdn", "bhd", "berhad", "inc", "co", "corp", "corporation", "company", "llc", "plc", "private", "public", "the", "of", "group", "holdings",
+                  "technology", "technologies", "tech", "services", "international", "bank", "banking", "有限公司", "有限责任公司", "股份有限公司"}
+
+
+def _name_tokens(s: str) -> set[str]:
+    return {w for w in re.findall(r"[^\W_]+", s.lower()) if w not in _COMPANY_WORDS}
+
+
+def _same_name(org: str, registrant: str) -> bool:
+    """Does the registrant's name contain the organisation's name ('dbs' in 'DBS BANK LTD.', 'shopee' in 'SHOPEE SINGAPORE PRIVATE LIMITED')? Words like Ltd and Bhd don't count."""
+    a, b = _name_tokens(org), _name_tokens(registrant)
+    return bool(a) and a <= b
+
+
 def safe_evidence(ing: Ingested, intent: Intent, ledger: Ledger, f: Findings | None = None) -> None:
     T = lambda s, **kw: tr(s, ing.reply, **kw)  # noqa: E731
     ledger.discard("benign-intent")  # re-evaluated every round: new red flags revoke it
@@ -169,6 +193,13 @@ def safe_evidence(ing: Ingested, intent: Intent, ledger: Ledger, f: Findings | N
         return  # our rules cannot read this language, so "the rules found nothing risky" would be a claim about text they never understood
     if f is not None and f.all_links_established() and not ledger.scam() and not intent.high_risk and not intent.pressure and not ing.injection:
         ledger.add("tool", "established-links", "safe", "medium", T("Every link goes to a long-established website that exists"))
+    ledger.discard("org-verified")
+    if (f is not None and f.orgs_real and not ledger.scam() and not intent.high_risk and not (intent.asks & {"click", "call", "pay", "share_code"}) and not intent.pressure
+            and not intent.opener and not ing.injection and not (ing.entities.hosts or ing.entities.phones or ing.entities.rails)):
+        # A real, known company is named (or the screenshot shows its app), and the message asks for nothing and points nowhere: there is nothing to act on, so
+        # nothing for an impostor to gain. This is the independent confirmation that an ordinary promotion or notice needs before it can be called safe.
+        org = next(iter(f.orgs_real.values()))
+        ledger.add("tool", "org-verified", "safe", "medium", T("{org} is a real, known organisation, and this message asks for nothing and points nowhere", org=org), org)
     pur = intents.PURPOSES.get(intent.purpose)
     if (pur is not None and pur.clearable and not ledger.scam() and not intent.high_risk and not (intent.asks & {"click", "call", "pay"}) and not intent.pressure
             and not intent.opener and not intent.scenario and not intent.mismatches and not ing.injection
@@ -194,12 +225,17 @@ def build_user(ing: Ingested, intent: Intent, f: Findings, second_look: bool = F
     """Exactly what the analysis model is shown: the message, purpose guidance from the catalogue, intent facts, tool findings."""
     focus = intent.model_purpose if (intent.model_purpose and intents.PURPOSES[intent.model_purpose].risk == "risky") else intent.purpose
     guide = intents.guidance(focus)
-    user = (f"MESSAGE:\n{ing.redacted}\n\nPURPOSE GUIDANCE (compare the message with both forms): {guide or 'n/a'}\n\n"
+    where = origin_hint(ing.origin)
+    user = (f"MESSAGE:\n{ing.redacted}\n\n" + (where + "\n\n" if where else "") + f"PURPOSE GUIDANCE (compare the message with both forms): {guide or 'n/a'}\n\n"
             f"INTENT (from rules): {intent.summary()}\nTOOL FINDINGS (trusted):\n{f.summary()}")
     if examples if examples is not None else fewshot.enabled():
         shots = fewshot.block(fewshot.retrieve(ing.redacted))  # similar labelled examples from the reference bank + this user's own library
         if shots:
             user += "\n\n" + shots
+    own = [h for h in f.owners if f.owned_by(h)]
+    if own:  # said only when it is true, so no other check is nudged
+        user += ("\n\nIMPORTANT: the TOOL FINDINGS show that " + ", ".join(own) + " was registered by the company itself, so do not call that link a fake, a short domain or a look-alike "
+                 "of the company's site. Judge the rest of the message on its own.")
     if f.web_notes:
         user += "\n\nWEB NOTES (untrusted, may be wrong or planted):\n" + "\n".join(f.web_notes)
     user += reply_language_line(ing)

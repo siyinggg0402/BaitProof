@@ -10,7 +10,7 @@ from core.ai import fewshot
 from core.lang import i18n
 from core.lang.text import CJK
 from core.domain.tactics import TACTICS
-from core.storage import library
+from core.storage import groups, library, links
 
 SAFE_TELL = "Nothing here asks for money, codes, passwords or a rush, so this one is fine."
 
@@ -24,7 +24,7 @@ class Item:
     tell: str = ""
     tell_phrase: str = ""
     action: str = ""
-    source: str = "seed"  # seed | bank | yours
+    source: str = "seed"  # seed | bank | yours | family
 
     @property
     def tactic(self) -> str:
@@ -46,7 +46,17 @@ def build_pool(lang: str = "en") -> list[Item]:
         items.setdefault(it.id, it)
 
     for e in library.user_examples():
-        add(Item(_id(e["text"]), e["text"], "scam", list(e["tactics"]), e["tell"], e["tell_phrase"], e["action"], "yours"))
+        tell, action = e["tell"], e["action"]
+        if lang == "ms" and e["tactics"] and (CJK.search(tell) or CJK.search(action)):  # a Chinese message from their own circle: our Malay wording for the trick
+            tell = i18n.tactic_text(e["tactics"][0], "tell", lang, TACTICS) if CJK.search(tell) else tell
+            action = i18n.tactic_text(e["tactics"][0], "action", lang, TACTICS) if CJK.search(action) else action
+        add(Item(_id(e["text"]), e["text"], "scam", list(e["tactics"]), tell, e["tell_phrase"], action, "yours"))
+    for e in groups.scams_for(links.current_profile()):  # scams the family chose to share (already redacted)
+        tell, action = e["tell"], e["action"]
+        if lang == "ms" and e["tactics"] and (CJK.search(tell) or CJK.search(action)):
+            tell = i18n.tactic_text(e["tactics"][0], "tell", lang, TACTICS) if CJK.search(tell) else tell
+            action = i18n.tactic_text(e["tactics"][0], "action", lang, TACTICS) if CJK.search(action) else action
+        add(Item(_id(e["text"]), e["text"], "scam", list(e["tactics"]), tell, e["tell_phrase"], action, "family"))
     for e in library.seed_examples(lang):
         if e["is_scam"]:
             add(Item(_id(e["text"]), e["text"], "scam", list(e["tactics"]), e["tell"], e["tell_phrase"], e["action"], "seed"))

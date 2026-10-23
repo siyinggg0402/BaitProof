@@ -8,7 +8,7 @@ Inference stays on Nebius Token Factory; the VM only runs the web app (and the b
 - Security group: allow **22** (SSH), **80** and **443** (web).
 
 ## 2. Domain (optional, recommended)
-Create an `A` record for your domain pointing at the VM's public IP. With a domain, Caddy gets an HTTPS certificate automatically. Without one the app is served over plain HTTP on the IP, which is fine for a quick demo (but Telegram deep links and `https` cookies are nicer with a domain).
+Create an `A` record for your domain pointing at the VM's public IP. With a domain, Caddy gets an HTTPS certificate automatically. Without one the app is served over plain HTTP on the IP, which is fine for a quick demo (but Telegram deep links and `https` cookies are nicer with a domain). **The installable app and the Android Share option need HTTPS**: browsers only run the service worker on HTTPS or `localhost`, so on a bare IP the site works but has no Install button and does not appear in the Share sheet.
 
 ## 3. Install
 ```bash
@@ -59,6 +59,7 @@ unlink - Disconnect
 lang - Language: en, zh or zh-Hant
 help - Help
 ```
+The bot speaks as Finn, the website's mascot. Give it his face too: `/setuserpic` in @BotFather, then send `web/static/img/finn-avatar.png` (or set the name, description and picture through the Bot API's `setMyName`, `setMyDescription` and `setMyProfilePhoto`).
 Test: send the bot a suspicious message, then `/quiz`. Link it to the website: **Records** > *Connect Telegram* shows a one-time code to send as `/link CODE`.
 
 ## 7. Update
@@ -68,7 +69,7 @@ cd /opt/baitproof && sudo -u baitproof git pull && sudo systemctl restart baitpr
 
 ## What is protected
 - `.env` is mode 600 and owned by the service user; the services run with `NoNewPrivileges`, a read-only filesystem except `/var/lib/baitproof`, and a private `/tmp`.
-- Public mode (`BAITPROOF_MULTIUSER=1`, set by the unit) gives every visitor an anonymous profile database, so strangers never see each other's records.
+- Public mode (`BAITPROOF_MULTIUSER=1`, set by the unit) gives every visitor an anonymous profile database, so strangers never see each other's records. Profiles can become accounts (a nickname, an avatar and a sign-in key kept only as a hash) so friends can compare Scam Road distances; the sign-in form shares the `/admin` login rate limit, and the profile id (the session cookie) is never shown to anyone. Set `BAITPROOF_URL` so invite links carry your public address. **Notifications are optional**: `pip install -r requirements-extras.txt`, then once on the VM `sudo -u baitproof /opt/baitproof/.venv/bin/python -m scripts.ops.make_vapid` (writes `VAPID_PRIVATE_KEY` and `VAPID_PUBLIC_KEY` into `.env` and never prints the private key), set `VAPID_SUBJECT` to a mailto: or https: address you control, and restart. Until both keys exist the site shows nothing about notifications. They need HTTPS.
 - Strict CSP, no CORS, per-IP rate limits on the routes that cost model calls (`BAITPROOF_RATE`, default 30/min) and a login limit on `/admin`.
 
 ## Troubleshooting
@@ -76,8 +77,9 @@ cd /opt/baitproof && sudo -u baitproof git pull && sudo systemctl restart baitpr
 |---|---|
 | Site not reachable | security group ports 80/443; `sudo systemctl status caddy`; DNS has propagated |
 | Checks say "offline mode" | `NEBIUS_API_KEY` empty or wrong: `cd /opt/baitproof && sudo -u baitproof .venv/bin/python -m scripts.ops.verify_setup` (never prints the key) |
+| No Install button, or Baitproof is missing from the Android Share sheet | The site is on plain HTTP. Use a domain so Caddy serves HTTPS; then open the site once in Chrome and install it ("Install" in the footer or the browser menu) |
 | Share card shows English only | `fc-list :lang=zh` shows no font: `sudo apt-get install fonts-noto-cjk` |
 | `/admin` is empty | check `BAITPROOF_ADMIN_TOKEN`; logs exist under `/var/lib/baitproof/logs` |
 | Bot silent | `sudo journalctl -u baitproof-bot -n 50`; token and username in `.env`; only one bot process may poll a token |
 
-Cost: each check is well under a cent on Token Factory. `python -m scripts.ops.logs_report` on the VM (with `BAITPROOF_LOG_DIR=/var/lib/baitproof/logs`) shows tokens and spend.
+Cost: each check is well under a cent on Token Factory. `/admin` shows tokens, estimated spend, latency and gate behaviour.

@@ -112,7 +112,7 @@ def test_the_speak_language_choice_is_for_english_pages_only(monkeypatch):
     assert 'id="speak-lang"' in home(c, monkeypatch, False, False) and "Bahasa Melayu" in c.get("/").text
     zh = lang_client("zh")
     page = zh.get("/").text
-    assert 'id="speak-lang"' not in page and "Bahasa Melayu" not in page
+    assert 'id="speak-lang"' not in page and "<option value=\"ms-MY\">" not in page  # (Bahasa Melayu is in the language menu now, but the speech choice stays English-pages-only)
 
 
 def test_the_form_remembers_how_the_message_arrived(client):
@@ -121,11 +121,31 @@ def test_the_form_remembers_how_the_message_arrived(client):
     assert 'name="source" id="source" value="screenshot"' in page and "Read from a screenshot" in page
 
 
+def test_the_screenshots_app_and_sender_travel_with_the_check_and_come_back_as_a_line_on_the_result(client, monkeypatch):
+    from core.pipelines import check as pipeline
+    got = {}
+    real = pipeline.check_message
+
+    def spy(text, **kw):
+        got.update(kw)
+        return real(text, **kw)
+    monkeypatch.setattr(pipeline, "check_message", spy)
+    page = client.post("/check", data={"message": SCAM, "source": "screenshot", "origin_channel": "app", "origin_app": "Tomoro Coffee", "origin_sender": ""}).text
+    assert got["origin"].app == "Tomoro Coffee" and got["origin"].channel == "app"
+    assert "Where it came from: a screen inside Tomoro Coffee" in page
+    got.clear()
+    client.post("/check", data={"message": SCAM, "source": "text", "origin_app": "Tomoro Coffee"})
+    assert "origin" not in got  # only a screenshot reports where it came from; a typed message cannot claim it
+    got.clear()
+    client.post("/check", data={"message": SCAM, "source": "screenshot", "origin_channel": "carrier pigeon"})
+    assert "origin" not in got  # nothing usable left after cleaning
+
+
 # ------------------------------------------------------------------------------------------------ reading a screenshot
 def test_a_screenshot_is_read_and_returned_for_the_person_to_check(client, seen):
     r = client.post("/api/read/image", files=files(png()))
     assert r.status_code == 200 and r.headers["cache-control"] == "no-store"
-    assert r.json() == {"text": "Your parcel is on hold. Pay the $1.99 fee: dhl-fee-pay.xyz/track", "sender": "DHL", "language": "en", "links": ["dhl-fee-pay.xyz/track"],
+    assert r.json() == {"text": "Your parcel is on hold. Pay the $1.99 fee: dhl-fee-pay.xyz/track", "sender": "DHL", "channel": "", "app": "", "language": "en", "links": ["dhl-fee-pay.xyz/track"],
                         "qr_urls": ["https://qr.example/pay"], "legible": True, "note": ""}
     data, lang = seen["image"]
     assert data == png() and lang == "en"  # the bytes arrive untouched, with the visitor's language

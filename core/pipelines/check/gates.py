@@ -79,6 +79,10 @@ def arbitrate(ledger: Ledger, intent: Intent, f: Findings, model_verdict: Verdic
                      model_dependent=m_safe or bool(model_only))
     elif m_scam:
         d = Decision(Verdict.UNSURE, "low", [T("model suspects a scam but gave no verifiable evidence")], model_dependent=True)
+    elif (model_verdict == Verdict.UNSURE and any(e.source == "org-verified" for e in ledger.safe())
+          and not (intent.high_risk or f.suspicious_hosts or intent.pressure or injection or intent.opener or risky_purpose)):
+        # The AI is unsure only because it sees a few words with no context. A named company that really exists, with nothing to click, call or pay, settles it.
+        d = Decision(Verdict.SAFE, "medium", [T("the company is real, and the message asks for nothing and points nowhere")])
     elif intent.high_risk or f.suspicious_hosts or intent.pressure or injection or intent.opener or risky_purpose or model_verdict == Verdict.UNSURE:
         only_model = not (intent.high_risk or f.suspicious_hosts or intent.pressure or injection or intent.opener or risky_purpose)  # a second look can only help here
         d = Decision(Verdict.UNSURE, "low", [T("the AI isn't sure and nothing else explains it") if only_model else T("asks for something sensitive or is hard to judge")],

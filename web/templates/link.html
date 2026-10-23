@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}{{ _("Link Hunt") }} · Baitproof{% endblock %}
+{% block meta %}<link rel="stylesheet" href="/static/css/linkhunt.css">{% endblock %}
+{% block content %}
+<span class="pill rise"><b>{{ _("MINI GAME") }}</b> {{ _("Spot the fake address") }}</span>
+<h1 class="rise d1">{{ _("Link Hunt") }}</h1>
+<p class="lead rise d2">{{ _("Four links say they belong to real companies. One is a fake. Read each address carefully and tap the fake before it fools you.") }}</p>
+
+<section class="card lh rise d3" id="lh" aria-label="{{ _('Link Hunt game') }}">
+  <div id="lh-intro" class="lh-center">
+    <img src="/static/img/finn.png" alt="" class="finn-pic" width="120" height="78">
+    <p>{{ _("A real company's address ends with its own name, like paypal.com. Extra words, strange endings and swapped letters are how fakes give themselves away.") }}</p>
+    <p class="keys"><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd> {{ _("or tap a link") }} · {{ _("Three wrong taps end the round.") }}</p>
+    {% if best %}<p class="best">{{ _("Your best: {n} points", n=best) }}</p>{% endif %}
+    {% if not account %}<p class="muted"><a href="/signin">{{ _("Log in") }}</a> {{ _("to put your score on the friends' leaderboard.") }}</p>
+    {% elif not friends_n %}<p class="muted"><a href="/friends">{{ _("Add a friend") }}</a> {{ _("to compare scores.") }}</p>{% endif %}
+    <button class="big" id="lh-start" type="button">{{ _("Start hunting") }}</button>
+  </div>
+
+  <div id="lh-play" hidden>
+    <div class="lh-hud"><span id="lh-hearts" role="img"></span><span class="lh-score"><span id="lh-score">0</span></span><span class="combo" id="lh-combo" hidden></span></div>
+    <h2 id="lh-q">{{ _("Which link is the fake?") }}</h2>
+    <div class="lh-opts" id="lh-opts" role="group" aria-labelledby="lh-q"></div>
+    <div class="lh-feedback" id="lh-feedback" hidden aria-live="polite">
+      <p id="lh-verdict" class="lh-verdict"></p>
+      <p id="lh-tell"></p>
+      <button class="big" id="lh-next" type="button">{{ _("Next link") }}</button>
+    </div>
+  </div>
+
+  <div id="lh-end" class="lh-center" hidden>
+    <p class="newbest" id="lh-newbest" hidden>🏆 {{ _("New personal best!") }}</p>
+    <h2>{{ _("Round over") }}</h2>
+    <p class="bigdist"><span id="lh-final">0</span></p>
+    <ul class="stats" id="lh-stats"></ul>
+    <p class="chips-row" id="lh-badges"></p>
+    <ol class="board mini" id="lh-board" hidden></ol>
+    <p class="muted" id="lh-login" hidden><a href="/signin">{{ _("Log in") }}</a> {{ _("to put your score on the friends' leaderboard.") }}</p>
+    <div class="actions"><button class="big" id="lh-again" type="button">{{ _("Hunt again") }}</button><a class="btn sec" href="/friends?game=link">{{ _("Friends") }}</a><a class="btn sec" href="/train">{{ _("Train") }}</a></div>
+  </div>
+
+  <div id="lh-lost" class="lh-center" hidden>
+    <h2>{{ _("Lost the trail") }}</h2><p>{{ _("The connection dropped. Check it and try again.") }}</p>
+    <button class="big" id="lh-retry" type="button">{{ _("Try again") }}</button>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="/static/js/linkhunt.js"></script>{% endblock %}

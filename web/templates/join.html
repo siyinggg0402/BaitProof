@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}{{ _("Friend invite") }} · Baitproof{% endblock %}
+{% block meta %}<link rel="stylesheet" href="/static/css/social.css">{% endblock %}
+{% block content %}
+{% if card %}
+<span class="pill rise"><b>{{ _("INVITE") }}</b> {{ _("Play with friends") }}</span>
+<h1 class="rise d1"><span aria-hidden="true">{{ card.avatar }}</span> {{ _("{name} invited you to be friends", name=card.nickname) }}</h1>
+<p class="lead rise d2">{{ _("See each other's best on Scam Road and race to spot scams. Friends see only your nickname, your avatar and your scores.") }}</p>
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+<section class="card rise d3 narrow">
+  <form method="post" action="/join/{{ code }}" class="stack">
+    {% if account %}
+    <p>{{ _("You will be friends with {name}.", name=card.nickname) }}</p>
+    <button class="big" type="submit">{{ _("Accept and add {name}", name=card.nickname) }}</button>
+    {% else %}
+    <label for="nick">{{ _("Pick a nickname") }}</label>
+    <input id="nick" name="nickname" value="{{ nickname or '' }}" minlength="2" maxlength="16" autocomplete="nickname" required>
+    {% set current = '' %}{% include "_avatars.html" %}
+    <button class="big" type="submit">{{ _("Make my profile and add {name}", name=card.nickname) }}</button>
+    <p class="muted">{{ _("Already have a profile?") }} <a href="/signin">{{ _("Log in with your key") }}</a></p>
+    {% endif %}
+  </form>
+</section>
+{% else %}
+<h1 class="rise d1">{{ _("That invite doesn't work") }}</h1>
+<p class="lead rise d2">{{ _("The link may be old, or your friend made a new code. Ask them for a fresh one.") }}</p>
+<p><a class="btn big" href="/friends">{{ _("Go to Friends") }}</a></p>
+{% endif %}
+{% endblock %}

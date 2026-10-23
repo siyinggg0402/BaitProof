@@ -1,0 +1,21 @@
+{# a ranked board with a tab per game and per time range. Needs: board, game, scope, scopes, base (the page it lives on, "/friends" or "/family") #}
+<div class="board-head">
+  <h2 id="board-h">{{ _("Leaderboard") }}</h2>
+  <div class="seg" role="group" aria-label="{{ _('Game') }}">
+    <a href="{{ base }}?game=road" {% if game == 'road' %}aria-current="true"{% endif %}>{{ _("Scam Road") }}</a>
+    <a href="{{ base }}?game=daily" {% if game == 'daily' %}aria-current="true"{% endif %}>{{ _("Daily Road") }}</a>
+    <a href="{{ base }}?game=link" {% if game == 'link' %}aria-current="true"{% endif %}>{{ _("Link Hunt") }}</a>
+  </div>
+  <div class="seg" role="group" aria-label="{{ _('Time range') }}">
+    {% for sc in scopes %}<a href="{{ base }}?game={{ game }}&scope={{ sc }}" {% if scope == sc %}aria-current="true"{% endif %}>{{ {'day': _("Today"), 'week': _("This week"), 'all': _("All time")}[sc] }}</a>{% endfor %}
+  </div>
+</div>
+<ol class="board">
+  {% for r in board %}
+  <li class="{{ 'you' if r.you }}{{ ' idle' if not r.runs }}">
+    <span class="rank">{% if r.rank == 1 %}🥇{% elif r.rank == 2 %}🥈{% elif r.rank == 3 %}🥉{% elif r.rank %}{{ r.rank }}{% else %}–{% endif %}</span>
+    <span class="who"><span aria-hidden="true">{{ r.avatar }}</span> {{ r.nickname }}{% if r.you %} <em>{{ _("(you)") }}</em>{% endif %}</span>
+    <span class="far">{% if r.runs %}{% if game == "link" %}{{ _("{n} points", n=r.best) }}{% else %}{{ _("{n} m", n=r.best) }}{% endif %}{% else %}{{ _("no drive yet") }}{% endif %}</span>
+  </li>
+  {% endfor %}
+</ol>

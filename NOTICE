@@ -12,3 +12,9 @@ The phishing blocklist (core/pipelines/check/blocklist.py) downloads, at run tim
 repository; it is kept in a local cache folder (data/cache/, git-ignored).
 
 Offline phone-number rules come from the `phonenumbers` package (a Python port of Google's libphonenumber, Apache License 2.0), installed from PyPI.
+
+The Inter typeface (web/static/fonts/inter-latin-wght-normal.woff2, Latin variable font, from the @fontsource-variable/inter package) is Copyright 2020 The Inter Project
+Authors (https://github.com/rsms/inter), licensed under the SIL Open Font License 1.1. The license text is in web/static/fonts/OFL.txt.
+
+three.js r160 (web/static/vendor/three.module.min.js, the unmodified single-file ES build from the `three` npm package, used for the 3D Scam Road game) is Copyright 2010-2023
+three.js authors, licensed under the MIT License. The license text is in web/static/vendor/LICENSE-three.txt.

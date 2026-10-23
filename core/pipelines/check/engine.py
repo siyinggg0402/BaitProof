@@ -102,8 +102,16 @@ class Case:
         return ""
 
 
+def claimed_org(ing: Ingested, it: Intent) -> str:
+    """The company the message is, or says it is from: named in the text, else the app or brand a screenshot showed (unverified, so it is only ever looked up)."""
+    if it.claimed_kind in ("organisation", "authority"):
+        return it.claimed
+    names = ing.origin.names() if ing.origin else []
+    return names[0] if names else ""
+
+
 def investigate(ing: Ingested, it: Intent, tr: Trace, run) -> Case:
-    f, gate = tools.run_tools(ing, tr, it.claimed if it.claimed_kind in ("organisation", "authority") else "")
+    f, gate = tools.run_tools(ing, tr, claimed_org(ing, it))
     case = Case(ing, it, f, gate, Ledger(), tr, run)
     analysis.rule_evidence(ing, it, f, case.ledger)
     if not case.model_pass():

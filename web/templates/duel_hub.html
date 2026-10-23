@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}{{ _("Live race") }} · Baitproof{% endblock %}
+{% block meta %}<link rel="stylesheet" href="/static/css/social.css">{% endblock %}
+{% block content %}
+<span class="pill rise"><b>{{ _("LIVE RACE") }}</b> {{ _("Same gates, same moment") }}</span>
+<h1 class="rise d1">{{ _("Race a friend, live") }}</h1>
+<p class="lead rise d2">{{ _("You and up to three friends drive the same 12 gates of Scam Road at the same time. See each other's cars as you go. The most right answers wins.") }}</p>
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+{% if not account %}
+<p><a class="btn big" href="/me">{{ _("Make your profile") }}</a> <a class="btn sec" href="/signin">{{ _("Log in") }}</a></p>
+{% else %}
+
+{% if invites %}
+<section class="card rise d2">
+  <h2>{{ _("Challenges for you") }}</h2>
+  <ul class="plain friends">{% for i in invites %}<li><span class="who"><span aria-hidden="true">{{ i.avatar }}</span> {{ _("{name} challenged you", name=i.host) }}</span><a class="btn" href="/duel/{{ i.code }}">{{ _("Join the race") }}</a></li>{% endfor %}</ul>
+</section>
+{% endif %}
+
+{% if mine %}
+<section class="card rise d2">
+  <h2>{{ _("Your open races") }}</h2>
+  <ul class="plain friends">{% for m in mine %}<li><span class="who">{{ m.code }} · {{ _("{n} drivers", n=m.players) }}</span><a class="btn sec" href="/duel/{{ m.code }}">{{ _("Open") }}</a></li>{% endfor %}</ul>
+</section>
+{% endif %}
+
+<section class="card rise d3">
+  <h2>{{ _("Challenge friends") }}</h2>
+  {% if friends %}
+  <form method="post" action="/duel/new" class="stack">
+    <ul class="plain pick">{% for f in friends %}
+      <li><label class="check"><input type="checkbox" name="pub" value="{{ f.pub }}"> <span class="who"><span aria-hidden="true">{{ f.avatar }}</span> {{ f.nickname }}</span>{% set r = records.get(f.pub) %}{% if r and (r[0] or r[1]) %} <em class="muted">{{ _("you {w}–{l}", w=r[0], l=r[1]) }}</em>{% endif %}</label></li>{% endfor %}
+    </ul>
+    <button class="big" type="submit">{{ _("Open a race") }}</button>
+    <p class="muted">{{ _("The friends you tick get a notification if they have turned them on. You can also share the race link.") }}</p>
+  </form>
+  {% else %}
+  <p>{{ _("Add a friend first, or open a race and send the link to anyone with a profile.") }}</p>
+  <form method="post" action="/duel/new"><button class="big" type="submit">{{ _("Open a race") }}</button></form>
+  <p><a href="/friends">{{ _("Add a friend") }}</a></p>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}{{ _("Family group") }} · Baitproof{% endblock %}
+{% block meta %}<link rel="stylesheet" href="/static/css/social.css">{% endblock %}
+{% block content %}
+<span class="pill rise"><b>{{ _("FAMILY") }}</b> {{ _("Share the scams you meet") }}</span>
+{% if not account %}
+<h1 class="rise d1">{{ _("Family group") }}</h1>
+<p class="lead rise d2">{{ _("Make a profile first. Then start a family group, or join one with a code, to share scams and race each other.") }}</p>
+<p><a class="btn big" href="/me">{{ _("Make your profile") }}</a> <a class="btn sec" href="/signin">{{ _("Log in") }}</a></p>
+{% elif not group %}
+<h1 class="rise d1">{{ _("Family group") }}</h1>
+<p class="lead rise d2">{{ _("A small group for your family. When someone gets a scam, they can share it, and it turns up as a gate in everyone else's games, so the rest of the family learns to spot it before it reaches them.") }}</p>
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+<div class="grid2 rise d3">
+  <section class="card">
+    <h2>{{ _("Start a family group") }}</h2>
+    <form method="post" action="/family/create" class="stack">
+      <label for="fname">{{ _("Family name") }}</label>
+      <input id="fname" name="name" minlength="2" maxlength="24" required>
+      <input type="hidden" name="consent_asked" value="1">
+      <label class="check"><input type="checkbox" name="share" value="yes" checked> {{ _("Share my practice progress with the family") }}</label>
+      <p class="muted">{{ _("Your score, your streak and which tricks you have practised. Never your messages. You can change this any time.") }}</p>
+      <button class="big" type="submit">{{ _("Start group") }}</button>
+    </form>
+  </section>
+  <section class="card">
+    <h2>{{ _("Join with a code") }}</h2>
+    <form method="post" action="/family/join/__" class="stack" id="join-form">
+      <label for="fcode">{{ _("Family code") }}</label>
+      <input id="fcode" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="K7M2QX" required>
+      <button class="big" type="submit">{{ _("Join group") }}</button>
+    </form>
+    <p class="muted">{{ _("You can also open an invite link someone sends you.") }}</p>
+  </section>
+</div>
+<p class="muted">{{ _("Only the scam's redacted text is ever shared (phone numbers, e-mail addresses and link paths removed), and you choose each one. Nobody sees your messages.") }}</p>
+{% else %}
+<h1 class="rise d1">👪 {{ group.name }}</h1>
+{% if shared %}<p class="added">{{ _("Shared! It will turn up as a gate in your family's games.") }}</p>{% endif %}
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+
+<section class="card rise d2" aria-labelledby="board-h">
+  {% set base = "/family" %}{% include "_board.html" %}
+  <p><a class="btn big" href="/road">{{ _("Drive Scam Road") }}</a></p>
+</section>
+
+<section class="card rise d3">
+  <h2>{{ _("Invite your family") }}</h2>
+  <p>{{ _("Send this code or link. Up to 12 people can be in a group.") }}</p>
+  <p class="code" aria-label="{{ _('Family code') }}">{{ group.code }}</p>
+  <p><a class="btn" href="/family/dashboard">📊 {{ _("Family dashboard") }}</a></p>
+  <div class="actions">
+    <button type="button" class="btn sec" data-copy="{{ invite }}" data-done="{{ _('Copied') }}">{{ _("Copy invite link") }}</button>
+    <a class="btn sec" target="_blank" rel="noopener" href="https://wa.me/?text={{ (_('Join our family group on Baitproof to share scams and learn to spot them:') ~ ' ' ~ invite)|urlencode }}">{{ _("Share on WhatsApp") }}</a>
+  </div>
+  {% if group.is_owner %}<form method="post" action="/family/code"><button class="ghost" type="submit">{{ _("Make a new family code") }}</button></form>{% endif %}
+</section>
+
+<section class="card rise d3">
+  <h2>{{ _("Who is in") }}</h2>
+  <ul class="plain friends">
+    {% for m in group.members %}
+    <li><span class="who"><span aria-hidden="true">{{ m.avatar }}</span> {{ m.nickname }}{% if m.owner %} <em>{{ _("(started the group)") }}</em>{% endif %}{% if m.you %} <em>{{ _("(you)") }}</em>{% endif %}</span>
+      {% if group.is_owner and not m.owner %}<form method="post" action="/family/remove"><input type="hidden" name="pub" value="{{ m.pub }}"><button class="ghost" type="submit" aria-label="{{ _('Remove {name}', name=m.nickname) }}">{{ _("Remove") }}</button></form>{% endif %}</li>
+    {% endfor %}
+  </ul>
+</section>
+
+<section class="card rise d4">
+  <h2>{{ _("Scams your family shared") }}</h2>
+  {% if group.scams %}
+  <ul class="plain shared">
+    {% for s in group.scams %}
+    <li><blockquote>{{ s.text }}</blockquote>
+      <div class="meta"><span class="muted">{{ _("Shared by {name}", name=s.by or "?") }}</span>
+      {% if s.mine or group.is_owner %}<form method="post" action="/family/unshare"><input type="hidden" name="scam" value="{{ s.id }}"><button class="ghost" type="submit">{{ _("Take it out") }}</button></form>{% endif %}</div></li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="muted">{{ _("Nothing yet. When one of you meets a scam, share it below.") }}</p>{% endif %}
+</section>
+
+<section class="card rise d4">
+  <h2>{{ _("Share a scam you met") }}</h2>
+  <p class="muted">{{ _("Only the redacted text below is shared: phone numbers, e-mail addresses and link paths are already removed. You choose each one.") }}</p>
+  {% if mine %}
+  <ul class="plain shared">
+    {% for e in mine %}
+    <li><blockquote>{{ e.text }}</blockquote>
+      <form method="post" action="/family/share"><input type="hidden" name="ex" value="{{ e.id }}"><button class="btn sec" type="submit">👪 {{ _("Share with my family") }}</button></form></li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="muted">{{ _("No new scams to share. Check a suspicious message and it will appear here.") }}</p>{% endif %}
+</section>
+
+<section class="card rise d5">
+  <h2>{{ _("Leave") }}</h2>
+  <form method="post" action="/family/leave"><button class="btn sec" type="submit">{{ _("Leave this group") }}</button></form>
+  {% if group.is_owner %}
+  <hr>
+  <p>{{ _("Closing the group removes it for everyone, along with the scams you shared.") }}</p>
+  <form method="post" action="/family/delete" class="stack">
+    <label class="check"><input type="checkbox" name="confirm" value="yes" required> {{ _("Yes, close the group") }}</label>
+    <button class="btn danger" type="submit">{{ _("Close the group") }}</button>
+  </form>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}
+{% block scripts %}<script src="/static/js/social.js"></script>{% endblock %}

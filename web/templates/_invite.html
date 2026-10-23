@@ -1,0 +1,6 @@
+{# how to hand your friend code to someone: the code itself, a copyable invite link, and WhatsApp #}
+<p class="code" aria-label="{{ _('Your friend code') }}">{{ account.friend_code }}</p>
+<div class="actions">
+  <button type="button" class="btn sec" data-copy="{{ invite }}" data-done="{{ _('Copied') }}">{{ _("Copy invite link") }}</button>
+  <a class="btn sec" target="_blank" rel="noopener" href="https://wa.me/?text={{ (_('Be my friend on Baitproof and see who spots scams best:') ~ ' ' ~ invite)|urlencode }}">{{ _("Share on WhatsApp") }}</a>
+</div>

@@ -64,7 +64,7 @@ async def read_screenshot(request: Request):
         return failure(e, lang)
     except Exception as e:
         return unexpected("read_image", e, lang)
-    return JSONResponse({"text": r.text, "sender": r.sender, "language": r.language, "links": list(r.links), "qr_urls": list(r.qr_urls), "legible": r.legible,
+    return JSONResponse({"text": r.text, "sender": r.sender, "channel": r.channel, "app": r.app, "language": r.language, "links": list(r.links), "qr_urls": list(r.qr_urls), "legible": r.legible,
                          "note": ui.tr(r.note, lang) if r.note else ""}, headers={"Cache-Control": "no-store"})
 
 

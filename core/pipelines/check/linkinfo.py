@@ -43,12 +43,16 @@ def build(ing: Ingested, f: Findings, reply: str) -> list[LinkInfo]:
         age, dns = f.ages.get(host), f.dns.get(host)
         cert = f.certs.get(host) if age is None else None  # the certificate log stands in for the registry only when the registry said nothing
         listed = host in f.listed and not official
+        owner = f.owned_by(host) if not official else ""
+        registrant = f.owners.get(host, {}).get("registrant", "")
         notes: list[str] = []
         for w in (hard or []) + (soft or []):
             if "shortener" not in w:  # the label already says it
                 notes.append(T("This address {why}", why=why_text(w, reply)))
         if listed:
             notes.append(T("It is on a public list of known phishing websites"))
+        if registrant:
+            notes.append(T("Registered to {name}", name=registrant))  # the registry's record, written by whoever registered it: shown, not trusted
         if age is not None:
             notes.append(_age_note(age, T))
         elif cert is not None:
@@ -68,6 +72,8 @@ def build(ing: Ingested, f: Findings, reply: str) -> list[LinkInfo]:
             status, label = "known_phishing", T("Known phishing website")
         elif imitated:
             status, label = "lookalike", T("Looks like {official} but isn't", official=imitated.group("official"))
+        elif owner:
+            status, label = "official", T("Registered by {org} itself", org=owner.title())
         elif host in SHORTENERS:
             status = "shortener"
             label = T("A short link that goes to {dest}", dest=expanded) if expanded else T("A short link: it hides where it really goes")

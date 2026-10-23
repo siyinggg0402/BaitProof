@@ -13,7 +13,8 @@ from .intent import Intent
 from .knowledge import SHORTENERS
 from .tools import SPECS, Findings, ToolGate
 
-MAX_CALLS_PER_ROUND = 3
+MAX_CALLS_PER_ROUND = 4
+ALWAYS = ("official_site_wikidata", "domain_owner")  # cheap, and each settles a question the others cannot: who the company is, and who registered the address. The model may add and order calls but not skip these
 
 
 @dataclass
@@ -29,18 +30,20 @@ def open_questions(ing: Ingested, it: Intent, f: Findings, gate: ToolGate) -> li
     for url, dest in f.shorts.items():  # a short link says nothing about itself: where it goes comes first
         if not dest and gate.available("expand_link", url, f.done):
             qs.append(Question(f"short:{url}", f"Where does the short link {url[:60]} really go?", [("expand_link", url)]))
-    unofficial = [h for h in f.hosts if h not in f.official_hosts and h not in SHORTENERS]  # a shortener's own age and reputation are beside the point
+    unofficial = [h for h in f.hosts if h not in f.official_hosts and h not in SHORTENERS and not f.owned_by(h)]  # a shortener's own age and reputation are beside the point
+    org = it.claimed if it.claimed_kind in ("organisation", "authority") else (ing.entities.brands[0] if ing.entities.brands else "")
+    if not org and ing.origin and ing.origin.names():
+        org = ing.origin.names()[0]  # the app or brand a screenshot showed
+    if org and (unofficial or not f.orgs_real):  # a link to compare, or just: is this a real company? Asked first: it is cheap, and a registrant is compared with it
+        calls = [(t, org) for t in ("official_site_wikidata", "brand_lookup") if gate.available(t, org, f.done)]
+        if calls:
+            qs.append(Question("brand", f"Is that link really {org}'s website?" if unofficial else f"Is {org} a real company?", calls))
     for h in unofficial:
         # cert_history is asked alongside domain_age (not after it): the registry often has no answer for a country domain, and a second round just to find
         # that out would use up the loop's round limit. Its evidence is only used when the registry gave no age.
-        calls = [(t, h) for t in ("domain_age", "dns_check", "cert_history", "reputation") if gate.available(t, h, f.done)]
+        calls = [(t, h) for t in ("domain_age", "domain_owner", "dns_check", "cert_history", "reputation") if gate.available(t, h, f.done)]
         if calls:
             qs.append(Question(f"host:{h}", f"Is {h} a trustworthy website?", calls))
-    org = it.claimed if it.claimed_kind in ("organisation", "authority") else (ing.entities.brands[0] if ing.entities.brands else "")
-    if org and unofficial:
-        calls = [(t, org) for t in ("official_site_wikidata", "brand_lookup") if gate.available(t, org, f.done)]
-        if calls:
-            qs.append(Question("brand", f"Is that link really {org}'s website?", calls))
     if it.disagreements:
         qs.append(Question("recheck", "The rules and the AI disagree about what kind of scam this is: " + "; ".join(it.disagreements)))
     return qs
@@ -77,4 +80,7 @@ def llm_plan(ing: Ingested, qs: list[Question], ledger: Ledger, gate: ToolGate, 
             if key in candidates and key not in seen:  # only calls we offered: the model can't invent tools or arguments
                 seen.add(key)
                 picked.append(key)
-    return (picked[:MAX_CALLS_PER_ROUND], "model") if picked else (fallback, "rules")
+    if not picked:
+        return fallback, "rules"
+    must = [c for q in qs for c in q.calls if c[0] in ALWAYS and c not in picked]  # offered, and the model left them out
+    return ((must + picked)[:MAX_CALLS_PER_ROUND], "model")

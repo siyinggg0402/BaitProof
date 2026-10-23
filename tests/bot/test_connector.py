@@ -218,3 +218,12 @@ def test_main_registers_the_new_commands_and_the_button_handler(monkeypatch):
     commands = {c for h in handlers_ if isinstance(h, CommandHandler) for c in h.commands}
     assert commands >= {"start", "help", "score", "link", "unlink", "history", "lang", "quiz", "play", "challenge"}
     assert sum(isinstance(h, CallbackQueryHandler) for h in handlers_) == 1 and sum(isinstance(h, MessageHandler) for h in handlers_) == 3  # text, pictures, voice
+
+
+def test_a_forwarded_message_names_who_it_came_from():
+    from types import SimpleNamespace as NS
+    assert telegram_bot.forwarded_from(NS(forward_origin=None)) == "" and telegram_bot.forwarded_from(NS()) == ""
+    assert telegram_bot.forwarded_from(NS(forward_origin=NS(sender_user=NS(first_name="Mei", last_name="Tan")))) == "Mei Tan"
+    assert telegram_bot.forwarded_from(NS(forward_origin=NS(sender_user=None, sender_user_name="Hidden Name", chat=None, sender_chat=None))) == "Hidden Name"
+    assert telegram_bot.forwarded_from(NS(forward_origin=NS(chat=NS(title="Daily Deals"), sender_user=None))) == "Daily Deals"
+    assert telegram_bot.forwarded_from(NS(forward_origin=NS(sender_chat=NS(title="Group X"), sender_user=None, chat=None))) == "Group X"

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}{{ _("My profile") }} · Baitproof{% endblock %}
+{% block meta %}<link rel="stylesheet" href="/static/css/social.css">{% endblock %}
+{% block content %}
+<span class="pill rise"><b>{{ _("YOUR PROFILE") }}</b> {{ _("Friends, scores and signing in") }}</span>
+{% if account %}
+<h1 class="rise d1"><span aria-hidden="true">{{ account.avatar }}</span> {{ account.nickname }}</h1>
+{% if new_key %}
+<section class="card keybox rise d2" aria-live="polite">
+  {% if joined %}<p class="added">{{ _("You and {name} are now friends.", name=joined) }}</p>{% endif %}
+  <h2>{{ _("Your sign-in key") }}</h2>
+  <p class="code key" id="the-key">{{ new_key }}</p>
+  <p>{{ _("Save it somewhere safe. It is shown only now. It lets you use this profile on another phone or computer.") }}</p>
+  <button type="button" class="btn" data-copy="{{ new_key }}" data-done="{{ _('Copied') }}">{{ _("Copy key") }}</button>
+</section>
+{% endif %}
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+
+<section class="card rise d3">
+  <h2>{{ _("Your friend code") }}</h2>
+  <p>{{ _("Send this to a friend. When they enter it, or open your invite link, you become friends and see each other's scores.") }}</p>
+  {% include "_invite.html" %}
+  <div class="actions"><a class="btn" href="/friends">{{ _("See my friends") }}</a><a class="btn sec" href="/road">{{ _("Drive Scam Road") }}</a></div>
+</section>
+
+<section class="card rise d4">
+  <h2>{{ _("Change name or avatar") }}</h2>
+  <form method="post" action="/me/update" class="stack">
+    <label for="nick">{{ _("Nickname") }}</label>
+    <input id="nick" name="nickname" value="{{ account.nickname }}" minlength="2" maxlength="16" autocomplete="nickname" required>
+    {% set current = account.avatar %}{% include "_avatars.html" %}
+    <button class="big" type="submit">{{ _("Save") }}</button>
+  </form>
+</section>
+
+<section class="card rise d5">
+  <h2>{{ _("Sign in on another device") }}</h2>
+  <p>{{ _("On the other device, choose Log in and type your sign-in key. We only keep a scrambled copy of it, so we cannot show it again.") }}</p>
+  <p class="muted">{{ _("Lost it, or shared it by mistake? Make a new one. The old key stops working at once.") }}</p>
+  <form method="post" action="/me/key"><button class="btn sec" type="submit">{{ _("Make a new key") }}</button></form>
+  <hr>
+  <p class="muted">{{ _("Changed your mind about who has your friend code? A new code stops the old code and link. Friends you already have stay.") }}</p>
+  <form method="post" action="/me/code"><button class="btn sec" type="submit">{{ _("Make a new friend code") }}</button></form>
+</section>
+
+<section class="card rise d5">
+  <h2>{{ _("Leave") }}</h2>
+  {% if multiuser %}
+  <p>{{ _("Signing out gives this device a fresh, empty profile. Come back any time with your key.") }}</p>
+  <form method="post" action="/signout"><button class="btn sec" type="submit">{{ _("Sign out of this device") }}</button></form>
+  <hr>
+  {% endif %}
+  <p>{{ _("Deleting your profile removes your nickname, your friends and your scores. Your records and practice stay until you delete them on the Records page.") }}</p>
+  <form method="post" action="/me/delete" class="stack">
+    <label class="check"><input type="checkbox" name="confirm" value="yes" required> {{ _("Yes, delete my profile") }}</label>
+    <button class="btn danger" type="submit">{{ _("Delete my profile") }}</button>
+  </form>
+</section>
+
+{% else %}
+<h1 class="rise d1">{{ _("Make your profile") }}</h1>
+<p class="lead rise d2">{{ _("Pick a nickname and an avatar to play with friends. No email and no password: you get a sign-in key for your other devices.") }}</p>
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+<section class="card rise d3 narrow">
+  <form method="post" action="/me/create" class="stack">
+    {% if join %}<input type="hidden" name="join" value="{{ join }}">{% endif %}
+    <label for="nick">{{ _("Nickname") }}</label>
+    <input id="nick" name="nickname" value="{{ nickname or '' }}" minlength="2" maxlength="16" autocomplete="nickname" required>
+    <p class="muted">{{ _("2 to 16 letters or numbers. Your friends see this name, your avatar and your scores, nothing else.") }}</p>
+    {% set current = '' %}{% include "_avatars.html" %}
+    <button class="big" type="submit">{{ _("Create my profile") }}</button>
+  </form>
+  <p class="muted">{{ _("Already have a profile on another device?") }} <a href="/signin">{{ _("Log in with your key") }}</a></p>
+</section>
+{% endif %}
+{% endblock %}
+{% block scripts %}<script src="/static/js/social.js"></script>{% endblock %}

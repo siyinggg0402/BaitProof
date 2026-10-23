@@ -19,7 +19,7 @@ if (form && window.fetch && window.ReadableStream) {
     live.scrollIntoView({ behavior: "smooth", block: "nearest" });
     const fallback = () => { btn.disabled = false; live.hidden = true; form.submit(); };
     try {
-      const res = await fetch("/api/check/stream", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: msg, source: document.getElementById("source")?.value || "text" }) });
+      const res = await fetch("/api/check/stream", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: msg, source: document.getElementById("source")?.value || "text", origin_channel: document.getElementById("origin-channel")?.value || "", origin_app: document.getElementById("origin-app")?.value || "", origin_sender: document.getElementById("origin-sender")?.value || "" }) });
       if (!res.ok || !res.body) return fallback();
       const reader = res.body.getReader(), dec = new TextDecoder();
       let buf = "", doneId = null;
@@ -49,3 +49,15 @@ if (form && window.fetch && window.ReadableStream) {
     } catch (_) { fallback(); }
   });
 }
+
+// "Try an example" buttons fill the box
+document.querySelectorAll("[data-example]").forEach((b) =>
+  b.addEventListener("click", () => {
+    const t = document.getElementById("message");
+    t.value = b.dataset.example;
+    t.focus();
+  })
+);
+
+// something shared from another app (the phone's Share menu) is checked at once: the person already chose to send it here
+if (form && form.dataset.autocheck === "1" && document.getElementById("message")?.value.trim()) setTimeout(() => (form.requestSubmit ? form.requestSubmit() : form.submit()), 350);

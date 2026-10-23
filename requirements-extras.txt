@@ -3,3 +3,4 @@
 faster-whisper>=1.0            # voice notes to text on this machine (CPU, int8). Off with BAITPROOF_STT=0. The speech model (~145 MB for the default "base")
                                # downloads once, the first time a voice note (or warmup) needs it; nothing is sent anywhere. Bundles PyAV, which decodes ogg/opus, webm, m4a, mp3, wav.
 opencv-python-headless>=4.8    # reads QR codes in screenshots locally, so the address inside can be checked (without it a QR code only gets a "do not scan" warning)
+pywebpush>=2.0                 # "a friend just passed you" notifications on phones and computers (Web Push). Also needs `python -m scripts.ops.make_vapid` once, to make the site's own keys.

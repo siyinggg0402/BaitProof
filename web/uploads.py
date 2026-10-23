@@ -42,8 +42,8 @@ class Upload:
 class _Collector:
     """Receives the multipart parser's callbacks and keeps only the `file` part and a few short text fields, in memory."""
 
-    def __init__(self, limit: int) -> None:
-        self.limit, self.up = limit, Upload()
+    def __init__(self, limit: int, file_field: str = "file", field_max: int = FIELD_MAX) -> None:
+        self.limit, self.file_field, self.field_max, self.up = limit, file_field, field_max, Upload()
         self._hname = self._hval = b""
         self._begin()
 
@@ -68,12 +68,12 @@ class _Collector:
         _, options = parse_options_header(self.headers.get(b"content-disposition", b""))
         self.name = options.get(b"name", b"").decode("utf-8", "replace")
         self.is_file = b"filename" in options
-        self.keep = self.name == "file" if self.is_file else len(self.up.fields) < FIELDS_MAX
+        self.keep = self.name == self.file_field if self.is_file else len(self.up.fields) < FIELDS_MAX
 
     def on_part_data(self, data: bytes, start: int, end: int) -> None:
         if not self.keep:
             return
-        room = (self.limit if self.is_file else FIELD_MAX) - len(self.buf)
+        room = (self.limit if self.is_file else self.field_max) - len(self.buf)
         if end - start > room:
             if self.is_file:
                 raise UploadError("too_big")  # never hold more than the limit
@@ -94,8 +94,9 @@ class _Collector:
         pass
 
 
-async def read_upload(request: Request, limit: int) -> Upload:
-    """The `file` part of a multipart POST (at most `limit` bytes) and its small text fields. Raises UploadError."""
+async def read_upload(request: Request, limit: int, *, file_field: str = "file", field_max: int = FIELD_MAX, require_file: bool = True) -> Upload:
+    """The `file_field` part of a multipart POST (at most `limit` bytes) and its small text fields (at most `field_max` characters each). Raises UploadError.
+    `require_file=False` is for a phone's Share menu, which may send only words."""
     kind, params = parse_options_header(request.headers.get("content-type", ""))
     boundary = params.get(b"boundary")
     if kind != b"multipart/form-data" or not boundary:
@@ -103,7 +104,7 @@ async def read_upload(request: Request, limit: int) -> Upload:
     declared = request.headers.get("content-length", "")
     if declared.isdigit() and int(declared) > limit + OVERHEAD:
         raise UploadError("too_big")  # said so up front: refuse without reading it
-    sink = _Collector(limit)
+    sink = _Collector(limit, file_field, field_max)
     callbacks = {name: getattr(sink, name) for name in (
         "on_part_begin", "on_part_data", "on_part_end", "on_header_field", "on_header_value", "on_header_end", "on_headers_finished", "on_end")}
     parser = MultipartParser(boundary, callbacks)
@@ -117,6 +118,6 @@ async def read_upload(request: Request, limit: int) -> Upload:
         parser.finalize()
     except (FormParserError, ClientDisconnect) as e:
         raise UploadError("no_file") from e
-    if not sink.up.data:
+    if require_file and not sink.up.data:
         raise UploadError("no_file")
     return sink.up

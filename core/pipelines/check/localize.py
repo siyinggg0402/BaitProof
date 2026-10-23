@@ -9,12 +9,20 @@ import json
 from core.ai import llm
 from core.ai.prompts import LOCALIZE_SYSTEM
 from core.lang import i18n
-from core.lang.text import CJK, to_simplified
+from core.lang.text import CJK, detect, to_simplified
 
 
 def in_script(text: str, lang: str) -> bool:
-    """Is this text already in the reader's language? Only Chinese needs checking: English is what the model writes by default."""
-    return not text.strip() or i18n.norm(lang) == "en" or bool(CJK.search(text))
+    """Is this text already in the reader's language? English is what the model writes by default, so only Chinese and Malay need checking."""
+    if not text.strip() or i18n.norm(lang) == "en":
+        return True
+    if i18n.norm(lang) == "ms":
+        return detect(text) == "ms"
+    return bool(CJK.search(text))
+
+
+def _is_in(lang: str, text: str) -> bool:
+    return detect(text) == "ms" if i18n.norm(lang) == "ms" else bool(CJK.search(text))
 
 
 def convert_script(text: str, lang: str) -> str:
@@ -33,7 +41,7 @@ def translate(texts: list[str], lang: str) -> list[str] | None:
     except llm.LLMUnavailable:
         return None
     items = out.get("items") if isinstance(out, dict) else None
-    if not isinstance(items, list) or len(items) != len(texts) or not all(isinstance(x, str) and CJK.search(x) for x in items):
+    if not isinstance(items, list) or len(items) != len(texts) or not all(isinstance(x, str) and _is_in(lang, x) for x in items):
         return None
     return [convert_script(x.strip(), lang) for x in items]
 

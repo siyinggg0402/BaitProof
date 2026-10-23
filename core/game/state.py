@@ -1,4 +1,4 @@
-"""A person's game progress, kept in their own profile: XP, level, streak, badges. No accounts, no leaderboard."""
+"""A person's game progress, kept in their own profile: XP, level, streak, badges. (The friends' leaderboard is separate: core/storage/runs.py.)"""
 from __future__ import annotations
 
 import json
@@ -10,7 +10,8 @@ from core.domain.tactics import TACTICS
 from core.storage import db
 
 DEFAULT = {"xp": 0, "rounds": 0, "correct_total": 0, "best_combo": 0, "streak": 0, "best_streak": 0, "last_play": "", "daily_done": "",
-           "badges": [], "boss_won": [], "yours_correct": 0, "tells_found": 0, "seen": []}
+           "badges": [], "boss_won": [], "yours_correct": 0, "tells_found": 0, "seen": [], "garage": {"car": "plum", "hat": "none"}, "road_daily_count": 0, "road_daily_last": "",
+           "duel_wins": 0, "duels_played": 0}
 TITLES = ["Rookie", "Spotter", "Sleuth", "Detective", "Guardian", "Sentinel", "Scam Slayer"]
 
 BADGES: dict[str, tuple[str, str]] = {
@@ -24,6 +25,12 @@ BADGES: dict[str, tuple[str, str]] = {
     "level-5": ("Guardian", "Reach level 5"),
     "yours-5": ("Family detective", "Spot 5 scams that reached your own family"),
     "tell-5": ("Eagle eye", "Find the giveaway in 5 messages"),
+    "road-500": ("Road tripper", "Drive 500 metres on Scam Road in one go"),
+    "road-ahead": ("Out in front", "Drive past a friend's best on Scam Road"),
+    "road-daily": ("Daily driver", "Finish a Daily Road"),
+    "link-10": ("Link sleuth", "Spot 10 fake links in one Link Hunt"),
+    "duel-win": ("Duelist", "Win a live race"),
+    "duel-5": ("Race champion", "Win 5 live races"),
     **{f"boss:{t}": (f"Master of “{v['label']}”", f"Beat the {v['label'].lower()} boss") for t, v in TACTICS.items()},
 }
 

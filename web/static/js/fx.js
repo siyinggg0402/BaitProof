@@ -53,3 +53,45 @@ if (bubble) {
     }
   })();
 }
+
+// ---- a soft light under the pointer, and a tilt toward it; a ripple where a button is pressed
+(() => {
+  const LIT = ".card,.mode-card,.tile,.mock,.kpi", TILT = ".mode-card,.tile,.mock", PRESS = ".btn,button.big,a.big,.ghost,.speak,.inbtn,.choice,nav .cta";
+  let cur = null, ev = null, queued = 0;
+  const rest = (el) => { if (el) { el.style.removeProperty("--rx"); el.style.removeProperty("--ry"); } };
+  function apply() {
+    queued = 0;
+    const e = ev, el = e.target.closest ? e.target.closest(LIT) : null;
+    if (el !== cur) { rest(cur); cur = el; }
+    if (!el) return;
+    const r = el.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+    el.style.setProperty("--mx", x + "px"); el.style.setProperty("--my", y + "px");
+    if (!reduce && el.matches(TILT) && r.width < 760) { // big panels stay still; small cards lean toward the pointer
+      el.style.setProperty("--ry", ((x / r.width - 0.5) * 9).toFixed(2) + "deg");
+      el.style.setProperty("--rx", ((0.5 - y / r.height) * 9).toFixed(2) + "deg");
+    }
+  }
+  document.addEventListener("pointermove", (e) => { if (e.pointerType !== "mouse") return; ev = e; if (!queued) queued = requestAnimationFrame(apply); }, { passive: true });
+  document.addEventListener("pointerout", (e) => { if (!e.relatedTarget) { rest(cur); cur = null; } }, { passive: true }); // the pointer left the window
+  if (reduce) return;
+  document.addEventListener("pointerdown", (e) => {
+    const b = e.target.closest ? e.target.closest(PRESS) : null;
+    if (!b || b.disabled) return;
+    const r = b.getBoundingClientRect(), d = Math.max(r.width, r.height) * 2, s = document.createElement("span");
+    s.className = "rip";
+    s.style.width = s.style.height = d + "px"; s.style.left = (e.clientX - r.left - d / 2) + "px"; s.style.top = (e.clientY - r.top - d / 2) + "px";
+    b.append(s);
+    s.addEventListener("animationend", () => s.remove());
+  }, { passive: true });
+  // when a verdict arrives, a ripple spreads from it
+  const slot = document.getElementById("result-slot");
+  if (slot && window.MutationObserver) {
+    new MutationObserver(() => {
+      const card = document.getElementById("result");
+      if (!card || card.dataset.splashed) return;
+      card.dataset.splashed = "1";
+      const b = card.getBoundingClientRect();
+      if (window.bpSplash) window.bpSplash(b.left + b.width / 2, Math.min(Math.max(b.top + 70, 90), innerHeight - 90), 1.25);
+    }).observe(slot, { childList: true, subtree: true });
+  }
+})();

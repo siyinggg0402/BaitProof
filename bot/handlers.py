@@ -9,6 +9,7 @@ import hashlib
 import inspect
 import logging
 import os
+import queue
 import re
 import threading
 import time
@@ -16,29 +17,32 @@ from collections import OrderedDict
 from dataclasses import dataclass, field
 
 from core import obs
-from core.domain import privacy
+from core.domain import helplines, privacy
 from core.game import engine
 from core.game import state as game_state
 from core.inputs import audio, image
 from core.inputs.errors import InputError
 from core.lang import i18n
 from core.lang.i18n import tactic_text, tr
-from core.domain.schemas import CheckResult, LinkInfo, Verdict
+from core.domain.schemas import CheckResult, LinkInfo, Origin, Verdict
 from core.domain.tactics import TACTICS
 from core.pipelines import challenge
 from core.pipelines.check import check_message
-from core.storage import db, history, links, model
+from core.pipelines.check.origin import make as make_origin
+from core.storage import db, family, history, links, model
 
 log = logging.getLogger(__name__)
 
-WELCOME = ("Hi! I'm Baitproof 🛡️\n\nForward or paste any message you're unsure about and I'll tell you if it's a scam, "
+WELCOME = ("Hi! I'm Finn 🐟, Baitproof's scam-spotting fish. I never take the bait!\n\nForward or paste any message you're unsure about and I'll tell you if it's a scam, "
            "show you the one giveaway, and add that trick to your practice.\n"
            "You can also send a screenshot or a voice note.\n\n"
            "/quiz is a quick game: scam or not? (/quiz daily is today's Daily Challenge.)\n"
            "/challenge makes a link to send your family, to see if they can spot the scam too.\n\n"
            "/link CODE connects this chat to your Baitproof web profile, so everything you check here shows up in your records.\n"
            "/history shows your latest checks, /score your Baitproof score, /unlink disconnects.\n"
-           "/lang chooses the language: /lang en, /lang zh (简体中文) or /lang zh-Hant (繁體中文).\n"
+           "/report shows who to call, and where to report a scam, if you have already paid or shared something.\n"
+           "/family lets someone you trust get a short note when you meet a scam (they never see your messages). /safeword explains a simple trick against fake \"it's me\" messages.\n"
+           "/lang chooses the language: /lang en, /lang ms (Bahasa Melayu), /lang zh (简体中文) or /lang zh-Hant (繁體中文).\n"
            "I keep the tricks I see, not your messages.")
 ICON = {Verdict.SCAM: "🚨", Verdict.LIKELY_SCAM: "⚠️", Verdict.SAFE: "✅", Verdict.UNSURE: "❓", Verdict.VICTIM: "💛"}
 
@@ -117,8 +121,18 @@ def format_result(r: CheckResult) -> str:
     if r.action:
         sections.append(tr("What to do: {action}", L, action=_defang(r.action)))
     tail = []
+    if r.origin_note:  # where it seems to have come from: said back, so the person can see what was understood
+        tail.append("📍 " + _defang(r.origin_note))
+    if r.verdict == Verdict.SAFE:  # a "safe" is only worth something if it says what it rests on
+        proofs = [e.claim for e in r.evidence if e.kind == "tool" and e.supports == "safe" and e.source in ("org-verified", "domain_owner", "brand_lookup", "established-links")][:2]
+        if proofs:
+            tail.append("🔎 " + tr("What I checked:", L) + " " + "; ".join(_defang(c) for c in proofs))
     if r.links:
         tail.append(format_links(r.links, L))
+    if r.verdict in (Verdict.SCAM, Verdict.LIKELY_SCAM):
+        tail.append(helplines.short(L))
+    elif r.verdict == Verdict.VICTIM:  # someone who says they were fooled: the whole list, not a hint
+        tail.append(helplines.text(L))
     if r.added_to_training:
         tail.append(tr("📚 Added to your practice: {tricks}", L, tricks=_sep(L).join(tactic_text(t, "label", L, TACTICS) for t in r.added_to_training)))
     end = "".join("\n\n" + s for s in tail)
@@ -126,35 +140,40 @@ def format_result(r: CheckResult) -> str:
 
 
 def _sep(lang: str) -> str:
-    return ", " if i18n.norm(lang) == "en" else "、"
+    return "、" if i18n.norm(lang) in ("zh", "zh-Hant") else ", "
 
 
-def _checked(linked: bool, text: str, L: str | None, source: str = "text") -> tuple[CheckResult, Reply]:
+def _checked(linked: bool, text: str, L: str | None, source: str = "text", origin: Origin | None = None, chat_id: int | None = None) -> tuple[CheckResult, Reply]:
     """Check `text` and record it. `source` says how the message reached us (text | screenshot | voice); for the last two `text` is what was READ or
     HEARD, and that is what the record's (redacted) preview comes from. Returns the result and the reply that shows it."""
     extra = {}
+    accepted = inspect.signature(check_message).parameters
     if source != "text":  # tell the pipeline where the text came from, if this version of it knows how to take that
-        accepted = inspect.signature(check_message).parameters
         extra = {k: v for k, v in (("source", source), ("read_text", text)) if k in accepted}
+    if origin is not None:
+        extra["origin"] = origin
     result = check_message(text, lang=L, **extra)
     if source != "text":  # and if it does not, say it here
         if result.source == "text":
             result.source = source
         result.read_text = result.read_text or text
     history.add(result, "telegram", text)  # the record: verdict, tricks, giveaway and a short redacted preview, never the raw message
+    if chat_id is not None:
+        _family_notify(result, chat_id)
     out = format_result(result)
     if linked and web_url():
         out += "\n\n" + tr("🗂 Saved to your records: {url}", result.lang, url=web_url("/records"))
     return result, Reply(out[:4000], _practice_buttons(result.lang) if result.added_to_training else [])
 
 
-def on_check(chat_id: int, text: str, lang_hint: str | None = None) -> list[Reply]:
-    """A pasted or forwarded message: the verdict, and (when it taught a trick) buttons to practise it or to challenge the family."""
+def on_check(chat_id: int, text: str, lang_hint: str | None = None, forwarded_from: str = "") -> list[Reply]:
+    """A pasted or forwarded message: the verdict, and (when it taught a trick) buttons to practise it or to challenge the family.
+    `forwarded_from` is who or what Telegram says a forwarded message came from (empty for a message typed or pasted in)."""
     linked = bind_chat(chat_id)
     L = chat_lang(lang_hint)
     if not text.strip():
-        return [Reply(tr("Send me the message you want checked.", L or "en"))]
-    return [_checked(linked, text, L)[1]]
+        return [Reply(tr("Send me the message you want checked. 🐟", L or "en"))]
+    return [_checked(linked, text, L, origin=make_origin(forwarded_from=forwarded_from), chat_id=chat_id)[1]]
 
 
 def on_text(chat_id: int, text: str, lang_hint: str | None = None) -> str:
@@ -193,14 +212,100 @@ def on_unlink(chat_id: int, lang_hint: str | None = None) -> str:
 
 
 def on_lang(chat_id: int, arg: str, lang_hint: str | None = None) -> str:
-    """/lang en | zh | zh-Hant: remembered for this chat (in its profile settings)."""
+    """/lang en | ms | zh | zh-Hant: remembered for this chat (in its profile settings)."""
     bind_chat(chat_id)
     a = arg.strip()
-    if a.lower() not in ("en", "zh", "zh-hans", "zh-cn", "zh-hant", "zh-tw", "zh-hk", "cn", "tw"):
-        return tr("Send /lang en, /lang zh or /lang zh-Hant.", chat_lang(lang_hint) or "en")
+    if a.lower() not in ("en", "ms", "bm", "malay", "zh", "zh-hans", "zh-cn", "zh-hant", "zh-tw", "zh-hk", "cn", "tw"):
+        return tr("Send /lang en, /lang ms, /lang zh or /lang zh-Hant.", chat_lang(lang_hint) or "en")
     chosen = i18n.norm("zh-Hant" if a.lower() in ("tw", "zh-tw", "zh-hk", "zh-hant") else a)
     history.set_setting("tg_lang", chosen)
-    return {"en": "Language set to English.", "zh": "已切换为简体中文。", "zh-Hant": "已切換為繁體中文。"}[chosen]
+    return {"en": "Language set to English.", "zh": "已切换为简体中文。", "zh-Hant": "已切換為繁體中文。", "ms": "Bahasa ditetapkan kepada Bahasa Melayu."}[chosen]
+
+
+def on_report(chat_id: int, lang_hint: str | None = None) -> str:
+    """/report: who to call and where to report a scam (Singapore and Malaysia), in the chat's language."""
+    bind_chat(chat_id)
+    return helplines.text(chat_lang(lang_hint) or "en")
+
+
+# ---------------------------------------------------------------- family alerts and the safe word
+ALERTS: "queue.SimpleQueue[tuple[int, str]]" = queue.SimpleQueue()  # (chat id, text) to send to someone ELSE; the connector drains it after it has answered
+
+
+def take_alerts() -> list[tuple[int, str]]:
+    """Messages for other chats that the last checks produced (a family helper's note). The connector sends them."""
+    out = []
+    while True:
+        try:
+            out.append(ALERTS.get_nowait())
+        except queue.Empty:
+            return out
+
+
+def _family_notify(r: CheckResult, chat_id: int) -> None:
+    """Tell this person's family helpers (if they chose any) that they just met a scam, or may have been fooled. Only the verdict and the NAMES of the tricks
+    go out: never the message, its words, its links or its numbers."""
+    if r.verdict not in (Verdict.SCAM, Verdict.LIKELY_SCAM, Verdict.VICTIM):
+        return
+    profile = db._profile.get() or links.LOCAL
+    helpers = [h for h in family.helpers_of(profile) if h["chat_id"] != str(chat_id)]
+    if not helpers or not family.may_alert(profile):
+        return
+    for h in helpers:
+        L = h["lang"] or "en"
+        who = h["name"] or tr("A family member", L)
+        if r.verdict == Verdict.VICTIM:
+            text = tr("🚨 {who} may have already paid or shared something with a scammer. Please call them now. If money was sent, they should call their bank straight away. More: /report", L, who=who)
+        else:
+            tricks = _sep(L).join(tactic_text(t.id, "label", L, TACTICS) for t in r.tactics[:3])
+            text = tr("👪 {who} just checked a message that looks like a scam.", L, who=who) + (" " + tr("Tricks: {tricks}.", L, tricks=tricks) if tricks else "")
+            text += "\n" + tr("Why not give them a call, to check they're okay and haven't paid or shared anything? Tip: agree a family safe word (/safeword).", L)
+        ALERTS.put((int(h["chat_id"]), text))
+
+
+def on_family(chat_id: int, arg: str = "", lang_hint: str | None = None) -> str:
+    """/family [name] makes a code for a family helper; /family off stops all alerts about you."""
+    bind_chat(chat_id)
+    L = chat_lang(lang_hint) or "en"
+    profile = db._profile.get() or links.LOCAL
+    if arg.strip().lower() == "off":
+        gone = family.stop_for_owner(profile)
+        for h in gone:
+            ALERTS.put((int(h["chat_id"]), tr("You will no longer get family alerts about {who}.", h["lang"] or "en", who=h["name"] or tr("a family member", h["lang"] or "en"))))
+        return tr("Done. Nobody gets alerts about your checks any more.", L) if gone else tr("Nobody was getting alerts about your checks.", L)
+    if _too_many_attempts(chat_id):
+        return tr("Too many tries. Please wait a few minutes and get a fresh code from the website.", L)
+    code = family.new_code(profile, chat_id, arg)
+    n = family.count(profile)
+    out = tr("👪 Family alerts\n\nAsk someone you trust to send me this in their own chat (it works for 10 minutes):\n\n/guard {code}\n\nThen, when you check a message that looks like a scam, they get a short note that you checked one and which tricks it uses. They never see your messages. Stop it any time with /family off.", L, code=code)
+    if n:
+        out += "\n\n" + tr("Right now {n} family helper(s) get these alerts.", L, n=n)
+    return out
+
+
+def on_guard(chat_id: int, arg: str = "", lang_hint: str | None = None, who: str = "") -> str:
+    """/guard CODE: become a family helper for someone; /guard off: stop being one."""
+    bind_chat(chat_id)
+    L = chat_lang(lang_hint) or "en"
+    a = arg.strip()
+    if a.lower() == "off":
+        left = family.stop_for_helper(chat_id)
+        return tr("Done. You won't get family alerts any more.", L) if left else tr("You weren't getting any family alerts.", L)
+    if not a:
+        return tr("Send /guard followed by the 6-character code your family member got from /family, for example /guard K7M2QX. To stop getting alerts: /guard off.", L)
+    if _too_many_attempts(chat_id):
+        return tr("Too many tries. Please wait a few minutes and get a fresh code from the website.", L)
+    got = family.redeem(a, chat_id, L)
+    if got is None:
+        return tr("That code didn't work. It may have expired (they last 10 minutes), been used already, or this person already has the most helpers. Ask them for a fresh one with /family.", L)
+    ALERTS.put((int(got["owner_chat"]), tr("👪 {who} is now a family helper: they get a short note when you check something that looks like a scam, never your messages. Stop it any time with /family off.", chat_lang() or "en", who=(who or tr("Someone you invited", chat_lang() or "en")))))
+    name = got["name"] or tr("them", L)
+    return tr("👪 You're now a family helper for {name}. When they check a message that looks like a scam, I'll tell you, so you can give them a call. I never pass on what their messages say. To stop: /guard off.", L, name=name)
+
+
+def on_safeword(chat_id: int, lang_hint: str | None = None) -> str:
+    bind_chat(chat_id)
+    return tr("🔑 A family safe word\n\nScammers copy voices and hijack chat accounts, so \"Hi Mum, it's me, I need money now\" can look and sound real. Agree ONE secret word with your family, in person. If anyone asks for money or codes in a hurry, even if it sounds just like them, ask for the safe word. No word, no money.\n\nNever type your safe word here, or in any chat.", chat_lang(lang_hint) or "en")
 
 
 def on_history(chat_id: int, n: int = 5, lang_hint: str | None = None) -> str:
@@ -238,7 +343,7 @@ def nudge_text(chat_id: int) -> str | None:
     if not m["due"]:
         return None
     url = os.getenv("BAITPROOF_URL", "")
-    return tr("🛡️ {n} scam trick(s) are due for a one-minute refresher.", chat_lang() or "en", n=m["due"]) + (f" {url}/train" if url else "")
+    return tr("🐟 Psst! {n} scam trick(s) are due for a one-minute refresher.", chat_lang() or "en", n=m["due"]) + (f" {url}/train" if url else "")
 
 
 # ---------------------------------------------------------------- quiz and family challenge
@@ -356,7 +461,7 @@ def _summary(s: dict, L: str) -> Reply:
              tr("Not one slip. Your family is lucky to have you.", L) if s["perfect"] else tr("Nice work. Each round makes the next scam easier to spot.", L), "",
              f"✅ {s['correct']}/{s['total']} " + tr("right", L),
              "⭐ " + tr("+{n} XP", L, n=s["xp_gained"]),
-             "🏆 " + tr("Level {n} · {title}", L, n=st["level"], title=st["title"]) + (" (" if i18n.norm(L) == "en" else "（") + tr("{a} / {b} XP", L, a=st["xp_into_level"], b=st["xp_for_level"]) + (")" if i18n.norm(L) == "en" else "）")]
+             "🏆 " + tr("Level {n} · {title}", L, n=st["level"], title=st["title"]) + (" (" if i18n.norm(L) in ("en", "ms") else "（") + tr("{a} / {b} XP", L, a=st["xp_into_level"], b=st["xp_for_level"]) + (")" if i18n.norm(L) == "en" else "）")]
     if s["level_up"]:
         lines.append("⬆️ " + tr("Level up! You're now level {n}: {title}", L, n=st["level"], title=st["title"]))
     if st["streak"]:
@@ -563,7 +668,7 @@ def voice_precheck(chat_id: int, file_size: int | None, seconds: float | None, l
     return [stop] if stop else []
 
 
-def on_image(chat_id: int, data: bytes, lang_hint: str | None = None) -> list[Reply]:
+def on_image(chat_id: int, data: bytes, lang_hint: str | None = None, forwarded_from: str = "") -> list[Reply]:
     """A screenshot (the bytes of the picture): what was read from it, then the normal check. A picture that cannot be read well enough is not
     checked: the person is asked for a clearer one, or the text. The picture itself is dropped when this returns."""
     linked = bind_chat(chat_id)
@@ -583,7 +688,8 @@ def on_image(chat_id: int, data: bytes, lang_hint: str | None = None) -> list[Re
             said = _read_reply(head, text, R, reading.sender, qr, reading.note)
             return [Reply((said + "\n\n" + tr("The picture was hard to read, so please check this matches what you see.", R) + "\n"
                            + tr("I haven't checked it yet. Please send a clearer picture, or paste the text.", R))[:4000])]
-        result, checked = _checked(linked, "\n".join([t for t in (text, *qr) if t]), L, "screenshot")
+        origin = make_origin(channel=reading.channel, app=reading.app, sender=reading.sender, forwarded_from=forwarded_from)  # where the picture seems to come from
+        result, checked = _checked(linked, "\n".join([t for t in (text, *qr) if t]), L, "screenshot", origin, chat_id)
         return [Reply(_read_reply(tr("📷 I read this from your screenshot:", result.lang), text, result.lang, reading.sender, qr, reading.note)), checked]
     except InputError as e:
         return [Reply(tr(e.message, L or "en"))]
@@ -605,7 +711,7 @@ def on_voice(chat_id: int, data: bytes, mime: str = "", lang_hint: str | None = 
         R = L or (i18n.norm(heard.language) if heard.language else "en")
         if not text:
             return [Reply(tr("I couldn't hear any words in that voice note. Please try again, or send the text.", R))]
-        result, checked = _checked(linked, text, L, "voice")
+        result, checked = _checked(linked, text, L, "voice", chat_id=chat_id)
         return [Reply(_read_reply(tr("🎙️ I heard:", result.lang), text, result.lang)), checked]
     except InputError as e:
         return [Reply(tr(e.message, L or "en"))]

@@ -13,6 +13,7 @@ from playwright.sync_api import expect, sync_playwright
 
 PORT = 8771
 FAKE_PORT = 8772  # the same website with canned screenshot and voice readers (tests/e2e/fake_inputs_app.py)
+SOCIAL_PORT = 8773  # a public-mode copy (one profile per visitor), for friends and the 3D road
 CHROME = os.getenv("CHROME_PATH", "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
 
 
@@ -84,7 +85,7 @@ def overflow_checker(page, problems, W: int = 390):
             const bar = document.querySelector('.bar'), br = bar ? bar.getBoundingClientRect().right : W;
             const out = [];
             for (const e of document.querySelectorAll('body *')) {
-                if (e.closest('.glow, .tbl-wrap, .sr-only') || !e.getClientRects().length) continue;  // tables scroll inside their own container
+                if (e.closest('.glow, .tbl-wrap, .scroll-x, .sr-only, .finn-root, .finn-bubble') || !e.getClientRects().length) continue;  // tables scroll inside their own container; the mascot is a fixed overlay that swims in from off-screen
                 const r = e.getBoundingClientRect().right;
                 if (r > W + 1 || (bar && bar.contains(e) && r > br + 1)) out.push(e.tagName.toLowerCase() + '.' + (e.className || '') + '@' + Math.round(r));
             }
@@ -357,7 +358,7 @@ def zh_pass(page, base, no_overflow, expect_401, quiet) -> None:
     switch_language(page, "zh", "zh-Hans")
     no_overflow("zh-home")
     assert "让你的家人" in page.inner_text("h1") and "查一查" in page.inner_text(".tabs") and "练习" in page.inner_text(".tabs") and "记录" in page.inner_text(".tabs")
-    assert page.locator(".tabs a").count() == 3 and "游戏" not in page.inner_text(".tabs")
+    assert page.locator(".tabs a").count() == 4 and "游戏" not in page.inner_text(".tabs")
     assert page.is_visible(".tabs") and not page.is_visible("nav .navlink")
     inputs_off_pass(page, base, no_overflow, "zh", quiet)  # screenshot and voice, in Chinese, on a server with the AI off
     page.goto(base)
@@ -397,7 +398,7 @@ def zh_pass(page, base, no_overflow, expect_401, quiet) -> None:
         assert re.search("[一-鿿]", page.inner_text(".feedback"))
         if i == 0:
             no_overflow("zh-train-feedback")
-        page.click(".step button.big:last-of-type")
+        page.click(".step > button.big")
     page.wait_for_selector("text=你答对了")
     no_overflow("zh-train-finish")
 
@@ -485,6 +486,515 @@ def zh_pass(page, base, no_overflow, expect_401, quiet) -> None:
     no_overflow("en-after-zh")
 
 
+SCAM_MS = "Tahniah! Anda telah memenangi hadiah RM50,000. Sila klik pautan ini untuk menuntut dalam 24 jam http://hadiah-maybank.top/tuntut"
+
+
+def ms_pass(page, base, no_overflow, quiet) -> None:
+    """Bahasa Melayu: pick it from the header menu, then check, practise, play, records and challenge, all at phone width."""
+    import re
+
+    page.goto(base)
+    switch_language(page, "ms", "ms")
+    no_overflow("ms-home")
+    assert "lebih sukar ditipu" in page.inner_text("h1") and "Semak" in page.inner_text(".tabs") and "Latihan" in page.inner_text(".tabs") and "Rekod" in page.inner_text(".tabs")
+    assert page.locator(".tabs a").count() == 4 and not re.search("[一-鿿]", page.inner_text("main"))
+    assert not page.query_selector("#speak-lang")  # (the speech choice is for English pages)
+
+    # check a Malay scam (offline rules): the verdict, the evidence, the steps and the help panel are all Malay
+    page.fill("#message", SCAM_MS)
+    page.click("button.big:has-text('Semak sekarang')")
+    page.wait_for_selector("#result .banner")
+    assert "PENIPUAN" in page.inner_text("#result .banner").upper(), page.inner_text("#result .banner")
+    result = page.inner_text("#result")
+    for word in ("Tanda pembongkar", "Apa yang perlu dibuat", "Bukti", "Baca dengan kuat", "Ditambah pada latihan anda", "Perlukan bantuan", "1799", "997"):
+        assert word.upper() in result.upper(), (word, result)  # (headings are set in capitals by the stylesheet)
+    assert not re.search("[一-鿿]", result) and "The giveaway" not in result
+    no_overflow("ms-result")
+    page.evaluate("(() => { window.__lang = null; speechSynthesis.speak = (u) => { window.__lang = u.lang; }; })()")
+    page.click("#result .speak")
+    assert page.evaluate("window.__lang") == "ms-MY", page.evaluate("window.__lang")
+    page.click("#result [data-feedback=up]")
+    page.wait_for_selector("#result [data-fb-note]:has-text('Terima kasih')")
+
+    # practice, on Malay messages
+    page.goto(base + "/train")
+    no_overflow("ms-train")
+    assert "Latihan" in page.inner_text("h1") and "Latihan pantas" in page.inner_text("#practice h2")
+    page.click("#start")
+    for i in range(4):
+        page.wait_for_selector(".step .opt, .step textarea")
+        if page.query_selector(".step .opt"):
+            page.click(".step .opt >> nth=0")
+        else:
+            page.fill(".step textarea", "Saya akan abaikan, dan telefon bank saya untuk menyemak")
+            page.click(".step button.big")
+        page.wait_for_selector(".feedback")
+        assert not re.search("[一-鿿]", page.inner_text(".feedback")), page.inner_text(".feedback")
+        if i == 0:
+            no_overflow("ms-train-feedback")
+        page.click(".step > button.big")
+    page.wait_for_selector("text=Anda menjawab")
+    no_overflow("ms-train-finish")
+    page.goto(base + "/game")
+    page.wait_for_selector(".mode-card")
+    no_overflow("ms-game-hub")
+    page.click(".mode-card >> nth=0")
+    page.wait_for_selector(".choice")
+    buttons = " ".join(page.locator(".choice").all_inner_texts())   # (the message itself may be a Chinese scam from this person's own circle, on purpose)
+    assert re.search("Penipuan", buttons) and not re.search("[一-鿿]", buttons)
+    no_overflow("ms-game-play")
+
+    # records and the challenge
+    page.goto(base + "/records")
+    page.wait_for_selector("#tg")
+    no_overflow("ms-records")
+    assert "Rekod saya" in page.inner_text("h1") and page.locator(".rec").count() >= 1
+    page.goto(base)
+    page.click("nav .cta")
+    page.wait_for_selector("#start")
+    assert "Bolehkah anda mengesan penipuan" in page.inner_text("h1"), page.inner_text("h1")
+    no_overflow("ms-challenge")
+    for url, word in (("/friends", "Kawan"), ("/family", "Kumpulan keluarga"), ("/link", "Cari Pautan Palsu"), ("/road", "Sedia memandu?")):   # the newer pages, in Malay, at phone width
+        page.goto(base + url)
+        page.wait_for_selector("main")
+        no_overflow("ms" + url.replace("/", "-"))
+        assert word in page.inner_text("main") and not re.search("[一-鿿]", page.inner_text("main")), url
+    switch_language(page, "en", "en")
+    chrome = page.inner_text("h1") + page.inner_text(".tabs")
+    assert "Train" in chrome and "Latihan" not in chrome, chrome
+    no_overflow("en-after-ms")
+
+
+SOFTWARE_GL = ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"]  # a headless Chrome with no graphics card still draws WebGL
+
+
+def blank_check(page, selector: str) -> float:
+    """How much the picture inside `selector` varies (0 = one flat colour): a 3D scene that did not draw is flat."""
+    box = page.locator(selector).bounding_box()
+    img = Image.open(io.BytesIO(page.screenshot(clip=box))).convert("L").resize((64, 40))
+    px = list(img.tobytes())  # (one byte per pixel in greyscale)
+    mean = sum(px) / len(px)
+    return (sum((v - mean) ** 2 for v in px) / len(px)) ** 0.5
+
+
+def social_pass(p, base, problems, truth) -> None:
+    """Public mode, three browsers: Aiman makes a profile and an invite; Mei joins from the link on a phone; Mei then signs in on a laptop and drives the 3D road;
+    Aiman's phone sees Mei's distance on the board and her flag-marker on the road."""
+    import re
+    from urllib.parse import urlsplit
+
+    b = p.chromium.launch(executable_path=CHROME, headless=True, args=SOFTWARE_GL)
+    LANE = {"scam": "1", "unsure": "2", "safe": "3"}
+
+    def phone(name):
+        ctx = b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2, is_mobile=True, has_touch=True, permissions=["clipboard-read", "clipboard-write"])
+        page = ctx.new_page()
+        page.on("console", lambda m: problems.append(f"{name} console {m.type}: {m.text}") if m.type == "error" and "status of 400" not in m.text else None)
+        page.on("pageerror", lambda e: problems.append(f"{name} pageerror: {e}"))
+        return ctx, page, overflow_checker(page, problems)
+
+    ctx_a, aiman, ov_a = phone("aiman")
+    # ---- Aiman: log in link, make a profile, see the key once, find the invite
+    aiman.goto(base)
+    assert aiman.is_visible("a.me.login") and "Log in" in aiman.inner_text("a.me.login")
+    aiman.click("a.me.login")
+    assert aiman.url.endswith("/signin") and "Log in" in aiman.inner_text("h1")
+    ov_a("signin")
+    aiman.click("text=Make your profile")
+    aiman.wait_for_selector("input[name=nickname]")
+    ov_a("me-new")
+    aiman.fill("#nick", "Aiman")
+    aiman.click(".avatars .av >> nth=2")
+    aiman.click("button:has-text('Create my profile')")
+    aiman.wait_for_selector("#the-key")
+    key_a = aiman.inner_text("#the-key").strip()
+    assert re.fullmatch(r"[A-Z0-9]{4}(-[A-Z0-9]{4}){3}", key_a)
+    ov_a("me-key")
+    aiman.click(".keybox [data-copy]")
+    assert aiman.evaluate("() => navigator.clipboard.readText()") == key_a, "the copy button copies the key"
+    aiman.goto(base + "/me")
+    assert not aiman.query_selector("#the-key") and "Aiman" in aiman.inner_text("h1")   # the key is not shown again
+    ov_a("me")
+    invite = aiman.get_attribute("[data-copy]", "data-copy")
+    assert "/join/" in invite
+    aiman.goto(base + "/friends")
+    ov_a("friends-empty")
+    assert "Add a friend to compete" in aiman.inner_text("main") and aiman.is_visible(".tabs a[aria-current=page]:has-text('Friends')")
+
+    # ---- Mei: opens the invite on a phone, makes a profile and is friends with Aiman at once
+    ctx_m, mei, ov_m = phone("mei")
+    path = urlsplit(invite).path
+    mei.goto(base + path)
+    assert "Aiman invited you to be friends" in mei.inner_text("h1")
+    ov_m("join")
+    mei.fill("#nick", "Mei")
+    mei.click("button:has-text('Make my profile and add Aiman')")
+    mei.wait_for_selector("#the-key")
+    key_m = mei.inner_text("#the-key").strip()
+    assert "You and Aiman are now friends." in mei.inner_text("main")
+    ov_m("me-joined")
+    mei.goto(base + "/friends")
+    assert "Aiman" in mei.inner_text(".friends") and mei.locator(".board li").count() == 2
+    ov_m("friends")
+
+    # ---- Mei on a laptop: signs in with her key, drives Scam Road (3D) and finishes with three wrong turns
+    ctx_l = b.new_context(viewport={"width": 1100, "height": 800})
+    lap = ctx_l.new_page()
+    lap.on("console", lambda m: problems.append(f"laptop console {m.type}: {m.text}") if m.type in ("error",) else None)
+    lap.on("pageerror", lambda e: problems.append(f"laptop pageerror: {e}"))
+    lap.goto(base + "/signin")
+    lap.fill("#key", key_m.lower())
+    lap.click("button:has-text('Log in')")
+    lap.wait_for_selector("h1:has-text('Mei')")
+    lap.goto(base + "/road")
+    lap.wait_for_selector("#go")
+    assert lap.is_visible("#intro") and "Ready to drive?" in lap.inner_text("#intro")
+    assert blank_check(lap, "#scene") > 6, "the 3D scene drew something"
+    lap.click("#go")
+    for _ in range(60):
+        if lap.evaluate("() => window.__road.state") == "driving":
+            break
+        lap.wait_for_timeout(250)
+    assert lap.evaluate("() => window.__road.state") == "driving" and lap.is_visible("#lanes") and lap.is_visible("#msg")
+    assert blank_check(lap, "#scene") > 8, "the road drew"
+
+    def drive_gate(page, right: bool) -> str:
+        text = page.evaluate("() => window.__road.text")
+        t = truth[text]
+        wrong = {"scam": "3", "safe": "1", "unsure": "1"}[t]
+        page.keyboard.press(LANE[t] if right else wrong)
+        page.wait_for_timeout(250)
+        page.evaluate("() => window.__road.advance(window.__road.gateAhead + 2)")
+        page.wait_for_timeout(900)
+        return t
+
+    def gate(right: bool) -> str:
+        return drive_gate(lap, right)
+
+    for i in range(3):
+        gate(True)
+    for _ in range(40):
+        if lap.evaluate("() => window.__road.distance") == 240:
+            break
+        lap.wait_for_timeout(100)
+    assert lap.evaluate("() => window.__road.distance") == 240 and lap.is_visible(".toast.good")
+    gate(False)
+    lap.wait_for_selector("#why:not([hidden])", timeout=8000)
+    assert lap.inner_text("#why-tell").strip()  # (the giveaway is always there; "what to do" only for a scam)
+    lap.click("#why-go")
+    for _ in range(2):
+        gate(False)
+        lap.wait_for_selector("#why:not([hidden])", timeout=8000)
+        lap.click("#why-go")
+    lap.wait_for_selector("#end:not([hidden])", timeout=10000)
+    assert "240" in lap.inner_text("#end-dist") and lap.is_visible("#end-best") and "3 right" in lap.inner_text("#end-stats")
+    assert "Mei" in lap.inner_text("#end-board") and not lap.is_visible("#end-login")
+    run = ctx_l.request.post(base + "/api/road/start", data={"mode": "daily"}).json()
+    queue = list(run["items"])
+    for i in range(5):                      # four right, then a wrong turn: a path "cccc" + "w"
+        g = queue.pop(0)
+        t = truth[g["text"]]
+        lane = {"scam": 0, "unsure": 1, "safe": 2}[t] if i < 4 else {"scam": 2, "safe": 0, "unsure": 0}[t]
+        queue += ctx_l.request.post(base + "/api/road/answer", data={"run": run["run"], "gate": g["id"], "lane": lane}).json()["next"]
+    assert ctx_l.request.post(base + "/api/road/finish", data={"run": run["run"]}).json()["distance"] == 320
+    ctx_l.close()
+
+    # ---- Aiman's phone: Mei's 240 m is on the board, and the road shows her as a marker to chase (and fits the phone)
+    aiman.goto(base + "/friends")
+    board = aiman.inner_text(".board")
+    assert board.index("Mei") < board.index("Aiman") and "240 m" in board and "no drive yet" in board
+    ov_a("friends-board")
+    aiman.goto(base + "/road")
+    aiman.wait_for_selector("#go")
+    assert "Your best" not in aiman.inner_text("#intro")
+    ov_a("road-intro")
+    aiman.click("#go")
+    for _ in range(60):
+        if aiman.evaluate("() => window.__road.state") == "driving":
+            break
+        aiman.wait_for_timeout(250)
+    assert "Mei is 240 m ahead" in aiman.inner_text("#race-text") and aiman.locator("#track .mk").count() == 2
+    box = aiman.locator("#lanes").bounding_box()
+    assert box["y"] + box["height"] <= 844 and box["x"] >= 0 and box["x"] + box["width"] <= 390, "the lane buttons fit the phone"
+    ov_a("road-phone")
+    aiman.tap(".lanes button[data-lane='2']")
+    assert aiman.get_attribute(".lanes button[data-lane='2']", "aria-pressed") == "true" and aiman.evaluate("() => window.__road.lane") == 2
+    aiman.click("#pause")
+    assert aiman.is_visible("#pause-sheet")
+    aiman.click("#quit")
+    aiman.wait_for_selector("#end:not([hidden])")
+    assert aiman.inner_text("#end-dist").strip().startswith("0")
+
+    # ---- the Daily Road: the same messages for everyone, Mei's drive as a ghost, a first-of-the-day badge, a hat earned, themes and sound
+    aiman.goto(base + "/road")
+    aiman.wait_for_selector("#go-daily")
+    assert aiman.locator(".finn-root").count() == 0 and aiman.locator("canvas.fx").count() == 0   # (a game page: no flying fish, no second WebGL canvas)
+    aiman.click(".drawer summary")
+    assert aiman.locator("#garage-cars button").count() == 7 and aiman.locator("#garage-cars button:disabled").count() == 6 and aiman.locator("#garage-hats button:disabled").count() == 5
+    assert "Next to unlock" in aiman.inner_text("#garage-note")
+    aiman.click("#themes button:has-text('Night')")
+    assert aiman.evaluate("() => window.__road.theme") == "night"
+    ov_a("road-drawer")
+    aiman.click("#go-daily")
+    for _ in range(60):
+        if aiman.evaluate("() => window.__road.state") == "driving":
+            break
+        aiman.wait_for_timeout(250)
+    assert aiman.evaluate("() => window.__road.mode") == "daily" and aiman.evaluate("() => window.__road.ghosts") == 1 and aiman.is_visible("#mode-chip")
+    assert aiman.locator("#track .mk").count() == 2   # you, and Mei's drive from today
+    drive_gate(aiman, True)
+    aiman.click("#sound")
+    assert aiman.get_attribute("#sound", "aria-pressed") == "false" and aiman.evaluate("() => window.__road.sound") is False
+    aiman.click("#pause")
+    aiman.click("#quit")
+    aiman.wait_for_selector("#end:not([hidden])")
+    assert "Daily Road done" in aiman.inner_text("#end-title") and "Daily driver" in aiman.inner_text("#end-badges") and "Party hat" in aiman.inner_text("#end-badges")
+    ov_a("road-daily-end")
+    aiman.reload()
+    aiman.wait_for_selector("#go-daily")
+    assert aiman.evaluate("() => window.__road.theme") == "night" and aiman.evaluate("() => window.__road.sound") is False     # (both remembered)
+    aiman.click(".drawer summary")
+    aiman.click("#garage-hats button[aria-label='Party hat']")
+    for _ in range(40):
+        if aiman.evaluate("() => window.__road.skin.hat") == "party":
+            break
+        aiman.wait_for_timeout(150)
+    assert aiman.evaluate("() => window.__road.skin.hat") == "party"
+    assert aiman.locator("#push-box").count() == 0     # (this copy has no push keys: nothing about notifications is offered)
+
+    # ---- Link Hunt: four links, one fake, three wrong taps end the round; the score reaches the friends' board
+    aiman.goto(base + "/link")
+    aiman.wait_for_selector("#lh-start")
+    ov_a("link-intro")
+    aiman.click("#lh-start")
+    aiman.wait_for_selector(".lh-opt")
+    assert aiman.locator(".lh-opt").count() == 4 and "Which link is the fake?" in aiman.inner_text("#lh-q")
+    ov_a("link-play")
+    for i in range(40):
+        aiman.click(".lh-opt >> nth=0")
+        aiman.wait_for_selector("#lh-feedback:not([hidden])")
+        assert aiman.locator(".lh-opt.fake").count() == 1 and aiman.inner_text("#lh-tell").strip()
+        if i == 0:
+            ov_a("link-feedback")
+        last = "See my result" in aiman.inner_text("#lh-next")     # (the third wrong tap: the button now leads to the result)
+        aiman.click("#lh-next")
+        if last:
+            break
+    aiman.wait_for_selector("#lh-end:not([hidden])")
+    assert "points" in aiman.inner_text("#lh-final") and "Round over" in aiman.inner_text("#lh-end")
+    ov_a("link-end")
+    aiman.goto(base + "/friends?game=link&scope=all")
+    assert "points" in aiman.inner_text(".board") and aiman.is_visible("a[aria-current='true']:has-text('Link Hunt')")
+    ov_a("friends-link")
+
+    # ---- a family group: Aiman starts it, Mei joins from the invite, Aiman shares a scam she just checked and Mei sees it (redacted)
+    aiman.goto(base + "/family")
+    ov_a("family-new")
+    aiman.fill("#fname", "The Lims")
+    aiman.click("button:has-text('Start group')")
+    aiman.wait_for_selector("text=The Lims")
+    ov_a("family")
+    fam_invite = aiman.get_attribute("[data-copy*='/family/join/']", "data-copy")
+    mei.goto(base + urlsplit(fam_invite).path)
+    assert "Join The Lims?" in mei.inner_text("h1")
+    ov_m("family-join")
+    mei.click("button:has-text('Join The Lims')")
+    mei.wait_for_selector("h1:has-text('The Lims')")
+    aiman.goto(base)
+    aiman.fill("#message", "DHL: Your parcel is on hold. Pay the $1.99 fee within 24 hours. Call 0800-555-0199 or pay now: dhl-fee-pay.xyz/track/9981")
+    aiman.click("button.big:has-text('Check it')")
+    aiman.wait_for_selector("#result .banner")
+    aiman.click(".family-share button")
+    aiman.wait_for_selector("text=Shared!")
+    assert "The Lims" in aiman.inner_text("h1")
+    mei.goto(base + "/family")
+    page_text = mei.inner_text("main")
+    assert "Shared by Aiman" in page_text and "dhl-fee-pay.xyz" in page_text and "0800-555-0199" not in page_text and "/track/9981" not in page_text
+    ov_m("family-shared")
+    mei.goto(base + "/game")
+    mei.wait_for_selector(".mode-card")
+    for _ in range(40):
+        if "1 scam that reached your own family" in mei.inner_text(".mode-grid"):
+            break
+        mei.wait_for_timeout(150)
+    assert "1 scam that reached your own family" in mei.inner_text(".mode-grid")    # (the shared scam is a gate in Mei's own games)
+
+    # ---- the family dashboard: what each person chose to share, soft spots, a summary for the chat
+    aiman.goto(base + "/family/dashboard")
+    aiman.wait_for_selector("table.matrix")
+    assert aiman.locator("table.matrix tbody tr").count() == 12 and "Family score" in aiman.inner_text("main") and "Mei" in aiman.inner_text(".people") and "Aiman" in aiman.inner_text(".people")
+    assert "This week, for the family chat" in aiman.inner_text("main") and "👪 The Lims on Baitproof this week" in aiman.inner_text(".summary")
+    assert aiman.locator(".avgbar i").first.evaluate("e => e.style.width") != ""      # (the bars are drawn by the script: the page's policy forbids style attributes)
+    ov_a("family-dashboard")
+    aiman.click("button:has-text('Hide my progress')")
+    aiman.wait_for_selector("text=Your progress is private.")
+    aiman.click("button:has-text('Share my progress')")
+    aiman.wait_for_selector("text=Your progress is visible to your family.")
+    mei.goto(base + "/family")
+    assert mei.is_visible("a:has-text('Family dashboard')")
+
+    # ---- a live race: Aiman opens it and asks Mei; Mei joins from the hub; same gates, same moment; Aiman wins; the result and the record
+    aiman.goto(base + "/duel")
+    assert "Race a friend, live" in aiman.inner_text("h1")
+    ov_a("duel-hub")
+    aiman.check("input[name=pub]")
+    aiman.click("button:has-text('Open a race')")
+    aiman.wait_for_selector("#lobby:not([hidden])")
+    mei.goto(base + "/duel")
+    assert "Aiman challenged you" in mei.inner_text("main")
+    ov_m("duel-invite")
+    mei.click("a:has-text('Join the race')")
+    mei.wait_for_selector("#lobby:not([hidden])")
+    aiman.wait_for_selector("#lobby-start:not([hidden])", timeout=15000)
+    who = (aiman.inner_text("#lobby-players"), mei.inner_text("#lobby-players"))
+    assert "Mei" in who[0] and "Aiman" in who[1] and aiman.locator("#lobby-players li").count() == 2, who
+    ov_a("duel-lobby")
+    aiman.click("#lobby-start")
+    for pg in (aiman, mei):
+        for _ in range(80):
+            if pg.evaluate("() => window.__road.state") == "driving":
+                break
+            pg.wait_for_timeout(250)
+        assert pg.evaluate("() => window.__road.state") == "driving" and pg.evaluate("() => window.__road.mode") == "duel" and not pg.is_visible("#pause")
+    assert aiman.evaluate("() => window.__road.ghosts") == 1 and mei.evaluate("() => window.__road.ghosts") == 1      # (each sees the other as a live car)
+    assert "Gate 1 of 12" in aiman.inner_text("#mode-chip")
+    for _ in range(4):
+        drive_gate(aiman, True)
+        drive_gate(mei, True)
+    ov_a("duel-race")
+    for _ in range(8):
+        drive_gate(aiman, True)
+    assert "Gate" in aiman.inner_text("#mode-chip") or aiman.is_visible("#duel-wait")
+    for _ in range(3):
+        drive_gate(mei, False)
+        mei.wait_for_selector("#why:not([hidden])", timeout=15000)
+        mei.click("#why-go")
+    for pg in (aiman, mei):
+        pg.wait_for_selector("#duel-end:not([hidden])", timeout=45000)
+    assert "You won the race!" in aiman.inner_text("#duel-title") and aiman.is_visible("#duel-won") and "Race over" in mei.inner_text("#duel-title")
+    assert aiman.locator("#duel-board li").count() == 2 and aiman.inner_text("#duel-board li >> nth=0").find("Aiman") >= 0 and "12 right" in aiman.inner_text("#duel-board")
+    assert "+35 XP" in aiman.inner_text("#duel-chips") and "Duelist" in aiman.inner_text("#duel-chips") and "+10 XP" in mei.inner_text("#duel-chips")
+    assert "You and Mei: 1–0" in aiman.inner_text("#duel-record") and "You and Aiman: 0–1" in mei.inner_text("#duel-record")
+    ov_a("duel-result")
+    ov_m("duel-result-mei")
+    aiman.click("#duel-rematch")
+    aiman.wait_for_selector("#lobby:not([hidden])")
+    mei.goto(base + "/duel")
+    assert "Aiman challenged you" in mei.inner_text("main")      # (the rematch asked Mei in again)
+    aiman.click("#lobby-leave")
+    aiman.wait_for_selector("h1:has-text('Race a friend, live')")
+    mei.goto(base + "/duel")
+    assert "challenged you" not in mei.inner_text("main")        # (the host left, which closed it: the invitation went with it)
+    aiman.goto(base + "/duel/ZZZZZZ")
+    assert "isn't open any more" in aiman.inner_text("main")
+
+    # ---- today is a festival (Deepavali): the home page, the road and the scene say so
+    fest = ctx_m.new_page()
+    fest.goto(base)
+    assert "Happy Deepavali!" in fest.inner_text(".season-strip")
+    fest.goto(base + "/road")
+    fest.wait_for_selector("#go")
+    assert "The road is dressed for Deepavali." in fest.inner_text(".season-line") and fest.evaluate("() => window.__road.season") == "deepavali"
+    assert fest.evaluate("() => window.__road.theme") == "deepavali"      # (Auto: the festival that is on; Mei never picked a look of her own in this browser)
+    fest.close()
+
+    # ---- signing out leaves the account for its key; deleting removes the profile and its place on the board
+    mei.goto(base + "/me")
+    mei.click("button:has-text('Sign out of this device')")
+    mei.wait_for_selector("a.me.login")
+    assert "Aiman" not in mei.inner_text("body") and mei.url.rstrip("/") == base
+    aiman.goto(base + "/me")
+    aiman.check("input[name=confirm]")
+    aiman.click("button:has-text('Delete my profile')")
+    aiman.wait_for_selector("a.me.login")
+    ctx_a.close()
+    ctx_m.close()
+    b.close()
+
+
+FINN_POS = "() => { const r = document.querySelector('.finn-root').getBoundingClientRect(); return [Math.round(r.x), Math.round(r.y)] }"
+FINN_SAYS = "() => { const b = document.querySelector('.finn-bubble'); return b.classList.contains('on') ? b.textContent : '' }"
+FINN_MOOD = "() => (document.querySelector('.finn-root').className.match(/m-(\\w+)/) || [])[1]"
+
+
+def finn_pass(browser, base, problems) -> None:
+    """Finn, the mascot: swims in on a first visit and settles, can be picked up and moved (and is remembered), tells a tip when tapped, reacts to a check,
+    obeys the keyboard, can be sent away with the footer switch, holds still for 'reduce motion', and on a phone sits above the tab bar."""
+    ctx = browser.new_context(viewport={"width": 1280, "height": 820})
+    page = ctx.new_page()
+    page.on("console", lambda m: problems.append(f"finn console {m.type}: {m.text}") if m.type in ("error", "warning") else None)
+    page.on("pageerror", lambda e: problems.append(f"finn pageerror: {e}"))
+    page.goto(base + "/")
+    xs = []
+    for _ in range(6):
+        page.wait_for_timeout(1300)
+        xs.append(page.evaluate(FINN_POS)[0])
+    assert max(xs) - min(xs) > 400, f"he should swim across the page on a first visit: {xs}"
+    page.wait_for_timeout(2400)
+    x, y = page.evaluate(FINN_POS)
+    assert x > 1000 and y > 560, f"he settles in the bottom-right corner: {(x, y)}"
+    assert "Finn" in page.evaluate(FINN_SAYS), "he introduces himself"
+    # pick him up and drop him in the middle: he startles while held, stays where he is put, and is remembered after a reload
+    c = (x + 64, y + 46)
+    page.mouse.move(*c); page.mouse.down(); page.mouse.move(c[0] - 250, c[1] - 200, steps=8); page.mouse.move(560, 340, steps=10)
+    page.wait_for_timeout(150)
+    assert page.evaluate(FINN_MOOD) == "grab"
+    page.mouse.up(); page.wait_for_timeout(1800)
+    dropped = page.evaluate(FINN_POS)
+    assert abs(dropped[0] - (560 - 64)) < 150 and abs(dropped[1] - (340 - 46)) < 150, f"he stays where he was dropped: {dropped}"
+    page.reload(); page.wait_for_timeout(2400)
+    back = page.evaluate(FINN_POS)
+    assert abs(back[0] - dropped[0]) < 150 and abs(back[1] - dropped[1]) < 150, f"a reload remembers the spot: {dropped} -> {back}"
+    # a tap is a tip
+    page.evaluate("window.bpFinn.hide()")
+    page.mouse.click(back[0] + 64, back[1] + 46); page.wait_for_timeout(400)
+    assert page.evaluate(FINN_SAYS), "a tap gives a tip"
+    # he reacts to a check: alarmed by a scam
+    page.evaluate("window.bpFinn.hide()")
+    page.fill("#message", "DHL: Your parcel is on hold. Pay the $1.99 fee within 24 hours or it will be returned. Pay now: dhl-fee-pay.xyz/track")
+    page.click("#check-form button.big")
+    page.wait_for_selector("#result", timeout=60000)
+    page.wait_for_timeout(900)
+    assert page.evaluate(FINN_MOOD) == "alert" and "link" in page.evaluate(FINN_SAYS), "he is alarmed by a scam"
+    # keyboard: arrows move him, Enter gives a tip
+    page.evaluate("window.bpFinn.hide()")
+    page.focus(".finn-root")
+    before = page.evaluate(FINN_POS)
+    page.keyboard.press("ArrowLeft")
+    page.keyboard.press("ArrowLeft")
+    assert page.evaluate(FINN_POS)[0] < before[0], "the arrow keys move him"
+    page.keyboard.press("Enter")
+    page.wait_for_timeout(300)
+    assert page.evaluate(FINN_SAYS), "Enter gives a tip"
+    # the footer switch sends him away, and brings him back
+    page.click("#mascot-toggle")
+    page.wait_for_load_state()
+    page.wait_for_timeout(900)
+    assert page.query_selector(".finn-root") is None and page.get_attribute("#mascot-toggle", "aria-pressed") == "false"
+    page.click("#mascot-toggle")
+    page.wait_for_load_state()
+    page.wait_for_timeout(1500)
+    assert page.query_selector(".finn-root") is not None
+    ctx.close()
+    # reduce motion: he is simply there, and does not move
+    ctx = browser.new_context(viewport={"width": 1280, "height": 820}, reduced_motion="reduce")
+    page = ctx.new_page()
+    page.goto(base + "/")
+    page.wait_for_timeout(700)
+    a = page.evaluate(FINN_POS)
+    page.wait_for_timeout(700)
+    assert a == page.evaluate(FINN_POS) and a[0] > 1000, "no flying for reduce motion"
+    ctx.close()
+    # a phone: smaller, and above the tab bar
+    ctx = browser.new_context(viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True)
+    page = ctx.new_page()
+    page.goto(base + "/")
+    page.wait_for_timeout(9500)
+    r = page.evaluate("() => { const r = document.querySelector('.finn-root').getBoundingClientRect(); return [Math.round(r.width), Math.round(r.bottom)] }")
+    assert r[0] <= 100 and r[1] <= 844 - 70, f"on a phone he is smaller and clear of the tab bar: {r}"
+    ctx.close()
+
+
 def desktop_pass(browser, base, problems) -> None:
     ctx = browser.new_context(viewport={"width": 1280, "height": 720})
     ctx.add_init_script(FAKE_SPEECH)
@@ -493,7 +1003,7 @@ def desktop_pass(browser, base, problems) -> None:
     page.on("pageerror", lambda e: problems.append(f"desktop pageerror: {e}"))
     for url in ("/", "/train", "/game", "/records"):
         page.goto(base + url)
-        assert [a.strip() for a in page.locator("nav .navlink").all_inner_texts()] == ["Check", "Train", "Records"], url
+        assert [a.strip() for a in page.locator("nav .navlink").all_inner_texts()] == ["Check", "Train", "Friends", "Records"], url
         assert page.locator("nav .navlink").first.is_visible() and not page.is_visible(".tabs"), url
         assert page.is_visible("#textsize") and page.is_visible("nav .cta") and page.is_visible("#lang summary"), url  # "Aa", the family challenge and the language menu stay
         assert page.evaluate("document.documentElement.scrollWidth") <= 1280, url
@@ -516,7 +1026,7 @@ def desktop_pass(browser, base, problems) -> None:
 
 def main() -> int:
     # NEBIUS_API_KEY="" forces offline rules: the e2e test must never spend model credit (dotenv does not override set vars)
-    env = {**os.environ, "BAITPROOF_DB": tempfile.mkdtemp() + "/e2e.sqlite", "BAITPROOF_LOG_DIR": tempfile.mkdtemp(), "NEBIUS_API_KEY": "", "BAITPROOF_STT": "0", "BAITPROOF_BLOCKLIST": "0", "BAITPROOF_ADMIN_TOKEN": "e2e-token"}  # (no AI and no server speech-to-text, even if faster-whisper is installed here)
+    env = {**os.environ, "BAITPROOF_DB": tempfile.mkdtemp() + "/e2e.sqlite", "BAITPROOF_LOG_DIR": tempfile.mkdtemp(), "NEBIUS_API_KEY": "", "VAPID_PRIVATE_KEY": "", "VAPID_PUBLIC_KEY": "", "BAITPROOF_STT": "0", "BAITPROOF_BLOCKLIST": "0", "BAITPROOF_ADMIN_TOKEN": "e2e-token"}  # (no AI and no server speech-to-text, even if faster-whisper is installed here)
     srv = subprocess.Popen([sys.executable, "-m", "uvicorn", "web.main:app", "--port", str(PORT)], env=env,
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     base, problems = f"http://127.0.0.1:{PORT}", []
@@ -542,7 +1052,7 @@ def main() -> int:
             # Check flow
             page.goto(base)
             no_overflow("home")
-            assert page.locator(".tabs a").count() == 3 and [a.strip() for a in page.locator(".tabs a").all_inner_texts()] == ["Check", "Train", "Records"]
+            assert page.locator(".tabs a").count() == 4 and [a.strip() for a in page.locator(".tabs a").all_inner_texts()] == ["Check", "Train", "Friends", "Records"]
             assert page.inner_text(".tabs a[aria-current=page]").strip() == "Check"
             assert not page.is_visible(".home-demo"), "the demo is for wide screens only"
             assert page.locator("#map").count() == 0, "the resilience map lives on the Train page now"
@@ -574,7 +1084,7 @@ def main() -> int:
             assert page.url.endswith("/train")
             no_overflow("train-hub")
             assert page.is_visible("#practice #start") and page.is_visible("#games") and page.is_visible("#map")
-            assert page.locator("#games a.mode-card").count() == 4 and "Inbox Rush" in page.inner_text("#games") and "Quick practice" in page.inner_text("#practice")
+            assert page.locator("#games a.mode-card").count() == 6 and "Inbox Rush" in page.inner_text("#games") and "Quick practice" in page.inner_text("#practice")
             assert page.inner_text(".tabs a[aria-current=page]").strip() == "Train"
 
             # operator dashboard: login, then numbers without any message text
@@ -710,10 +1220,27 @@ def main() -> int:
 
             # ---- Chinese pass: switch language with the header menu, then check, practise, play, records and challenge at phone width
             zh_pass(page, base, no_overflow, expect_401, quiet)
+            ms_pass(page, base, no_overflow, quiet)
 
             # ---- a laptop: the menu in the header, the form above the fold with the demo beside it, no tab bar
             desktop_pass(b, base, problems)
+            finn_pass(b, base, problems)
             b.close()
+
+            # ---- friends and the 3D road, on a public-mode copy: three browsers
+            os.environ.setdefault("BAITPROOF_DB", env["BAITPROOF_DB"])  # (the pool of messages is read in this process too, from the same throw-away folder)
+            from core.game import pool as gp
+
+            truth = {i.text: i.truth for i in gp.build_pool("en")}
+            social_base = f"http://127.0.0.1:{SOCIAL_PORT}"
+            social = subprocess.Popen([sys.executable, "-m", "uvicorn", "web.main:app", "--port", str(SOCIAL_PORT)],
+                                      env={**env, "BAITPROOF_MULTIUSER": "1", "BAITPROOF_DB": tempfile.mkdtemp() + "/social.sqlite", "BAITPROOF_RATE": "1000", "BAITPROOF_TODAY": "2026-11-08"},
+                                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            try:
+                wait_until_up(social_base)
+                social_pass(p, social_base, problems, truth)
+            finally:
+                social.terminate()
 
             # ---- a server that CAN read pictures and voice (canned readers): the full screenshot and voice flows at phone width, in English and Chinese
             fake_base = f"http://127.0.0.1:{FAKE_PORT}"

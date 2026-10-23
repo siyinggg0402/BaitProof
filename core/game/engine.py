@@ -15,6 +15,7 @@ from core.game import state as gs
 from core.storage import model
 
 MODES = ("rush", "daily", "tell", "boss", "yours")
+PRIVATE = ("yours", "family")  # from a person's own circle: their own checks, and the scams their family chose to share
 LIVES = 3
 XP_CORRECT, XP_PARTIAL, XP_TELL, XP_COMBO_STEP, XP_COMBO_CAP, XP_FAST = 10, 5, 15, 2, 5, 5
 XP_FINISH, XP_PERFECT, XP_DAILY, XP_BOSS = 10, 20, 50, 40
@@ -101,15 +102,15 @@ def select(mode: str, trick: str, rnd: random.Random, state: dict, items: list[g
     elif mode == "tell":
         chosen = _pick([i for i in scams if len(i.tell_phrase.split()) >= 2 or (gp.is_cjk(i.text) and i.tell_phrase)], 5, rnd, seen)  # Chinese phrases have no spaces
     elif mode == "yours":
-        chosen = _pick([i for i in scams if i.source == "yours"], 5, rnd, seen)
+        chosen = _pick([i for i in scams if i.source in PRIVATE], 5, rnd, seen)
         if not chosen:
             raise GameError("No scams from your own circle yet. Check a message first and it will appear here.")
     elif mode == "daily":
         chosen = _pick(scams, 4, rnd, set()) + _pick(safes, 1, rnd, set()) + _pick(unsure, 1, rnd, set())
     else:  # rush: weighted towards the tricks this person is weakest at, plus their own family's scams
         weak = set(_weak_tricks())
-        yours = [i for i in scams if i.source == "yours"]
-        targeted = [i for i in scams if set(i.tactics) & weak and i.source != "yours"]
+        yours = [i for i in scams if i.source in PRIVATE]
+        targeted = [i for i in scams if set(i.tactics) & weak and i.source not in PRIVATE]
         chosen = _pick(yours, 2, rnd, seen)
         chosen += _pick([i for i in targeted if i not in chosen], 5 - len(chosen), rnd, seen)
         chosen += _pick([i for i in scams if i not in chosen], 5 - len(chosen), rnd, seen)
@@ -139,7 +140,7 @@ def public(r: Round, lang: str = "en") -> dict:
     """What the browser sees: the messages, never the answers."""
     out = []
     for i in r.items:
-        d = {"id": i.id, "text": i.text, "yours": i.source == "yours"}
+        d = {"id": i.id, "text": i.text, "yours": i.source in PRIVATE}
         if r.mode == "tell":
             d["words"] = gp.words(i.text)
         out.append(d)
@@ -204,7 +205,7 @@ def answer(r: Round, item_id: str, choice: str | None = None, picked: list[int] 
     s = gs.get()
     s["xp"] += gain
     s["seen"] = ([item_id] + [x for x in s["seen"] if x != item_id])[:60]
-    if outcome == "correct" and item.source == "yours":
+    if outcome == "correct" and item.source in PRIVATE:
         s["yours_correct"] += 1
     if outcome == "correct" and r.mode == "tell":
         s["tells_found"] += 1
@@ -215,7 +216,7 @@ def answer(r: Round, item_id: str, choice: str | None = None, picked: list[int] 
     return {
         "outcome": outcome, "truth": item.truth, "xp": gain, "combo": r.combo, "lives": r.lives, "over": r.over, "answered": len(r.answered), "total": len(r.items),
         "tell": tell, "action": action, "highlight": list(span) if span else None, "tell_phrase": item.tell_phrase,
-        "tricks": [tactic_text(t, "label", lang, TACTICS) for t in item.tactics if t in TACTICS], "false_alarm": careful, "yours": item.source == "yours",
+        "tricks": [tactic_text(t, "label", lang, TACTICS) for t in item.tactics if t in TACTICS], "false_alarm": careful, "yours": item.source in PRIVATE,
         "level": gs.level_for(s["xp"]),
     }
 
@@ -317,7 +318,7 @@ def overview(lang: str = "en") -> dict:
     mastery = {r["tactic"]: r for r in model.all_mastery()}
     return {
         **gs.summary(s, lang),
-        "yours_available": sum(1 for i in items if i.source == "yours"),
+        "yours_available": sum(1 for i in items if i.source in PRIVATE),
         "tricks": [{"id": t, "label": tactic_text(t, "label", lang, TACTICS), "blurb": tactic_text(t, "blurb", lang, TACTICS), "level": mastery[t]["level"], "bars": model.LEVEL_BARS[mastery[t]["level"]],
                     "won": t in s["boss_won"], "messages": sum(1 for i in items if i.truth == "scam" and t in i.tactics)} for t, v in TACTICS.items()],
         "resilience": model.baitproof_score(),

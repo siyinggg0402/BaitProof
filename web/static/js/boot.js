@@ -1,7 +1,7 @@
 document.documentElement.classList.add("js");
 try { if (localStorage.getItem("bp-big") === "1") document.documentElement.classList.add("big"); } catch (_) {}
 
-// Translation for the scripts: the server embeds {lang, speech, dict} as <script type="application/json" id="i18n"> on Chinese pages only.
+// Translation for the scripts: the server embeds {lang, speech, dict} as <script type="application/json" id="i18n"> on Chinese and Malay pages (not on English ones).
 // The function t takes the English text (and an object of values) and gives the text in the page's language (English is the key and the fallback), filling in each {name}.
 const I18N = (() => {
   try { return Object.assign({ lang: "en", speech: "en", dict: {} }, JSON.parse(document.getElementById("i18n").textContent)); }
@@ -11,8 +11,11 @@ function t(text, vars) {
   const out = Object.prototype.hasOwnProperty.call(I18N.dict, text) ? I18N.dict[text] : text;
   return vars ? out.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? vars[k] : m)) : out;
 }
-// The voice for read-aloud: Chinese text is read by a Chinese voice (Traditional on a Traditional page), everything else by an English one.
-function speechLang(text) { return /[㐀-鿿]/.test(text) ? (I18N.speech !== "en" ? I18N.speech : "zh-CN") : "en"; }
+// The voice for read-aloud: Chinese text is read by a Chinese voice (Traditional on a Traditional page), a Malay page by a Malay voice, everything else by an English one.
+function speechLang(text) {
+  if (/[㐀-鿿]/.test(text)) return I18N.speech.startsWith("zh") ? I18N.speech : "zh-CN";
+  return I18N.lang === "ms" ? I18N.speech : "en";
+}
 function say(text) {
   if (!("speechSynthesis" in window)) return;
   const u = new SpeechSynthesisUtterance(text);

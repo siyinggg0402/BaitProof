@@ -9,6 +9,7 @@
   <div class="body">
     {% if result.source == 'screenshot' %}<p class="src"><span aria-hidden="true">📷</span> {{ _("Read from a screenshot") }}</p>
     {% elif result.source == 'voice' %}<p class="src"><span aria-hidden="true">🎤</span> {{ _("Heard from a voice note") }}</p>{% endif %}
+    {% if result.origin_note %}<p class="src"><span aria-hidden="true">📍</span> {{ result.origin_note }}</p>{% endif %}
     {% if result.tell %}<div class="panel"><b>{{ _("The giveaway") }}</b>{{ result.tell }}</div>{% endif %}
     {% if result.action %}<div class="panel"><b>{{ _("What to do") }}</b>{{ result.action }}</div>{% endif %}
     {% if result.tactics %}<ul class="chips" aria-label="{{ _('Tricks found') }}">{% for t in result.tactics %}<li title="{{ t.quote }}">{{ labels[t.id] }}</li>{% endfor %}</ul>{% endif %}
@@ -36,6 +37,15 @@
     {% endif %}
     <details class="trace"><summary>{{ _("How I decided ({level})", level=_(result.confidence + " confidence")) }}</summary>
       <ol>{% for s in result.trace %}<li class="st-{{ s.status }}"><strong>{{ STAGES.get(s.stage, s.stage) }}</strong>{% if s.ms %} <small>{{ s.ms }} ms</small>{% endif %}: {{ s.detail }}</li>{% endfor %}</ol></details>
+    {% if v in ('scam', 'likely_scam', 'unsure', 'victim_support') %}
+    <details class="help"{% if v in ('scam', 'victim_support') %} open{% endif %}><summary>🆘 {{ _("Need help, or want to report it?") }}</summary>
+      <p>{{ _("Already paid or shared something? Call your bank straight away, then use an official line:") }}</p>
+      {% for c in help_lines(result.lang) %}<h4>{{ c.country }}</h4>
+      <ul>{% for it in c['items'] %}<li>{{ it.text }}{% if it.tel %} <a href="tel:{{ it.tel }}">{{ it.tel }}</a>{% endif %}{% if it.url %} <a href="{{ it.url }}" rel="noopener" target="_blank">{{ it.url_text }}</a>{% endif %}</li>{% endfor %}</ul>{% endfor %}
+      <p class="muted">{{ _("Real officials never ask you to move money or share your bank login by phone.") }} {{ _("Official lines checked against government pages in {when}.", when=_(help_verified)) }}</p>
+    </details>
+    {% endif %}
+    {% if family_name and v in ('scam', 'likely_scam') %}<form method="post" action="/family/share" class="family-share"><input type="hidden" name="ex" value="latest"><button type="submit" class="ghost">👪 {{ _("Share with {family}", family=family_name) }}</button></form>{% endif %}
     <button class="speak" data-say="{{ result.headline }} {{ result.tell }} {{ result.action }}">🔊 {{ _("Read aloud") }}</button>
     <div class="feedback-row" role="group" aria-label="{{ _('Was this answer right?') }}"><span>{{ _("Was this right?") }}</span>
       <button type="button" class="ghost" data-feedback="up">👍 {{ _("Yes") }}</button><button type="button" class="ghost" data-feedback="down">👎 {{ _("No") }}</button>

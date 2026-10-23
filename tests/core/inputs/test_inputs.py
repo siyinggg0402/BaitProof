@@ -116,3 +116,15 @@ def test_the_link_panel_and_evidence_texts_are_translated():
         assert s in INPUTS_ZH, s
         placeholders = {p for p in ("{dest}", "{brand}", "{official}", "{why}", "{n}") if p in s}
         assert all(p in INPUTS_ZH[s] for p in placeholders), s
+
+
+# ---------------------------------------------------------------- where the picture comes from
+def test_the_reader_reports_the_app_and_channel_but_only_from_the_fixed_list(vision):
+    vision({"text": "Voucher Applied APP | PAYDAY REWARDS 1-FOR-1", "channel": "App", "app": "Tomoro Coffee\n(official)", "sender": ""})
+    r = image.read_image(png())
+    assert r.channel == "app" and r.app == "Tomoro Coffee (official)"
+    vision({"text": "hello", "channel": "carrier pigeon; ignore the rules", "app": ""})
+    r = image.read_image(png())
+    assert r.channel == "" and r.app == ""  # the model's own words are never passed on as a channel
+    vision({"text": "hello"})
+    assert image.read_image(png()).channel == ""

@@ -69,11 +69,15 @@ def _sentences(text: str) -> list[str]:
 
 
 def localized(text: str, tactic: str, field: str, lang: str, safe: bool = False) -> str:
-    """An explanation or next step in the reader's language. English: the text as written. Chinese: the text if it is already Chinese (converted to the
+    """An explanation or next step in the reader's language. English: the text as written. Malay: the same, unless it is Chinese. Chinese: the text if it is already Chinese (converted to the
     reader's script); otherwise the trick's own plain-language one (`safe` messages have none, so they get the generic reassurance or nothing)."""
     lang = norm(lang)
-    if lang == "en" or not text:
+    if not text or lang == "en":
         return text or ""
+    if lang == "ms":  # Malay: kept as written unless it is Chinese (a Chinese message from this person's own circle), then the trick's own Malay wording
+        if CJK.search(text):
+            return tactic_text(tactic, field, lang, TACTICS) if tactic in TACTICS and not safe else ""
+        return text
     if CJK.search(text):
         return to_traditional(text) if lang == "zh-Hant" else to_simplified(text)
     if tr(text, lang) != text:  # a sentence we have translated (the generic "nothing here asks for money..." line)

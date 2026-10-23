@@ -42,6 +42,10 @@ TWO_LEVEL = {"co.uk", "org.uk", "gov.uk", "com.au", "co.nz", "co.za", "com.br", 
 PUBLIC_HOST_RE = re.compile(r"^(?=.{4,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$")
 
 
+# Wikimedia (Wikidata) throttles anonymous clients hard; its policy is to say who is asking and where to reach them. The repository is public.
+USER_AGENT = os.getenv("BAITPROOF_USER_AGENT", "Baitproof/1.0 (scam-defence coach for families; https://github.com/siyinggg0402/Is-This-Legit)")
+
+
 # ---------------------------------------------------------------- helpers
 def _is_official(host: str, official: str) -> bool:
     return host == official or host.endswith("." + official) or (official.endswith(".gov") and host.endswith(".gov"))
@@ -51,9 +55,14 @@ def is_public_hostname(h: str) -> bool:
     return bool(PUBLIC_HOST_RE.match(h)) and not h.endswith((".local", ".internal", ".localhost", ".lan", ".home")) and h != "localhost"
 
 
+# A country domain usually puts one of these between the name and the country ('dbs.com.sg', 'bbc.co.uk', 'baidu.ac.cn'): together they are the public suffix.
+SECOND_LEVEL = {"com", "co", "net", "org", "gov", "edu", "ac", "or", "ne", "go", "per", "mil", "ltd", "plc", "sch", "me", "ind", "biz", "info"}
+
+
 def registered_domain(host: str) -> str:
+    """The part of an address that was actually registered: 'login.dbs.com.sg' -> 'dbs.com.sg', 'a.b.evil.xyz' -> 'evil.xyz'."""
     labels = host.split(".")
-    if len(labels) >= 3 and ".".join(labels[-2:]) in TWO_LEVEL:
+    if len(labels) >= 3 and (".".join(labels[-2:]) in TWO_LEVEL or (len(labels[-1]) == 2 and labels[-2] in SECOND_LEVEL)):
         return ".".join(labels[-3:])
     return ".".join(labels[-2:])
 
@@ -68,7 +77,7 @@ def net_enabled() -> bool:
 
 
 def _http_bytes(url: str, timeout: float = 5.0, max_bytes: int = 300_000) -> bytes:
-    req = Request(url, headers={"User-Agent": "Baitproof/1.0 (scam-defense; +https://github.com)", "Accept": "application/rdap+json, application/json"})
+    req = Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/rdap+json, application/json"})
     with urlopen(req, timeout=timeout) as r:  # noqa: S310 (fixed https registry host; argument is a validated hostname)
         return r.read(max_bytes)
 
@@ -78,6 +87,37 @@ def _http_json(url: str, timeout: float = 5.0, max_bytes: int = 300_000) -> dict
 
 
 # ---------------------------------------------------------------- tools (each returns a small dict)
+def _one_edit(a: str, b: str) -> bool:
+    """True when the two words differ by exactly one letter added, dropped, changed or swapped with its neighbour (a typing slip, or a typosquat on purpose)."""
+    if a == b or abs(len(a) - len(b)) > 1:
+        return False
+    if len(a) == len(b):
+        diff = [i for i in range(len(a)) if a[i] != b[i]]
+        return len(diff) == 1 or (len(diff) == 2 and diff[1] == diff[0] + 1 and a[diff[0]] == b[diff[1]] and a[diff[1]] == b[diff[0]])
+    short, long = (a, b) if len(a) < len(b) else (b, a)
+    return any(long[:i] + long[i + 1:] == short for i in range(len(long)))
+
+
+# the names a typosquat imitates: each well-known brand's own name and the first label of its real addresses ('maybank2u', 'cimbclicks'), for names of six letters or more
+# (a short name is one letter away from too many ordinary words), leaving out brands that are also ordinary words
+_SQUAT_NAMES: dict[str, tuple[str, str]] = {}
+for _brand, _site in BRANDS.items():
+    if _brand in AMBIGUOUS_BRANDS:
+        continue
+    for _name in {_brand, _site.split(".")[0], *(a.split(".")[0] for a in OFFICIAL_ALT.get(_brand, ()))}:
+        if len(_name) >= 6:
+            _SQUAT_NAMES.setdefault(_name, (_brand, _site))
+
+
+def _typosquat(host: str) -> tuple[str, str] | None:
+    """(brand, its real address) when a word in this host is one letter away from that brand's name but the host is not the brand's own: 'maybnak2u.com.my'."""
+    for token in {t for t in re.split(r"[.\-]", host) if len(t) >= 5}:
+        for name, (brand, site) in _SQUAT_NAMES.items():
+            if _one_edit(token, name) and not (_is_official(host, site) or any(_is_official(host, alt) for alt in OFFICIAL_ALT.get(brand, ()))):
+                return brand, site
+    return None
+
+
 def domain_check(host: str) -> dict:
     """Deterministic lookalike analysis. 'hard' flags are near-certain (brand impersonation); 'soft' are just odd."""
     tokens = set()
@@ -90,6 +130,8 @@ def domain_check(host: str) -> dict:
         hard.append(f"imitates {brand} but is not {BRANDS[brand]}")
     elif brand:
         official = brand
+    if not brand and (squat := _typosquat(host)):   # a one-letter slip on a known name: weak evidence by itself (real sites sometimes are), but worth saying
+        soft.append(f"looks one letter away from {squat[0]} ({squat[1]})")
     if "xn--" in host:
         hard.append("uses disguised (punycode) characters")
     if re.fullmatch(r"[\d.]+", host):
@@ -238,13 +280,14 @@ def dns_check(host: str) -> dict:
     return {"host": host, "status": "private" if any(_internal(ip) for ip in ips) else "ok"}
 
 
+ORG_CLAIMS = {"P159", "P452", "P1128", "P2139", "P355", "P749", "P112", "P1454", "P169"}  # Wikidata: headquarters, industry, employees, revenue, subsidiary, parent, founder, legal form, CEO
 GENERIC_ORGS = {"bank", "your bank", "the bank", "support", "support team", "customer service", "your provider", "service", "team", "office", "company", "your account"}
 
 
 def official_site_wikidata(org: str) -> dict:
     """Free, keyless: ask Wikidata (community-maintained, public) what the organisation's OFFICIAL WEBSITE is (property P856).
     Only the organisation name from the message is sent; we never visit any website."""
-    hit_label, hosts = None, []
+    hit_label, hosts, exists = None, [], False
     found = _http_json("https://www.wikidata.org/w/api.php?action=wbsearchentities&language=en&format=json&limit=3&type=item&search=" + quote(org))
     words = {w for w in re.findall(r"[a-z0-9]{3,}", org.lower())}
     for hit in found.get("search", [])[:3]:
@@ -255,16 +298,18 @@ def official_site_wikidata(org: str) -> dict:
         if not re.fullmatch(r"Q\d+", qid):
             continue
         ent = _http_json(f"https://www.wikidata.org/wiki/Special:EntityData/{qid}.json")
-        for claim in ent.get("entities", {}).get(qid, {}).get("claims", {}).get("P856", []):
+        claims = ent.get("entities", {}).get(qid, {}).get("claims", {})
+        for claim in claims.get("P856", []):
             url = claim.get("mainsnak", {}).get("datavalue", {}).get("value")
             if isinstance(url, str):
                 h = re.sub(r"^www\.", "", (urlparse(url).hostname or "").lower())
                 if h:
                     hosts.append(h)
-        if hosts:
+        if hosts or ORG_CLAIMS & set(claims):  # a website, or facts only an organisation has (headquarters, industry, employees, revenue, parent...)
             hit_label = hit.get("label")
+            exists = True
             break
-    return {"org": org, "hosts": list(dict.fromkeys(hosts)), "label": hit_label}
+    return {"org": org, "hosts": list(dict.fromkeys(hosts)), "label": hit_label, "exists": exists}
 
 
 def brand_lookup(org: str) -> dict:
@@ -334,6 +379,91 @@ def cert_history(host: str) -> dict:
     return out
 
 
+# -- domain_owner: who registered this address?
+WHOIS_TIMEOUT = 6.0
+WHOIS_MAX_BYTES = 30_000
+_whois_servers: dict[str, str] = {}  # top-level domain -> the registry's WHOIS server ('' = it has none)
+_REDACTED = re.compile(r"redact|privacy|protect|withheld|not disclosed|not available|proxy|whoisguard|data protected|gdpr|anonym|masked|statutory|n/a", re.I)
+_EMAIL_DOMAIN = re.compile(r"[A-Za-z0-9._%+-]+@([A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+)")
+_OWNER_NAME = re.compile(r"[^\w .,&()'/-]+", re.UNICODE)
+
+
+def _whois_address(server: str) -> str:
+    """The address of a WHOIS server. Every address must be public; the one exception is the 'fake-ip' block (198.18.0.0/15) that VPN and proxy software hands out
+    for every name, which is a tunnel to the real server rather than a door into this network. The server's name comes from the IANA list, not from the message."""
+    ips = [i[4][0] for i in socket.getaddrinfo(server, 43, type=socket.SOCK_STREAM)]
+    if not ips or not all(public_address(ip) or _fake(ip) for ip in ips):
+        raise ValueError("refused: the WHOIS server does not resolve to a public address")
+    return ips[0]
+
+
+def _whois_raw(server: str, query: str, timeout: float) -> str:
+    """One WHOIS question (port 43) to a registry's server, which is looked up on the IANA list and must be a public host. The query is the domain name only."""
+    if not re.fullmatch(r"[a-z0-9.-]{3,253}", server):
+        raise ValueError("odd WHOIS server name")
+    ip = _whois_address(server)
+    with socket.create_connection((ip, 43), timeout) as s:
+        s.settimeout(timeout)
+        s.sendall((query + "\r\n").encode("ascii", "ignore"))
+        out = b""
+        while len(out) < WHOIS_MAX_BYTES:
+            try:
+                chunk = s.recv(4096)
+            except (socket.timeout, OSError):
+                break
+            if not chunk:
+                break
+            out += chunk
+    return out.decode("utf-8", "replace")
+
+
+def _whois_server(tld: str) -> str:
+    if tld not in _whois_servers:
+        text = _whois_raw("whois.iana.org", tld, WHOIS_TIMEOUT)
+        _whois_servers[tld] = next((m.group(1).strip().lower() for l in text.splitlines() if (m := re.match(r"whois:\s*(\S+)", l, re.I))), "")
+    return _whois_servers[tld]
+
+
+def _owner_text(v: str) -> str:
+    """The registrant's name as the registry printed it: it is written by whoever registered the domain, so only plain name characters survive."""
+    return " ".join(_OWNER_NAME.sub(" ", v).split())[:80]
+
+
+def parse_whois(text: str) -> dict:
+    """{registrant, email_domains, registrar, status}. Redacted ('REDACTED FOR PRIVACY') values are ignored. status: found | redacted | empty."""
+    registrant, registrar, emails, redacted = "", "", [], False
+    for line in text.splitlines():
+        if ":" not in line:
+            continue
+        key, _, val = line.partition(":")
+        key, val = key.strip().lower(), val.strip()
+        if not val:
+            continue
+        if _REDACTED.search(val):
+            redacted = True
+            continue
+        if key in ("registrant organization", "registrant organisation", "registrant", "registrant name", "organization", "org") and not registrant:
+            registrant = _owner_text(val)
+        elif key in ("registrar", "sponsoring registrar") and not registrar:
+            registrar = _owner_text(val)
+        elif ("email" in key or "e-mail" in key) and key.split()[0] in ("registrant", "tech", "admin", "email", "technical", "administrative"):
+            for m in _EMAIL_DOMAIN.finditer(val):
+                d = m.group(1).lower()
+                if d not in emails and len(emails) < 4:
+                    emails.append(d)
+    return {"registrant": registrant, "email_domains": emails, "registrar": registrar, "status": "found" if registrant or emails else ("redacted" if redacted else "empty")}
+
+
+def domain_owner(host: str) -> dict:
+    """Who registered this address, from the registry's public WHOIS record (not from the site). Country registries such as .cn, .sg, .my and .hk
+    publish the registrant and a contact address; many .com records are redacted. Only the domain name is sent, and only to the registry."""
+    dom = registered_domain(host)
+    server = _whois_server(dom.rsplit(".", 1)[-1])
+    if not server:
+        return {"host": host, "domain": dom, "registrant": "", "email_domains": [], "registrar": "", "status": "unavailable"}
+    return {"host": host, "domain": dom, **parse_whois(_whois_raw(server, dom, WHOIS_TIMEOUT))}
+
+
 # -- expand_link: where does a short link really go?
 MAX_HOPS = 3  # at most this many requests, and only to shorteners
 HOP_TIMEOUT = 3.0  # seconds for one request (connect + answer)
@@ -355,10 +485,10 @@ def public_address(ip: str) -> bool:
     return bool(a.is_global and not (a.is_private or a.is_loopback or a.is_link_local or a.is_multicast or a.is_reserved or a.is_unspecified) and not any(a in n for n in _BAD_ADDR_NETS))
 
 
-def _resolve_public(host: str) -> str:
+def _resolve_public(host: str, port: int = 443) -> str:
     """The address to connect to for `host`, refusing the name unless EVERY address it resolves to is public. We then connect to that address
     itself, so the name cannot resolve to something else a moment later (DNS rebinding)."""
-    ips = [i[4][0] for i in socket.getaddrinfo(host, 443, type=socket.SOCK_STREAM)]
+    ips = [i[4][0] for i in socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)]
     if not ips or not all(public_address(ip) for ip in ips):
         raise ValueError("refused: the name does not resolve to a public address")
     return ips[0]
@@ -455,6 +585,7 @@ SPECS: dict[str, Spec] = {s.name: s for s in [
     Spec("reputation", "host", reputation, "Search the web for scam reports about this website.", net=True, timeout=10, requires="TAVILY_API_KEY"),
     Spec("blocklist_check", "host", blocklist_check, "Is this website address on a public list of known phishing sites (checked on this machine; nothing is sent)."),
     Spec("cert_history", "host", cert_history, "When the website first got a security certificate, from public Certificate Transparency logs. Use when the registry could not say how old the site is.", net=True, timeout=10),
+    Spec("domain_owner", "host", domain_owner, "Who registered the website address, from the registry record. Compare with the real company's website.", net=True, timeout=14),
     Spec("expand_link", "url", expand_link, "Find out where a SHORT link (bit.ly and the like) really goes, by asking the shortener where it redirects. The destination is never visited.", net=True, timeout=9),
 ]}
 
@@ -471,6 +602,8 @@ class Findings:
     ages: dict[str, int | None] = field(default_factory=dict)  # host -> registration age in days
     dns: dict[str, str] = field(default_factory=dict)  # host -> ok | nxdomain | private
     listed: dict[str, str] = field(default_factory=dict)  # host -> the entry on the public phishing list that matched it
+    owners: dict[str, dict] = field(default_factory=dict)  # host -> {"registrant": name, "emails": [domains of the registrant's contact addresses]}
+    orgs_real: dict[str, str] = field(default_factory=dict)  # organisation as named -> its name on Wikidata (it exists, whatever the message says)
     certs: dict[str, int | None] = field(default_factory=dict)  # host -> days since its domain's first logged security certificate (None = could not tell)
     brand_sites: dict[str, list[str]] = field(default_factory=dict)  # org -> hostnames the web says are official
     brand_src: dict[str, str] = field(default_factory=dict)  # org -> 'wikidata' | 'web search'
@@ -502,15 +635,27 @@ class Findings:
         a = self.ages.get(host)
         return a if a is not None else self.certs.get(host)
 
+    def owned_by(self, host: str) -> str:
+        """The company that itself registered this address: the registry's contact address for it is on that company's own website (one we know from Wikidata,
+        the web, or the brand table). '' when we cannot tell. The record is written by whoever registered the domain, so this is supporting evidence, never proof."""
+        o = self.owners.get(host)
+        if not o or not o.get("emails"):
+            return ""
+        mine = {registered_domain(d) for d in o["emails"]}
+        for org, sites in self.brand_sites.items():
+            if mine & {registered_domain(s) for s in sites}:
+                return org
+        return next((b for b, dom in BRANDS.items() if registered_domain(dom) in mine), "")
+
     def all_links_official(self) -> bool:
         hs = self._judged_hosts()
-        return bool(hs) and all(h in self.official_hosts for h in hs)
+        return bool(hs) and all(h in self.official_hosts or self.owned_by(h) for h in hs)
 
     def all_links_established(self) -> bool:
         """Every link is either a known real site, or an old, resolving domain (2+ years): a link we have positive reason to trust.
         A short link's own age says nothing about where it goes, so it only counts once it has been followed to its destination."""
         hs = self._judged_hosts()
-        return bool(hs) and all(h in self.official_hosts or (h not in SHORTENERS and (self.age_of(h) or 0) >= 730 and self.dns.get(h) == "ok" and h not in self.listed) for h in hs)
+        return bool(hs) and all(h in self.official_hosts or self.owned_by(h) or (h not in SHORTENERS and (self.age_of(h) or 0) >= 730 and self.dns.get(h) == "ok" and h not in self.listed) for h in hs)
 
     def apply(self, tool: str, arg: str, d: dict) -> None:
         self.done.add((tool, arg))
@@ -534,10 +679,15 @@ class Findings:
                 self.listed[arg] = d["listed"]
         elif tool == "cert_history":
             self.certs[arg] = d.get("first_days")
+        elif tool == "domain_owner":
+            if d.get("status") == "found":
+                self.owners[arg] = {"registrant": d.get("registrant", ""), "emails": d.get("email_domains", [])}
         elif tool in ("brand_lookup", "official_site_wikidata"):
             if d["hosts"] or arg not in self.brand_sites:  # never let an empty answer overwrite a real one
                 self.brand_sites[arg] = d["hosts"]
                 self.brand_src[arg] = "wikidata" if tool == "official_site_wikidata" else "web search"
+            if d.get("exists") or d["hosts"]:
+                self.orgs_real[arg] = d.get("label") or arg
         elif tool == "reputation":
             self.web_notes += d["notes"]
         elif tool == "expand_link":
@@ -564,6 +714,8 @@ class Findings:
         parts += [f"{h} was registered {a} days ago" for h, a in self.ages.items() if a is not None]
         parts += [f"{h} does not resolve" for h, s in self.dns.items() if s == "nxdomain"]
         parts += [f"{h} is on a public list of known phishing websites" for h in self.listed]
+        parts += [f"{h} is registered by {self.owned_by(h).title()} itself (the registry's contact address is on {self.owned_by(h).title()}'s own website)" for h in self.owners if self.owned_by(h)]
+        parts += [f"{o.title()} is a real, known organisation (Wikidata)" for o in self.orgs_real]
         parts += [f"{h} first got a security certificate {c} days ago" for h, c in self.certs.items() if c is not None and self.ages.get(h) is None]
         parts += [f"phone {p} looks like a {k} number" for p, k in self.phones.items() if k in ("caribbean", "premium", "personal")]
         parts += [f"{self.brand_src.get(o, 'the web')} lists {', '.join(h[:3])} as {o}'s official site" for o, h in self.brand_sites.items() if h]
@@ -592,7 +744,11 @@ class ToolGate:
         if spec.arg == "phone":
             return arg in e.phones
         if spec.arg == "org":
-            return bool(arg) and arg.lower() not in GENERIC_ORGS and arg.lower() in ({self.org} | set(e.brands)) and arg.lower() in self.ing.text.lower()
+            if not arg or arg.lower() in GENERIC_ORGS:
+                return False
+            if arg.lower() in {n.lower() for n in (self.ing.origin.names() if self.ing.origin else [])}:
+                return True  # the app or brand a screenshot showed: not written in the text, but it is where the message came from
+            return arg.lower() in ({self.org} | set(e.brands)) and arg.lower() in self.ing.text.lower()
         return False
 
     def available(self, name: str, arg: str, done: set) -> bool:

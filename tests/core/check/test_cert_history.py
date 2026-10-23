@@ -148,7 +148,7 @@ def test_the_planner_asks_for_the_certificate_log_in_the_same_round_as_the_regis
     gate = tools.ToolGate(ing, "", Trace())
     qs = planner.open_questions(ing, SimpleNamespace(claimed="", claimed_kind="", disagreements=[]), f, gate)
     (q,) = [q for q in qs if q.key.startswith("host:")]
-    assert {t for t, _ in q.calls} == {"domain_age", "dns_check", "cert_history"}
+    assert {t for t, _ in q.calls} == {"domain_age", "domain_owner", "dns_check", "cert_history"}
 
 
 # ---------------------------------------------------------------- phone numbers

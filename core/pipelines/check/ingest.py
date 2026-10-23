@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 
 from core.lang import text as L
 from core.domain import privacy
+from core.domain.schemas import Origin
 from core.lang import ms as MS
 from core.lang import zh as ZH
 from core.lang.text import Dual
@@ -41,6 +42,7 @@ class Ingested:
     english: bool  # True when our rules understand the language (English or Chinese); otherwise rules alone can't clear anything
     lang: str = "en"  # en | zh | zh-Hant | ms | ja | ko | ... | other (see core.lang.text)
     reply: str = "en"  # the language the ANSWER is written in (en | zh | zh-Hant): the user's choice, set by the pipeline
+    origin: Origin | None = None  # where the message seems to have come from (unverified context), set by the pipeline
 
 
 def ingest(raw: str) -> Ingested:

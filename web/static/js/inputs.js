@@ -28,7 +28,9 @@
     area.rows = 3;
     while (area.scrollHeight > area.clientHeight && area.rows < 10) area.rows += 1;
   }
-  function reset() { source.value = "text"; area.rows = 3; clear(); }
+  const origin = { channel: document.getElementById("origin-channel"), app: document.getElementById("origin-app"), sender: document.getElementById("origin-sender") };
+  function setOrigin(d) { origin.channel.value = d.channel || ""; origin.app.value = d.app || ""; origin.sender.value = d.sender || ""; } // what the screenshot showed: where the message seems to come from
+  function reset() { source.value = "text"; setOrigin({}); area.rows = 3; clear(); }
   const mmss = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
   const startCheck = () => (form.requestSubmit ? form.requestSubmit() : form.querySelector("button.big").click()); // the live view in check.js takes it from here
   const generic = () => t("Something went wrong. Please try again, or paste the text instead.");
@@ -71,6 +73,7 @@
       if (!text) throw new Error(t("I couldn't find a message in that. Try again, or paste the text instead."));
       const codes = data.qr_urls || [], missing = codes.filter((u) => !text.includes(u)); // our reader already adds a decoded QR address to the text; make sure it is there
       setText(missing.length ? text + "\n\n" + missing.join("\n") : text, "screenshot");
+      setOrigin(data);
       const readable = data.legible !== false;
       const lines = [readable ? t("I read this from your screenshot. Check it matches, fix anything wrong, then check it again.")
         : t("The picture was hard to read, so I haven't checked it yet. Please look at the text, fix anything wrong, then press “Check it”.")];

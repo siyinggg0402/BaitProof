@@ -59,6 +59,7 @@ def hint(update: Any) -> str | None:
 async def reply_all(update: Any, replies: list[Reply]) -> None:
     for r in replies:
         await update.message.reply_text(r.text, **render(r))
+    await send_alerts(update)
 
 
 async def start(update: Any, ctx: Any) -> None:
@@ -78,6 +79,40 @@ async def lang(update: Any, ctx: Any) -> None:
     await update.message.reply_text(await asyncio.to_thread(handlers.on_lang, update.effective_chat.id, " ".join(ctx.args or []), hint(update)))
 
 
+async def family_cmd(update: Any, ctx: Any) -> None:
+    await update.message.reply_text(await asyncio.to_thread(handlers.on_family, update.effective_chat.id, " ".join(ctx.args or []), hint(update)))
+    await send_alerts(update)
+
+
+async def guard_cmd(update: Any, ctx: Any) -> None:
+    who = (getattr(update.effective_user, "first_name", "") or "")[:40]
+    await update.message.reply_text(await asyncio.to_thread(handlers.on_guard, update.effective_chat.id, " ".join(ctx.args or []), hint(update), who))
+    await send_alerts(update)
+
+
+async def safeword_cmd(update: Any, ctx: Any) -> None:
+    await update.message.reply_text(await asyncio.to_thread(handlers.on_safeword, update.effective_chat.id, hint(update)))
+
+
+async def send_alerts(update: Any) -> None:
+    """Deliver the notes the last check or command produced for OTHER chats (a family helper). A chat that blocked the bot or is gone is simply skipped."""
+    alerts = handlers.take_alerts()
+    if not alerts:
+        return
+    get_bot = getattr(getattr(update, "message", None), "get_bot", None)
+    bot = get_bot() if get_bot else None
+    for chat, text in alerts:
+        try:
+            if bot is not None:
+                await bot.send_message(chat_id=chat, text=text)
+        except Exception as e:  # noqa: BLE001 (a failed note must never break the reply that was already sent)
+            handlers.note_failure("family-alert", e)
+
+
+async def report_cmd(update: Any, ctx: Any) -> None:
+    await update.message.reply_text(await asyncio.to_thread(handlers.on_report, update.effective_chat.id, hint(update)))
+
+
 async def history_cmd(update: Any, ctx: Any) -> None:
     await update.message.reply_text(await asyncio.to_thread(handlers.on_history, update.effective_chat.id, 5, hint(update)))
 
@@ -95,9 +130,24 @@ async def challenge_cmd(update: Any, ctx: Any) -> None:
     await reply_all(update, await asyncio.to_thread(handlers.on_challenge, update.effective_chat.id, hint(update)))
 
 
+def forwarded_from(msg: Any) -> str:
+    """Who or what Telegram says a forwarded message came from: a person's name, a hidden sender's name, or a channel or group title ('' when it was not forwarded).
+    Telegram writes it, not the sender of the message, but it names only the last place it passed through."""
+    o = getattr(msg, "forward_origin", None)
+    if o is None:
+        return ""
+    user = getattr(o, "sender_user", None)
+    if user is not None:
+        return " ".join(p for p in (getattr(user, "first_name", ""), getattr(user, "last_name", "") or "") if p)
+    for chat in (getattr(o, "chat", None), getattr(o, "sender_chat", None)):
+        if chat is not None and getattr(chat, "title", None):
+            return str(chat.title)
+    return str(getattr(o, "sender_user_name", "") or "")
+
+
 async def text(update: Any, ctx: Any) -> None:
     # Checking can call the model, so keep it off the event loop.
-    await reply_all(update, await asyncio.to_thread(handlers.on_check, update.effective_chat.id, update.message.text or "", hint(update)))
+    await reply_all(update, await asyncio.to_thread(handlers.on_check, update.effective_chat.id, update.message.text or "", hint(update), forwarded_from(update.message)))
 
 
 # ---------------------------------------------------------------- screenshots and voice notes
@@ -167,7 +217,7 @@ async def image_msg(update: Any, ctx: Any) -> None:
     media = largest_photo(msg.photo) if msg.photo else msg.document
     size = getattr(media, "file_size", None)  # known before the download, so a huge file is turned away without fetching it
     await read_input(update, ctx, "image", media, lambda: handlers.image_precheck(chat_id, size, lang_hint),
-                     lambda data: handlers.on_image(chat_id, data, lang_hint))
+                     lambda data: handlers.on_image(chat_id, data, lang_hint, forwarded_from(msg)))
 
 
 async def voice_msg(update: Any, ctx: Any) -> None:
@@ -214,6 +264,10 @@ def main() -> None:
     app.add_handler(CommandHandler("link", link))
     app.add_handler(CommandHandler("unlink", unlink))
     app.add_handler(CommandHandler("history", history_cmd))
+    app.add_handler(CommandHandler("report", report_cmd))
+    app.add_handler(CommandHandler("family", family_cmd))
+    app.add_handler(CommandHandler("guard", guard_cmd))
+    app.add_handler(CommandHandler("safeword", safeword_cmd))
     app.add_handler(CommandHandler("lang", lang))
     app.add_handler(CommandHandler(["quiz", "play"], quiz_cmd))
     app.add_handler(CommandHandler("challenge", challenge_cmd))

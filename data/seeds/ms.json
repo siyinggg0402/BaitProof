@@ -1,0 +1,574 @@
+[
+ {
+  "id": "m01",
+  "is_scam": true,
+  "tactics": [
+   "urgency-pressure",
+   "lookalike-link",
+   "advance-fee"
+  ],
+  "text": "Pos Laju: Bungkusan anda tidak dapat dihantar kerana alamat tidak lengkap. Sila bayar RM1.50 dalam masa 24 jam di http://poslaju-semak.top/alamat atau bungkusan akan dipulangkan.",
+  "tell_phrase": "dalam masa 24 jam",
+  "tell": "Yuran kecil dengan tarikh akhir beberapa jam ialah helah mendesak, dan poslaju-semak.top bukan laman web Pos Laju.",
+  "action": "Jangan tekan pautan. Jika anda menunggu bungkusan, buka aplikasi atau laman web Pos Laju sendiri.",
+  "lang": "ms"
+ },
+ {
+  "id": "m02",
+  "is_scam": true,
+  "tactics": [
+   "urgency-pressure",
+   "impersonation-official"
+  ],
+  "text": "TNB: Bekalan elektrik anda akan diputuskan hari ini jam 5 petang kerana bil tertunggak. Hubungi 03-5550199 sekarang untuk mengelakkan pemutusan.",
+  "tell_phrase": "diputuskan hari ini jam 5 petang",
+  "tell": "Syarikat utiliti sebenar menghantar amaran melalui surat dan memberi anda masa. Tarikh akhir hari ini ialah tekanan.",
+  "action": "Jangan telefon nombor itu. Semak bil anda dan telefon nombor yang tercetak padanya.",
+  "lang": "ms"
+ },
+ {
+  "id": "m03",
+  "is_scam": true,
+  "tactics": [
+   "authority-spoofing",
+   "emotional-manipulation"
+  ],
+  "text": "Saya Inspektor Razak dari Unit Jenayah Siber PDRM. Nama anda tersenarai dalam kes pengubahan wang haram. Jangan beritahu bank atau keluarga anda dan kekal dalam talian.",
+  "tell_phrase": "Jangan beritahu bank atau keluarga anda",
+  "tell": "Polis sebenar tidak pernah menyuruh anda merahsiakannya daripada bank atau keluarga anda.",
+  "action": "Letak telefon. Telefon balai polis tempatan pada nombor yang anda cari sendiri.",
+  "lang": "ms"
+ },
+ {
+  "id": "m04",
+  "is_scam": true,
+  "tactics": [
+   "otp-credential-phish",
+   "impersonation-official"
+  ],
+  "text": "Maybank2u: Seseorang cuba log masuk ke akaun anda. Kami baru menghantar kod TAC 6 digit. Balas dengan kod itu untuk membatalkannya.",
+  "tell_phrase": "Balas dengan kod itu",
+  "tell": "Tiada pihak bank yang memerlukan kod TAC anda. Kod itu ialah kunci kepada akaun anda.",
+  "action": "Jangan balas. Buka aplikasi bank rasmi sendiri dan semak akaun anda.",
+  "lang": "ms"
+ },
+ {
+  "id": "m05",
+  "is_scam": true,
+  "tactics": [
+   "lookalike-link",
+   "urgency-pressure",
+   "impersonation-official"
+  ],
+  "text": "CIMB Clicks: Akaun anda telah dihadkan. Sahkan butiran anda di cimbclicks-secure.top dalam masa 12 jam atau akaun akan ditutup.",
+  "tell_phrase": "cimbclicks-secure.top",
+  "tell": "Alamat bank sebenar berakhir dengan nama bank itu sendiri. cimbclicks-secure.top bukan CIMB.",
+  "action": "Jangan tekan pautan. Taip alamat rasmi bank sendiri atau gunakan aplikasinya.",
+  "lang": "ms"
+ },
+ {
+  "id": "m06",
+  "is_scam": true,
+  "tactics": [
+   "too-good-to-be-true"
+  ],
+  "text": "Tahniah! Nombor telefon anda dipilih memenangi RM8,800 dalam cabutan bertuah Touch 'n Go. Klik di sini untuk menuntut hadiah anda sebelum tamat.",
+  "tell_phrase": "dipilih memenangi RM8,800",
+  "tell": "Anda tidak menyertai cabutan itu, jadi anda tidak boleh menang. Hadiah yang tiba-tiba ialah umpan.",
+  "action": "Abaikan dan padam mesej itu.",
+  "lang": "ms"
+ },
+ {
+  "id": "m07",
+  "is_scam": true,
+  "tactics": [
+   "emotional-manipulation",
+   "irreversible-payment"
+  ],
+  "text": "Hai Mak, ini nombor baharu saya, telefon saya rosak. Boleh tolong bayar bil ini RM2,300 sekarang? Saya tak boleh telefon, nanti saya ganti.",
+  "tell_phrase": "ini nombor baharu saya",
+  "tell": "Penipu berpura-pura menjadi anak anda dari nombor baharu dan meminta wang dengan cepat. Mereka juga mengelak panggilan.",
+  "action": "Telefon anak anda pada nombor lama, atau tanya soalan yang hanya dia tahu jawapannya, sebelum bayar apa-apa.",
+  "lang": "ms"
+ },
+ {
+  "id": "m08",
+  "is_scam": true,
+  "tactics": [
+   "remote-access-request",
+   "authority-spoofing"
+  ],
+  "text": "Saya dari bahagian keselamatan bank. Akaun anda telah diceroboh. Sila pasang aplikasi AnyDesk supaya kami boleh melindungi wang anda dari jauh.",
+  "tell_phrase": "pasang aplikasi AnyDesk",
+  "tell": "Pihak bank tidak pernah meminta anda memasang aplikasi kawalan jauh. Dengan aplikasi itu, penipu boleh melihat dan mengawal telefon anda.",
+  "action": "Letak telefon. Jangan pasang apa-apa. Telefon bank pada nombor di belakang kad anda.",
+  "lang": "ms"
+ },
+ {
+  "id": "m09",
+  "is_scam": true,
+  "tactics": [
+   "job-task-scam",
+   "advance-fee"
+  ],
+  "text": "Kerja separuh masa dari rumah! Suka video dan dapat RM30 setiap tugasan. Untuk membuka tugasan yang lebih tinggi, anda perlu deposit RM200 dahulu.",
+  "tell_phrase": "perlu deposit RM200 dahulu",
+  "tell": "Kerja sebenar membayar anda. Kerja yang menyuruh anda memasukkan wang sedang mengambil wang anda.",
+  "action": "Jangan balas. Sekat penghantar itu.",
+  "lang": "ms"
+ },
+ {
+  "id": "m10",
+  "is_scam": true,
+  "tactics": [
+   "investment-crypto",
+   "too-good-to-be-true",
+   "urgency-pressure"
+  ],
+  "text": "Pelaburan emas digital jaminan untung 30% seminggu! Sudah 500 orang untung. Deposit RM1,000 hari ini, tempat terhad.",
+  "tell_phrase": "jaminan untung 30% seminggu",
+  "tell": "Tiada pelaburan sebenar yang menjamin untung setinggi itu. Tempat terhad ialah helah untuk mendesak anda.",
+  "action": "Jangan deposit apa-apa. Berbincang dengan seseorang yang anda percayai dahulu.",
+  "lang": "ms"
+ },
+ {
+  "id": "m11",
+  "is_scam": true,
+  "tactics": [
+   "emotional-manipulation",
+   "advance-fee"
+  ],
+  "text": "Sayang, saya doktor tentera di luar negara dan kita akan berkahwin. Pegawai kastam menahan hadiah saya; sila bayar RM4,500 supaya ia dilepaskan.",
+  "tell_phrase": "sila bayar RM4,500",
+  "tell": "Orang yang baru anda kenali dalam talian dan meminta wang untuk 'hadiah' atau 'kastam' ialah penipu percintaan.",
+  "action": "Berhenti berhubung dan jangan hantar wang. Ceritakan kepada ahli keluarga atau kawan.",
+  "lang": "ms"
+ },
+ {
+  "id": "m12",
+  "is_scam": true,
+  "tactics": [
+   "advance-fee",
+   "too-good-to-be-true"
+  ],
+  "text": "Pinjaman segera RM50,000 tanpa semakan CTOS! Lulus dalam 10 minit. Bayar yuran pemprosesan RM380 dahulu untuk melepaskan wang.",
+  "tell_phrase": "Bayar yuran pemprosesan RM380 dahulu",
+  "tell": "Pemberi pinjaman sebenar tidak meminta anda membayar sebelum anda menerima pinjaman.",
+  "action": "Jangan bayar yuran. Tiada pinjaman yang menunggu anda.",
+  "lang": "ms"
+ },
+ {
+  "id": "m13",
+  "is_scam": true,
+  "tactics": [
+   "impersonation-official",
+   "lookalike-link"
+  ],
+  "text": "LHDN: Anda layak mendapat bayaran balik cukai RM1,240. Isi nombor kad bank anda di http://lhdn-bayaran.top untuk menerimanya.",
+  "tell_phrase": "Isi nombor kad bank anda",
+  "tell": "Pejabat cukai tidak menghantar SMS meminta nombor kad bank anda, dan lhdn-bayaran.top bukan laman web rasmi.",
+  "action": "Abaikan. Semak status cukai anda di portal rasmi yang anda taip sendiri.",
+  "lang": "ms"
+ },
+ {
+  "id": "m14",
+  "is_scam": true,
+  "tactics": [
+   "impersonation-official",
+   "urgency-pressure"
+  ],
+  "text": "JPJ: Anda ada saman trafik tertunggak RM150. Bayar sekarang di jpj-saman.xyz untuk mengelakkan waran tangkap.",
+  "tell_phrase": "mengelakkan waran tangkap",
+  "tell": "Saman sebenar tidak menakutkan anda dengan waran tangkap melalui SMS, dan jpj-saman.xyz bukan alamat kerajaan.",
+  "action": "Jangan tekan pautan. Semak saman anda di aplikasi MyJPJ rasmi.",
+  "lang": "ms"
+ },
+ {
+  "id": "m15",
+  "is_scam": true,
+  "tactics": [
+   "otp-credential-phish",
+   "impersonation-official"
+  ],
+  "text": "Shopee: Pesanan anda dibatalkan dan kami mahu memulangkan RM89. Beri kod OTP yang dihantar kepada anda untuk mengesahkan bayaran balik.",
+  "tell_phrase": "Beri kod OTP yang dihantar kepada anda",
+  "tell": "Bayaran balik sebenar tidak memerlukan kod OTP anda. Kod itu membenarkan orang lain mengambil wang.",
+  "action": "Jangan beri kod itu. Semak pesanan anda dalam aplikasi Shopee.",
+  "lang": "ms"
+ },
+ {
+  "id": "m16",
+  "is_scam": true,
+  "tactics": [
+   "irreversible-payment",
+   "authority-spoofing",
+   "urgency-pressure"
+  ],
+  "text": "Ini bos anda. Saya sedang bermesyuarat dan tak boleh bercakap. Tolong beli 5 kad hadiah Google Play RM200 dan hantar kod di belakangnya kepada saya sekarang.",
+  "tell_phrase": "beli 5 kad hadiah Google Play",
+  "tell": "Bos sebenar tidak meminta kad hadiah melalui mesej. Kad hadiah ialah cara penipu menerima bayaran.",
+  "action": "Jangan beli. Telefon bos anda pada nombor yang anda sudah ada.",
+  "lang": "ms"
+ },
+ {
+  "id": "m17",
+  "is_scam": true,
+  "tactics": [
+   "impersonation-official",
+   "too-good-to-be-true",
+   "otp-credential-phish"
+  ],
+  "text": "Kerajaan: Anda terpilih menerima bantuan tunai RM1,000. Daftar segera di bantuan-rakyat.top dan masukkan kata laluan bank anda.",
+  "tell_phrase": "masukkan kata laluan bank anda",
+  "tell": "Bantuan kerajaan sebenar tidak pernah memerlukan kata laluan bank anda.",
+  "action": "Abaikan. Semak bantuan melalui laman web kerajaan rasmi yang anda taip sendiri.",
+  "lang": "ms"
+ },
+ {
+  "id": "m18",
+  "is_scam": true,
+  "tactics": [
+   "investment-crypto",
+   "urgency-pressure"
+  ],
+  "text": "Rakan saya dapat untung besar dengan Bitcoin melalui platform ini. Pelabur baharu dapat bonus 100% jika deposit hari ini. Ikut pautan saya.",
+  "tell_phrase": "bonus 100% jika deposit hari ini",
+  "tell": "Bonus yang hanya sah hari ini ialah helah untuk mendesak anda mendeposit wang sebelum anda sempat berfikir.",
+  "action": "Jangan deposit. Tanya orang yang anda percayai, dan semak sama ada platform itu berdaftar.",
+  "lang": "ms"
+ },
+ {
+  "id": "m19",
+  "is_scam": true,
+  "tactics": [
+   "emotional-manipulation",
+   "irreversible-payment"
+  ],
+  "text": "Maaf, saya tersalah transfer RM500 ke akaun anda. Tolong pulangkan segera ke nombor ini, jika tidak saya akan buat laporan polis.",
+  "tell_phrase": "jika tidak saya akan buat laporan polis",
+  "tell": "Penipu menggunakan rasa bersalah dan ugutan supaya anda memindahkan wang sebelum anda menyemak.",
+  "action": "Jangan pulangkan. Semak akaun bank anda dan tanya bank anda dahulu.",
+  "lang": "ms"
+ },
+ {
+  "id": "m20",
+  "is_scam": true,
+  "tactics": [
+   "urgency-pressure",
+   "otp-credential-phish",
+   "lookalike-link"
+  ],
+  "text": "Akaun WhatsApp anda akan disekat dalam 2 jam kerana melanggar polisi. Sahkan di wa-semak.top atau hantar kod 6 digit yang anda terima.",
+  "tell_phrase": "disekat dalam 2 jam",
+  "tell": "WhatsApp tidak menghantar mesej seperti ini, dan kod 6 digit itu boleh merampas akaun anda.",
+  "action": "Jangan hantar kod itu. Abaikan mesej tersebut.",
+  "lang": "ms"
+ },
+ {
+  "id": "m21",
+  "is_scam": true,
+  "tactics": [
+   "advance-fee",
+   "impersonation-official"
+  ],
+  "text": "J&T Express: Anda ada pakej COD RM150 yang belum dibayar. Bayar dahulu melalui pautan ini atau pakej akan dikembalikan kepada penghantar.",
+  "tell_phrase": "Bayar dahulu melalui pautan ini",
+  "tell": "Anda tidak membuat tempahan ini, dan bayaran melalui pautan yang tidak dikenali ialah helah.",
+  "action": "Jangan tekan pautan. Semak tempahan anda dalam aplikasi kedai tempat anda membeli.",
+  "lang": "ms"
+ },
+ {
+  "id": "m22",
+  "is_scam": true,
+  "tactics": [
+   "emotional-manipulation"
+  ],
+  "text": "Tolong, anak saya sakit tenat di hospital dan kami perlu RM3,000 hari ini. Sumbangan terus ke akaun peribadi ini, jangan beritahu sesiapa.",
+  "tell_phrase": "jangan beritahu sesiapa",
+  "tell": "Penipu menggunakan simpati dan menyuruh anda merahsiakannya supaya tiada sesiapa dapat menasihati anda.",
+  "action": "Jangan hantar wang. Sumbang melalui badan amal berdaftar yang anda cari sendiri.",
+  "lang": "ms"
+ },
+ {
+  "id": "m23",
+  "is_scam": true,
+  "tactics": [
+   "too-good-to-be-true",
+   "otp-credential-phish"
+  ],
+  "text": "Grab Rewards: Anda memenangi baucar RM500! Isi butiran kad kredit anda untuk menebus baucar sekarang.",
+  "tell_phrase": "Isi butiran kad kredit anda",
+  "tell": "Hadiah sebenar tidak meminta butiran kad kredit anda untuk 'menebus' baucar.",
+  "action": "Abaikan dan padam mesej itu.",
+  "lang": "ms"
+ },
+ {
+  "id": "m24",
+  "is_scam": true,
+  "tactics": [
+   "impersonation-official",
+   "urgency-pressure"
+  ],
+  "text": "CPF: Akaun CPF anda dibekukan. Hubungi pegawai kami di +65 8123 4567 dalam masa 24 jam untuk membukanya semula.",
+  "tell_phrase": "Akaun CPF anda dibekukan",
+  "tell": "Agensi sebenar tidak membekukan akaun melalui SMS dan tidak meminta anda menelefon nombor peribadi.",
+  "action": "Jangan telefon. Hubungi agensi melalui laman web rasminya.",
+  "lang": "ms"
+ },
+ {
+  "id": "m25",
+  "is_scam": true,
+  "tactics": [
+   "otp-credential-phish",
+   "authority-spoofing"
+  ],
+  "text": "Ini daripada bank anda. Ada transaksi mencurigakan RM4,980 di Johor Bahru. Untuk membatalkannya, beritahu kami kod yang baru anda terima.",
+  "tell_phrase": "beritahu kami kod yang baru anda terima",
+  "tell": "Bank sebenar tidak pernah meminta kod yang dihantar kepada anda. Penipu sedang cuba melakukan transaksi itu.",
+  "action": "Letak telefon. Telefon bank pada nombor di belakang kad anda.",
+  "lang": "ms"
+ },
+ {
+  "id": "m26",
+  "is_scam": true,
+  "tactics": [
+   "advance-fee",
+   "job-task-scam",
+   "too-good-to-be-true"
+  ],
+  "text": "Syarikat kami menawarkan kerja di Dubai gaji RM12,000 sebulan, tiada pengalaman. Bayar yuran visa dan tiket RM2,800 dahulu untuk mengesahkan tempat anda.",
+  "tell_phrase": "Bayar yuran visa dan tiket RM2,800 dahulu",
+  "tell": "Majikan sebenar tidak meminta anda membayar sebelum anda mula bekerja.",
+  "action": "Jangan bayar. Semak majikan itu dengan agensi pekerjaan berdaftar.",
+  "lang": "ms"
+ },
+ {
+  "id": "m27",
+  "is_scam": true,
+  "tactics": [
+   "authority-spoofing",
+   "irreversible-payment",
+   "emotional-manipulation"
+  ],
+  "text": "Pegawai Kastam: Bungkusan dari luar negara atas nama anda mengandungi dadah. Pindahkan RM6,000 ke akaun jaminan kami untuk menyelesaikannya atau anda ditangkap.",
+  "tell_phrase": "Pindahkan RM6,000 ke akaun jaminan",
+  "tell": "Pegawai sebenar tidak meminta wang jaminan ke akaun peribadi dan tidak mengugut melalui telefon.",
+  "action": "Letak telefon. Jangan pindahkan wang. Telefon polis pada nombor yang anda cari sendiri.",
+  "lang": "ms"
+ },
+ {
+  "id": "m28",
+  "is_scam": true,
+  "tactics": [
+   "remote-access-request",
+   "lookalike-link"
+  ],
+  "text": "Anda dijemput ke majlis perkahwinan kami! Muat turun kad jemputan digital di sini: kad-jemputan.top/kad.apk",
+  "tell_phrase": "kad-jemputan.top/kad.apk",
+  "tell": "Kad jemputan sebenar tidak perlu dipasang sebagai aplikasi. Fail .apk boleh mengambil alih telefon dan akaun bank anda.",
+  "action": "Jangan buka fail itu. Tanya penghantar secara terus melalui panggilan.",
+  "lang": "ms"
+ },
+ {
+  "id": "m29",
+  "is_scam": true,
+  "tactics": [
+   "urgency-pressure",
+   "lookalike-link",
+   "impersonation-official"
+  ],
+  "text": "Touch 'n Go eWallet: Baki anda akan dibekukan. Sahkan akaun anda dalam masa 1 jam di tng-ewallet-sahkan.top.",
+  "tell_phrase": "dalam masa 1 jam",
+  "tell": "Tarikh akhir beberapa minit ialah tekanan, dan tng-ewallet-sahkan.top bukan alamat Touch 'n Go.",
+  "action": "Jangan tekan pautan. Buka aplikasi Touch 'n Go sendiri.",
+  "lang": "ms"
+ },
+ {
+  "id": "m30",
+  "is_scam": true,
+  "tactics": [
+   "advance-fee",
+   "investment-crypto"
+  ],
+  "text": "Akaun pelaburan anda ada keuntungan RM48,000. Untuk mengeluarkannya, bayar cukai 10% RM4,800 dahulu.",
+  "tell_phrase": "bayar cukai 10% RM4,800 dahulu",
+  "tell": "Cukai sebenar tidak dibayar kepada 'platform' sebelum anda boleh mengeluarkan wang anda. Itu helah yuran awal.",
+  "action": "Jangan bayar. Wang itu mungkin tidak wujud.",
+  "lang": "ms"
+ },
+ {
+  "id": "m31",
+  "is_scam": false,
+  "tactics": [],
+  "text": "Klinik Dr. Lim: Peringatan temujanji anda esok jam 10:30 pagi. Balas Y untuk mengesahkan, atau hubungi klinik pada nombor di kad temujanji anda.",
+  "tell_phrase": "",
+  "tell": "Tiada apa di sini yang meminta wang, kod atau tindakan segera. Jika ragu-ragu, hubungi mereka pada nombor yang anda sudah tahu.",
+  "action": "Tidak mengapa. Anda sentiasa boleh bertanya kepada orang itu sendiri.",
+  "lang": "ms"
+ },
+ {
+  "id": "m32",
+  "is_scam": false,
+  "tactics": [],
+  "text": "Mak, Abang lewat 15 minit. Mak makan dulu ya, tak payah tunggu. Sayang Mak!",
+  "tell_phrase": "",
+  "tell": "Tiada apa di sini yang meminta wang, kod atau tindakan segera. Jika ragu-ragu, hubungi mereka pada nombor yang anda sudah tahu.",
+  "action": "Tidak mengapa. Anda sentiasa boleh bertanya kepada orang itu sendiri.",
+  "lang": "ms"
+ },
+ {
+  "id": "m33",
+  "is_scam": false,
+  "tactics": [],
+  "text": "Pemandu Grab anda, Ahmad, sudah tiba di lokasi pengambilan. Nombor plat: WXY 1234.",
+  "tell_phrase": "",
+  "tell": "Tiada apa di sini yang meminta wang, kod atau tindakan segera. Jika ragu-ragu, hubungi mereka pada nombor yang anda sudah tahu.",
+  "action": "Tidak mengapa. Anda sentiasa boleh bertanya kepada orang itu sendiri.",
+  "lang": "ms"
+ },
+ {
+  "id": "m34",
+  "is_scam": false,
+  "tactics": [],
+  "text": "Pemberitahuan sekolah: Mesyuarat PIBG pada Sabtu ini jam 9 pagi di dewan sekolah. Kehadiran ibu bapa amat dialu-alukan.",
+  "tell_phrase": "",
+  "tell": "Tiada apa di sini yang meminta wang, kod atau tindakan segera. Jika ragu-ragu, hubungi mereka pada nombor yang anda sudah tahu.",
+  "action": "Tidak mengapa. Anda sentiasa boleh bertanya kepada orang itu sendiri.",
+  "lang": "ms"
+ },
+ {
+  "id": "m35",
+  "is_scam": false,
+  "tactics": [],
+  "text": "Maybank: Jangan kongsi TAC anda dengan sesiapa. Pihak bank tidak akan meminta TAC anda melalui telefon atau mesej.",
+  "tell_phrase": "",
+  "tell": "Tiada apa di sini yang meminta wang, kod atau tindakan segera. Jika ragu-ragu, hubungi mereka pada nombor yang anda sudah tahu.",
+  "action": "Tidak mengapa. Anda sentiasa boleh bertanya kepada orang itu sendiri.",
+  "lang": "ms"
+ },
+ {
+  "id": "m36",
+  "is_scam": false,
+  "tactics": [],
+  "text": "Buku tempahan anda sudah sedia untuk diambil di kaunter perpustakaan sehingga Jumaat. Sila bawa kad keahlian anda.",
+  "tell_phrase": "",
+  "tell": "Tiada apa di sini yang meminta wang, kod atau tindakan segera. Jika ragu-ragu, hubungi mereka pada nombor yang anda sudah tahu.",
+  "action": "Tidak mengapa. Anda sentiasa boleh bertanya kepada orang itu sendiri.",
+  "lang": "ms"
+ },
+ {
+  "id": "m37",
+  "is_scam": false,
+  "tactics": [],
+  "text": "Jom makan malam di rumah saya Sabtu ni? Saya masak nasi lemak. Bawa je diri awak.",
+  "tell_phrase": "",
+  "tell": "Tiada apa di sini yang meminta wang, kod atau tindakan segera. Jika ragu-ragu, hubungi mereka pada nombor yang anda sudah tahu.",
+  "action": "Tidak mengapa. Anda sentiasa boleh bertanya kepada orang itu sendiri.",
+  "lang": "ms"
+ },
+ {
+  "id": "m38",
+  "is_scam": false,
+  "tactics": [],
+  "text": "Shopee: Pesanan anda telah dihantar dan akan sampai dalam 2-3 hari. Jejak pesanan anda dalam aplikasi Shopee.",
+  "tell_phrase": "",
+  "tell": "Tiada apa di sini yang meminta wang, kod atau tindakan segera. Jika ragu-ragu, hubungi mereka pada nombor yang anda sudah tahu.",
+  "action": "Tidak mengapa. Anda sentiasa boleh bertanya kepada orang itu sendiri.",
+  "lang": "ms"
+ },
+ {
+  "id": "m39",
+  "is_scam": false,
+  "tactics": [],
+  "text": "TNB: Bil elektrik bulan ini RM86.40, tarikh akhir bayaran 30 hb. Anda boleh membayar melalui aplikasi myTNB atau di kaunter.",
+  "tell_phrase": "",
+  "tell": "Tiada apa di sini yang meminta wang, kod atau tindakan segera. Jika ragu-ragu, hubungi mereka pada nombor yang anda sudah tahu.",
+  "action": "Tidak mengapa. Anda sentiasa boleh bertanya kepada orang itu sendiri.",
+  "lang": "ms"
+ },
+ {
+  "id": "m40",
+  "is_scam": false,
+  "tactics": [],
+  "text": "Kek hari jadi anda sudah siap. Boleh ambil bila-bila masa sebelum jam 6 petang hari ini.",
+  "tell_phrase": "",
+  "tell": "Tiada apa di sini yang meminta wang, kod atau tindakan segera. Jika ragu-ragu, hubungi mereka pada nombor yang anda sudah tahu.",
+  "action": "Tidak mengapa. Anda sentiasa boleh bertanya kepada orang itu sendiri.",
+  "lang": "ms"
+ },
+ {
+  "id": "m41",
+  "is_scam": false,
+  "tactics": [],
+  "text": "Mesyuarat pasukan dipindahkan ke jam 3 petang di bilik mesyuarat B. Sila bawa laporan jualan bulan ini.",
+  "tell_phrase": "",
+  "tell": "Tiada apa di sini yang meminta wang, kod atau tindakan segera. Jika ragu-ragu, hubungi mereka pada nombor yang anda sudah tahu.",
+  "action": "Tidak mengapa. Anda sentiasa boleh bertanya kepada orang itu sendiri.",
+  "lang": "ms"
+ },
+ {
+  "id": "m42",
+  "is_scam": false,
+  "tactics": [],
+  "text": "Assalamualaikum, kami jiran baharu di nombor 14. Kalau ada apa-apa, boleh hubungi kami ya.",
+  "tell_phrase": "",
+  "tell": "Tiada apa di sini yang meminta wang, kod atau tindakan segera. Jika ragu-ragu, hubungi mereka pada nombor yang anda sudah tahu.",
+  "action": "Tidak mengapa. Anda sentiasa boleh bertanya kepada orang itu sendiri.",
+  "lang": "ms"
+ },
+ {
+  "id": "m43",
+  "is_scam": false,
+  "truth": "unsure",
+  "tactics": [],
+  "text": "Hai, ini Faizal, kawan sekolah dulu. Dah lama tak dengar khabar. Boleh bagi nombor baharu awak? Saya nak minta tolong sikit.",
+  "tell_phrase": "",
+  "tell": "Mungkin kawan sebenar, mungkin akaun yang dirampas yang sedang memulakan helah. Mesej ini sahaja tidak dapat membezakannya.",
+  "action": "Jangan beri butiran dahulu. Telefon dia pada nombor yang anda sudah ada, atau tanya soalan yang hanya dia tahu jawapannya.",
+  "lang": "ms"
+ },
+ {
+  "id": "m44",
+  "is_scam": false,
+  "truth": "unsure",
+  "tactics": [],
+  "text": "Kak, ini nombor baharu saya sebab telefon lama hilang. Simpan nombor ini ya.",
+  "tell_phrase": "",
+  "tell": "Mesej ini belum meminta wang, tetapi beginilah penipu selalunya memulakan perbualan. Sahkan dahulu.",
+  "action": "Telefon nombor lama atau tanya ahli keluarga lain sebelum membalas.",
+  "lang": "ms"
+ },
+ {
+  "id": "m45",
+  "is_scam": false,
+  "truth": "unsure",
+  "tactics": [],
+  "text": "Resume anda menarik perhatian kami. Sila hubungi pegawai sumber manusia kami di WhatsApp untuk temu duga pantas.",
+  "tell_phrase": "",
+  "tell": "Mungkin tawaran sebenar, mungkin pancingan kerja palsu. Tiada wang diminta lagi, tetapi anda tidak tahu siapa mereka.",
+  "action": "Cari syarikat itu sendiri dan hubungi mereka melalui laman web rasminya sebelum membalas.",
+  "lang": "ms"
+ },
+ {
+  "id": "m46",
+  "is_scam": false,
+  "truth": "unsure",
+  "tactics": [],
+  "text": "Anda ada bungkusan yang menunggu. Sila hubungi kami untuk mengatur penghantaran.",
+  "tell_phrase": "",
+  "tell": "Tiada wang atau pautan diminta, tetapi anda mungkin tidak menunggu sebarang bungkusan. Sukar dipastikan daripada mesej sahaja.",
+  "action": "Semak dalam aplikasi atau laman web kurier sebenar menggunakan nombor penjejakan anda.",
+  "lang": "ms"
+ },
+ {
+  "id": "m47",
+  "is_scam": false,
+  "truth": "unsure",
+  "tactics": [],
+  "text": "Hai, ini pengurus akaun bank anda. Boleh telefon saya semula pada nombor ini mengenai akaun simpanan anda?",
+  "tell_phrase": "",
+  "tell": "Bank sebenar boleh menelefon, tetapi penipu juga berbuat demikian. Anda tidak boleh pasti daripada mesej ini sahaja.",
+  "action": "Telefon bank pada nombor di belakang kad anda, bukan nombor dalam mesej.",
+  "lang": "ms"
+ }
+]

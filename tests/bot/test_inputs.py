@@ -383,3 +383,47 @@ def test_the_welcome_mentions_screenshots_and_voice_notes():
 
 def test_the_bots_new_wording_does_not_collide_with_the_readers():
     assert not set(BOT_ZH) & set(INPUTS_ZH)
+
+
+# ---------------------------------------------------------------- where it came from
+def capture_origin(monkeypatch):
+    got = {}
+
+    def fake(text, **kw):
+        got.update(kw)
+        return fake_result(origin=kw.get("origin"), origin_note="Where it came from: a screen inside Tomoro Coffee" if kw.get("origin") else "")
+    monkeypatch.setattr(handlers, "check_message", fake)
+    return got
+
+
+def test_a_screenshot_hands_the_pipeline_what_the_picture_showed_and_the_reply_says_it(images, monkeypatch):
+    got = capture_origin(monkeypatch)
+    images.ok = image.ImageReading(text="Voucher Applied APP | PAYDAY REWARDS 1-FOR-1", sender="", channel="app", app="Tomoro Coffee")
+    replies = handlers.on_image(1301, PNG, "en")
+    assert got["origin"].channel == "app" and got["origin"].app == "Tomoro Coffee"
+    assert "📍 Where it came from: a screen inside Tomoro Coffee" in plain(replies[-1].text)
+
+
+def test_a_forward_tells_the_pipeline_who_it_was_forwarded_from(monkeypatch):
+    got = capture_origin(monkeypatch)
+    handlers.on_check(1302, "Win a prize now", None, "Daily Deals")
+    assert got["origin"].forwarded_from == "Daily Deals"
+    got.clear()
+    handlers.on_check(1303, "Win a prize now")
+    assert "origin" not in got  # typed or pasted in: nothing is claimed about where it came from
+
+
+def test_the_origin_line_can_never_be_tapped(monkeypatch):
+    monkeypatch.setattr(handlers, "check_message", lambda *a, **k: fake_result(origin_note="Where it came from: a screen inside dhl-fee.xyz"))
+    text = handlers.on_text(1304, "x")
+    assert "📍" in text and not tappable(text.split("📍")[1].split("\n")[0])
+
+
+def test_a_safe_answer_says_what_it_rests_on(monkeypatch):
+    from core.domain.schemas import Evidence
+    proof = Evidence(kind="tool", source="org-verified", supports="safe", strength="medium", claim="Tomoro Coffee is a real, known organisation, and this message asks for nothing and points nowhere")
+    monkeypatch.setattr(handlers, "check_message", lambda *a, **k: fake_result(verdict=Verdict.SAFE, evidence=[proof]))
+    text = plain(handlers.on_text(1305, "x"))
+    assert "🔎 What I checked: Tomoro Coffee is a real, known organisation" in text
+    monkeypatch.setattr(handlers, "check_message", lambda *a, **k: fake_result(verdict=Verdict.SCAM, evidence=[proof]))
+    assert "🔎" not in handlers.on_text(1306, "x")  # only a safe answer needs to justify itself

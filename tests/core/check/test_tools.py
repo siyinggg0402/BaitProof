@@ -111,6 +111,9 @@ def test_phones_are_extracted_locally_and_dates_are_not_phones():
 def test_registered_domain_handles_two_level_suffixes():
     assert tools.registered_domain("login.secure.evil.xyz") == "evil.xyz"
     assert tools.registered_domain("shop.example.co.uk") == "example.co.uk"
+    for host, reg in (("login.dbs.com.sg", "dbs.com.sg"), ("www.maybank2u.com.my", "maybank2u.com.my"), ("hsbc.com.hk", "hsbc.com.hk"), ("a.b.baidu.com.cn", "baidu.com.cn"),
+                      ("mt.cn", "mt.cn"), ("x.y.mt.cn", "mt.cn"), ("paypal.com.evil.cc", "evil.cc"), ("support.me", "support.me"), ("a.go.id", "a.go.id"), ("evil.com.xyz", "com.xyz")):
+        assert tools.registered_domain(host) == reg, host
 
 
 def test_domain_age_reads_the_registry_not_the_site(monkeypatch):
@@ -226,14 +229,16 @@ def test_open_questions_only_propose_calls_the_gate_would_allow(monkeypatch):
     ing, it, f, g, L = _qs(True, monkeypatch)
     qs = planner.open_questions(ing, it, f, g)
     assert {q.key for q in qs} == {"host:acme-secure.top", "brand"}
-    assert planner.deterministic_plan(qs)[0] == ("domain_age", "acme-secure.top") and len(planner.deterministic_plan(qs)) == 3
+    plan = planner.deterministic_plan(qs)
+    assert plan[0][0] == "brand_lookup" or plan[0][0] == "official_site_wikidata"  # who the company is comes first: it is cheap, and a registrant is compared with it
+    assert ("domain_age", "acme-secure.top") in plan and ("domain_owner", "acme-secure.top") in plan and len(plan) == planner.MAX_CALLS_PER_ROUND == 4
     ing, it, f, g, L = _qs(False, monkeypatch)
     assert planner.open_questions(ing, it, f, g) == []  # network off: nothing any tool could answer
 
 
 def test_answered_questions_are_not_asked_again(monkeypatch):
     ing, it, f, g, L = _qs(True, monkeypatch)
-    f.done |= {("domain_age", "acme-secure.top"), ("cert_history", "acme-secure.top"), ("dns_check", "acme-secure.top"), ("reputation", "acme-secure.top"), ("brand_lookup", "acme bank"), ("official_site_wikidata", "acme bank")}
+    f.done |= {("domain_age", "acme-secure.top"), ("cert_history", "acme-secure.top"), ("domain_owner", "acme-secure.top"), ("dns_check", "acme-secure.top"), ("reputation", "acme-secure.top"), ("brand_lookup", "acme bank"), ("official_site_wikidata", "acme bank")}
     assert planner.open_questions(ing, it, f, g) == []
 
 
@@ -244,7 +249,9 @@ def test_model_planner_can_only_choose_offered_calls(monkeypatch):
     monkeypatch.setattr(llm, "chat_json", lambda *a, **k: {"calls": [{"tool": "domain_check", "arg": "evil.com"}, {"tool": "domain_age", "arg": "acme-secure.top"},
                                                                        {"tool": "shell", "arg": "rm -rf /"}], "reason": "x"})
     calls, who = planner.llm_plan(ing, qs, L, g, f)
-    assert calls == [("domain_age", "acme-secure.top")] and who == "model"
+    offered = {c for q in qs for c in q.calls}
+    assert who == "model" and ("domain_age", "acme-secure.top") in calls and set(calls) <= offered  # never the invented tool or the argument nobody offered
+    assert {c[0] for c in calls} >= {"domain_age", "domain_owner", "official_site_wikidata"}  # the cheap lookups that settle who the company is and who owns the address always run
     monkeypatch.setattr(llm, "chat_json", lambda *a, **k: {"calls": [{"tool": "nope", "arg": "x"}]})
     assert planner.llm_plan(ing, qs, L, g, f)[1] == "rules"  # nothing valid -> deterministic plan
     def down(*a, **k):
@@ -326,3 +333,51 @@ def test_the_loop_asks_wikidata_when_a_company_is_claimed_and_the_link_is_unveri
     monkeypatch.setitem(tools.SPECS, "dns_check", tools.Spec("dns_check", "host", lambda h: {"host": h, "status": "ok"}, "d", net=True))
     r = check_message("Acme Bank: please review your statement at acmebank-statements.top")
     assert any(e.source == "brand_lookup" and e.supports == "scam" and "acmebank.com" in e.claim for e in r.evidence)
+
+
+# ---------------------------------------------------------------- typosquats and the Malaysian brands
+@pytest.mark.parametrize("fake,brand", [("maybnak2u.com.my", "maybank"), ("cimbclikcs.com.my", "cimb"), ("netflxi.com", "netflix"), ("paypla.com", "paypal"),
+                                        ("publicbnak.com.my", "publicbank"), ("telegrm.org", "telegram")])
+def test_a_one_letter_slip_on_a_known_name_is_flagged_as_weak_evidence(fake, brand):
+    r = tools.domain_check(fake)
+    assert not r["hard"] and any("looks one letter away from" in w and brand in w.lower().replace(" ", "") for w in r["soft"]), (fake, r)
+
+
+@pytest.mark.parametrize("host", ["maybank2u.com.my", "www.maybank2u.com.my", "cimbclicks.com.my", "paypal.com", "netflix.com", "shopee.com.my", "shopee.sg", "tnb.com.my", "hasil.gov.my",
+                                  "example.com", "wikipedia.org", "microsoftonline.com", "singaporeair.com", "shopping.com", "mypaypal.com.au"])
+def test_real_addresses_and_ordinary_words_are_not_flagged_for_a_slip(host):
+    assert not any("one letter away" in w for w in tools.domain_check(host)["soft"]), host
+
+
+def test_the_slip_check_ignores_short_names_and_ambiguous_brands():
+    for host in ("dbz.com.sg", "grabb.com", "uobs.com", "chasee.com", "apples.com"):   # (dbs, grab, uob, chase, apple are short or also ordinary words)
+        assert not any("one letter away" in w for w in tools.domain_check(host)["soft"]), host
+
+
+def test_the_one_edit_rule():
+    assert tools._one_edit("paypal", "paypla") and tools._one_edit("paypal", "paypa") and tools._one_edit("paypal", "paypall") and tools._one_edit("paypal", "paypol")
+    assert not tools._one_edit("paypal", "paypal") and not tools._one_edit("paypal", "payppl2") and not tools._one_edit("paypal", "pypal1x") and not tools._one_edit("ab", "ba" + "c")
+
+
+@pytest.mark.parametrize("host", ["poslaju-help.com.my", "poslaju.top", "tnb-bill.xyz", "lhdn-refund.top", "jpj-saman.xyz"])
+def test_the_malaysian_parcel_electricity_tax_and_fine_names_are_recognised_when_imitated(host):
+    assert tools.domain_check(host)["hard"], host
+
+
+@pytest.mark.parametrize("host", ["poslaju.com.my", "tnb.com.my", "hasil.gov.my", "jpj.gov.my"])
+def test_and_their_real_addresses_are_not(host):
+    r = tools.domain_check(host)
+    assert not r["hard"] and not r["soft"], (host, r)
+
+
+def test_the_slip_wording_is_translated_in_every_language():
+    from core.lang import i18n
+
+    text = "looks one letter away from maybank (maybank.com)"
+    assert i18n.why(text, "en") == text
+    assert "只差一个字母" in i18n.why(text, "zh") and "hanya berbeza satu huruf" in i18n.why(text, "ms")
+
+
+def test_the_check_says_so_when_a_link_is_one_letter_from_a_known_name():
+    r = check_message("Maybank: your account is locked. Verify now at http://maybnak2u.com.my/verify", store=False, log=False)
+    assert any("one letter away from maybank" in e.claim for e in r.evidence) and r.verdict is not V.SAFE

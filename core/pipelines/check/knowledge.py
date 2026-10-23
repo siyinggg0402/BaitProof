@@ -69,6 +69,7 @@ BRANDS = {  # brand -> its real domain. Used to spot imitation (hard evidence) a
     "cathaybk": "cathaybk.com.tw", "ctbcbank": "ctbcbank.com", "esunbank": "esunbank.com", "fubon": "fubon.com", "dbs": "dbs.com", "ocbc": "ocbc.com", "uob": "uob.com.sg",
     "posb": "posb.com.sg", "maybank": "maybank.com", "cimb": "cimb.com", "publicbank": "publicbank.com.my", "singpost": "singpost.com", "grab": "grab.com", "shopee": "shopee.com",
     "lazada": "lazada.com", "singpass": "singpass.gov.sg", "iras": "iras.gov.sg", "cpf": "cpf.gov.sg", "touchngo": "touchngo.com.my",
+    "poslaju": "poslaju.com.my", "tnb": "tnb.com.my", "lhdn": "hasil.gov.my", "jpj": "jpj.gov.my",  # Malaysia: the parcel, electricity, tax and traffic-fine scams
 }
 # Some brands run more than one official domain (a bank has a site per country). A host on any of them is genuine.
 OFFICIAL_ALT = {
@@ -80,7 +81,7 @@ OFFICIAL_ALT = {
 ZH_BRAND_NAMES = ZH.BRAND_NAMES  # Chinese name -> brand key
 # Brand words that are also ordinary words or short names: only an exact host token counts, and mentions in the text don't count.
 AMBIGUOUS_BRANDS = {"apple", "uber", "steam", "booking", "ups", "ato", "zoom", "chase", "outlook", "twitter", "target", "square", "shell", "dpd", "nhs", "irs",
-                    "jd", "boc", "ccb", "uob", "dbs", "cpf", "grab", "iras", "fubon", "posb"}
+                    "jd", "boc", "ccb", "uob", "dbs", "cpf", "grab", "iras", "fubon", "posb", "tnb", "lhdn", "jpj"}
 FREE_MAIL = {"gmail.com", "googlemail.com", "yahoo.com", "yahoo.co.uk", "ymail.com", "outlook.com", "hotmail.com", "hotmail.co.uk", "live.com", "msn.com", "aol.com",
              "icloud.com", "proton.me", "protonmail.com", "gmx.com", "mail.com", "yandex.com", "zoho.com", "qq.com", "163.com", "126.com", "sina.com", "rediffmail.com"}
 BAD_TLDS = (".xyz", ".top", ".click", ".icu", ".info", ".online", ".site", ".shop", ".live", ".vip", ".cc", ".ink", ".work", ".buzz")

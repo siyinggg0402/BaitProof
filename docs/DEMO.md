@@ -7,7 +7,9 @@ The hackathon asks for a video under 3 minutes. This is a shot list with the wor
 2. A believable account: `python -m scripts.data.seed_demo` (honestly seeded: some tricks strong, one weak). Do NOT run it on the public server.
 3. Tabs open in this order: Check, Train, Records. A second window with Telegram (the bot linked to this profile: Records > *Connect Telegram*). Language set to English.
 4. Hide the bookmarks bar, the terminal and anything containing a key. Never show `.env`.
-5. Copy these into a note you can paste from:
+5. For the Scam Road beat (and, if you have time, the Daily Road ghost, the garage, Link Hunt or the family share): make a profile in this browser (header > Log in > Make your profile) and a second profile in a private window, join each other with an invite link, and drive one run in the private window first so there is a friend flag to chase. Run on a computer with a graphics card (the 3D road is smooth there; a virtual machine without one is slow).
+6. To film a live race you need two browser windows signed in as two friends. For a festive look, `BAITPROOF_TODAY=2026-11-08` pins the date to Deepavali (or add `?theme=raya` to the road address).
+7. Copy these into a note you can paste from:
 
 | Use | Message |
 |---|---|
@@ -22,15 +24,15 @@ The hackathon asks for a video under 3 minutes. This is a shot list with the wor
 
 | Time | On screen | Say |
 |---|---|---|
-| 0:00 | The English scam on a phone screenshot or pasted into the box, cursor on it | "Your parents get messages like this every week. Detectors tell you once and forget you. Baitproof is different: it makes your family harder to fool next time." |
+| 0:00 | Open the site fresh (clear its site data first): Finn swims in from the side, settles in the corner and says hello. Then the English scam pasted into the box, cursor on it | "Your parents get messages like this every week. Detectors tell you once and forget you. Baitproof is different: it makes your family harder to fool next time." |
 | 0:15 | Paste it, press Check. The live gates tick by | "I paste the message. Watch the gates: it reads the message, works out what it asks of me, checks the link and the sender, then the model reviews it, then rules weigh the evidence. Nemotron on Nebius Token Factory does the reading; deterministic gates make the decision." |
-| 0:35 | The verdict, the giveaway, "What to do", then open the evidence list | "A scam, and it points at the one giveaway: a fee plus a deadline, and a fake DHL address. Every red flag is evidence with a quote from the message. The model proposes, the gates decide: it can't invent a red flag that isn't in the text, and it can't talk us out of a hard one." |
+| 0:35 | The verdict, the giveaway, "What to do", then open the evidence list | "A scam, and it points at the one giveaway: a fee plus a deadline, and a fake DHL address. Every red flag is evidence with a quote from the message. The model proposes, the gates decide: it can't invent a red flag that isn't in the text, and it can't talk us out of a hard one. And if someone has already paid, the official hotlines are right under the verdict: ScamShield 1799, NSRC 997." |
 | 0:55 | Paste the genuine clinic message | "And a normal message is not called a scam. A plain model call flags a quarter of genuine messages; that destroys trust, so we measured it and built against it." |
-| 1:10 | Switch the language to 简体中文; paste the Chinese scam; show the Chinese result | "Our families aren't only in English. Same pipeline, with its own Chinese rules: it finds the link inside unspaced text, knows the bank and courier brands, and answers in the language you read. Simplified, Traditional, even an English scam explained in Chinese. Malay and Indonesian have rules too." Switch back to English. |
+| 1:10 | Switch the language to 简体中文; paste the Chinese scam; show the Chinese result | "Our families aren't only in English. Same pipeline, with its own Chinese rules: it finds the link inside unspaced text, knows the bank and courier brands, and answers in the language you read. Simplified, Traditional, even an English scam explained in Chinese. The same menu has Bahasa Melayu, for the Malaysian and Singapore families we are built for." Optionally paste the Malay scam and show the Malay result. Switch back to English. |
 | 1:35 | Telegram: forward the Family scam to the bot, show the reply | "Real life happens in chat, so the bot gives the same verdict in Telegram." |
 | 1:45 | Telegram: `/quiz`, tap two answers, show the feedback | "And young people don't open a website to practise, so the practice comes to them: a five-question quiz right in the chat." |
 | 2:00 | Website: Records (the Telegram check is there), then Train | "Everything I check, in Telegram or on the web, lands in one record, and the tricks go straight into my practice. It learns which tricks fool *me* and drills those." |
-| 2:15 | Train: a drill; or the Game: Spot the Tell or a boss fight | "Practice, a game, a boss fight per trick. Answers are graded on the server." |
+| 2:15 | Train > Scam Road: steer into two right lanes, take one wrong turn to show the giveaway, point at your friend's flag and the leaderboard | "Practice is a game too: a 3D drive where the lane you pick is your answer. Wrong turn? Here's the giveaway. And there's my friend's best distance on the road. Answers are graded on the server, so nobody can fake a score." |
 | 2:30 | `/challenge` in Telegram, open the link on the phone, play one round, show the result card | "The loop closes with the family: I send my mother a two-minute challenge, no account, and she gets a score card." |
 | 2:42 | The README evaluation table, or the `/admin` health page | "We measured it honestly: on real SMS we never tuned on, zero scams called safe, and about 2 percent false alarms where a plain model gives 12 to 33. Where our rules can't read a language, we never say 'looks safe'. Logs hold no message text." |
 | 2:55 | Logo, repo URL | "Baitproof. Open source, MIT. Thank you." |

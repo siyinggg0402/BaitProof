@@ -1,8 +1,16 @@
+"""Finn, the mascot. The behaviour is checked in a real browser (tests/e2e/browser.py, finn_pass); here: what the server sends, and that the script and
+stylesheet keep to the site's rules (no inline styles, no outside files, calm for 'reduce motion', every line he can say translated)."""
+from pathlib import Path
 import re
 
 from fastapi.testclient import TestClient
+import pytest
 
+from core.lang.i18n import tr
 from core.storage import library, model
+from web import ui
+from web import deps
+from web.main import app
 
 
 def test_web_flow():
@@ -96,14 +104,14 @@ def nav(html):
     return links(head), links(tabs)
 
 
-def test_the_menu_and_the_phone_tabs_are_check_train_records():
+def test_the_menu_and_the_phone_tabs_are_check_train_friends_records():
     from web.main import app
 
     c = TestClient(app)
     for url in ("/", "/train", "/game", "/records", "/records?channel=web"):
         head, tabs = nav(c.get(url).text)
-        assert [(h, t) for h, t, _ in head] == [("/", "Check"), ("/train", "Train"), ("/records", "Records")], url
-        assert [(h, t) for h, t, _ in tabs] == [("/", "Check"), ("/train", "Train"), ("/records", "Records")], url
+        assert [(h, t) for h, t, _ in head] == [("/", "Check"), ("/train", "Train"), ("/friends", "Friends"), ("/records", "Records")], url
+        assert [(h, t) for h, t, _ in tabs] == [("/", "Check"), ("/train", "Train"), ("/friends", "Friends"), ("/records", "Records")], url
         assert "Challenge family" in c.get(url).text and 'id="textsize"' in c.get(url).text and 'id="lang"' in c.get(url).text  # the CTA, "Aa" and the language menu stay
 
 
@@ -128,8 +136,8 @@ def test_the_train_hub_holds_quick_practice_and_the_games_and_the_map():
     assert 'id="stage"' in html and 'id="start"' in html and "/static/js/train.js" in html and "Quick practice" in html and "Start practice" in html
     games = html[html.index('id="games"'):html.index('id="map-h"')]
     hrefs = re.findall(r'class="mode-card[^"]*" href="([^"]+)"', games)
-    assert len(hrefs) == 4 and all(h.split("#")[0] == "/game" for h in hrefs) and {"/game#rush", "/game#daily", "/game#tell"} <= set(hrefs)
-    assert "Inbox Rush" in games and "Daily Challenge" in games and "Spot the Tell" in games and "Boss battles" in games
+    assert len(hrefs) == 6 and hrefs[:2] == ["/road", "/link"] and all(h.split("#")[0] == "/game" for h in hrefs[2:]) and {"/game#rush", "/game#daily", "/game#tell"} <= set(hrefs)
+    assert "Scam Road" in games and "Link Hunt" in games and "Inbox Rush" in games and "Daily Challenge" in games and "Spot the Tell" in games and "Boss battles" in games
     game = c.get("/game")  # the game itself is where it always was
     assert game.status_code == 200 and 'id="game"' in game.text
 
@@ -145,3 +153,150 @@ def test_the_home_page_leads_with_the_checker_and_no_longer_carries_the_map():
         assert "Start practice" not in html  # the hero no longer carries a second button: Train is a tab
     result = c.post("/check", data={"message": "Pay with gift cards today or you will be arrested. IRS notice."}).text
     assert re.search(r'<a class="big" href="/train">Practise this trick', result)  # after a result, practice is the Train hub
+
+
+ROOT = Path(__file__).resolve().parents[2]
+JS = (ROOT / "web/static/js/mascot.js").read_text(encoding="utf-8")
+CSS = (ROOT / "web/static/css/mascot.css").read_text(encoding="utf-8")
+
+
+def page(lang="en"):
+    c = TestClient(app)
+    c.cookies.set("lang", lang)
+    return c.get("/").text
+
+
+def test_every_page_loads_him_and_the_switch_that_sends_him_away():
+    html = page()
+    assert '/static/css/mascot.css' in html and '/static/js/mascot.js' in html
+    assert re.search(r'id="mascot-toggle"[^>]*aria-pressed="true"[^>]*hidden>Finn the fish<', html)  # hidden until the script knows he can run
+    assert html.index("/static/js/app.js") < html.index("/static/js/mascot.js")  # he uses the page's translator, so it loads first
+
+
+def test_the_switch_and_his_aria_label_are_translated():
+    assert "小鱼 Finn" in page("zh") and "小魚 Finn" in page("zh-Hant")  # Traditional is derived from the Simplified text
+    assert tr("Finn the fish, your scam-spotting helper. Press Enter for a tip, and use the arrow keys to move him.", "zh").startswith("小鱼 Finn")
+
+
+def test_the_admin_pages_have_no_mascot_script_problem():
+    # the dashboard extends the same layout: it must still render
+    c = TestClient(app)
+    assert c.get("/admin").status_code in (200, 401, 404)
+
+
+def test_every_line_he_says_has_a_chinese_version_in_both_scripts():
+    said = [k for k in ui.js_keys() if k in JS_LINES]
+    assert len(said) >= 24  # the tips, the reactions, the greeting and his label
+    for k in said:
+        assert tr(k, "zh") != k and tr(k, "zh-Hant") != k, k
+
+
+JS_LINES = {m.group(1) for m in re.finditer(r'\bt\("((?:[^"\\\n]|\\.)*)"\)', JS)}
+
+
+def test_the_drawing_and_the_script_obey_the_site_rules():
+    svg = re.search(r"const SVG = `(.*?)`;", JS, re.S).group(1)
+    assert "style=" not in svg and "http" not in svg and "<script" not in svg and "<image" not in svg  # strict CSP: no inline style, no outside file
+    assert "eval(" not in JS and "new Function" not in JS and "document.write" not in JS
+    assert "innerHTML" in JS and JS.count("innerHTML") == 1  # only the fixed drawing is ever parsed as markup; his words go in as plain text
+    assert "textContent" in JS and "bubble.textContent = text" in JS
+    assert "@import" not in CSS and "url(" not in CSS  # nothing fetched from anywhere
+
+
+def test_he_is_calm_for_reduce_motion_and_never_blocks_the_page():
+    assert "prefers-reduced-motion" in CSS and "prefers-reduced-motion" in JS
+    assert re.search(r"\.finn-root\.moving:not\(\.grabbed\)\{pointer-events:none\}", CSS)  # swimming on his own, he is click-through
+    assert "pointer-events:none" in CSS.split(".finn-bubble{")[1].split("}")[0]  # his speech bubble never catches a click
+    assert 'aria-hidden", "true"' in JS and 'role", "status"' in JS  # the bubble is hidden from screen readers; one polite live region speaks instead
+    assert "localStorage" in JS and "try {" in JS  # a blocked store (private mode) must not break the page
+
+
+@pytest.fixture
+def client():
+    deps.HITS.clear()
+    return TestClient(app)
+
+
+def start(c, mode="rush", trick=""):
+    return c.post("/api/game/start", json={"mode": mode, "trick": trick}).json()
+
+
+def test_page_and_state(client):
+    html = client.get("/game").text
+    assert 'id="game"' in html and "/static/js/game.js" in html
+    assert re.search(r'href="/train"\s+aria-current="page"', html)  # the game lives under the Train tab: it is the current one here
+    s = client.get("/api/game/state").json()
+    assert s["level"] == 1 and len(s["tricks"]) == 12 and s["badges"] == []
+
+
+def test_a_full_round_over_the_api_and_answers_stay_hidden_until_revealed(client):
+    r = start(client)
+    assert r["mode"] == "rush" and len(r["items"]) == 8 and set(r) == {"round", "mode", "trick", "trick_label", "lives", "total", "items"}
+    assert all(set(i) <= {"id", "text", "yours", "words"} for i in r["items"])  # no truth, no explanation, no tricks
+    # answering the way the page would: reveal returns the verdict and the explanation
+    first = r["items"][0]
+    a = client.post("/api/game/answer", json={"round": r["round"], "item_id": first["id"], "choice": "scam"}).json()
+    assert a["outcome"] in ("correct", "wrong", "partial") and a["truth"] in ("scam", "safe", "unsure") and "tell" in a
+    for it in r["items"][1:]:
+        client.post("/api/game/answer", json={"round": r["round"], "item_id": it["id"], "choice": "unsure"})
+    f = client.post("/api/game/finish", json={"round": r["round"]}).json()
+    assert f["completed"] and f["total"] == 8 and f["state"]["rounds"] == 1 and f["xp_gained"] > 0
+    assert client.get("/api/game/state").json()["xp"] == f["state"]["xp"]
+
+
+def test_boss_spot_the_tell_and_daily_modes_work(client):
+    b = start(client, "boss", "urgency-pressure")
+    assert b["lives"] == 3 and b["trick_label"] and len(b["items"]) >= 5
+    t = start(client, "tell")
+    assert all(i["words"] for i in t["items"])
+    res = client.post("/api/game/answer", json={"round": t["round"], "item_id": t["items"][0]["id"], "picked": [0, 1]}).json()
+    assert res["tell_phrase"] and res["outcome"] in ("correct", "partial", "wrong")
+    d1, d2 = start(client, "daily"), start(client, "daily")
+    assert [i["id"] for i in d1["items"]] == [i["id"] for i in d2["items"]]
+
+
+@pytest.mark.parametrize("body,code", [({"mode": "nonsense"}, 400), ({"mode": "boss", "trick": "nope"}, 400), ({"mode": "yours"}, 400)])
+def test_bad_start_requests_get_a_clear_400(client, body, code):
+    r = client.post("/api/game/start", json=body)
+    assert r.status_code == code and r.json()["detail"]
+
+
+def test_bad_answers_and_unknown_rounds(client):
+    r = start(client)
+    it = r["items"][0]["id"]
+    assert client.post("/api/game/answer", json={"round": r["round"], "item_id": it, "choice": "maybe"}).status_code == 400
+    assert client.post("/api/game/answer", json={"round": r["round"], "item_id": "nope", "choice": "scam"}).status_code == 400
+    client.post("/api/game/answer", json={"round": r["round"], "item_id": it, "choice": "scam"})
+    assert client.post("/api/game/answer", json={"round": r["round"], "item_id": it, "choice": "scam"}).status_code == 400  # twice
+    assert client.post("/api/game/answer", json={"round": "doesnotexist", "item_id": it, "choice": "scam"}).status_code == 404
+    assert client.post("/api/game/finish", json={"round": "doesnotexist"}).status_code == 404
+
+
+def test_visitors_have_separate_progress_and_cannot_answer_each_others_rounds(monkeypatch):
+    monkeypatch.setenv("BAITPROOF_MULTIUSER", "1")
+    deps.HITS.clear()
+    a, b = TestClient(app), TestClient(app)
+    a.get("/")
+    b.get("/")
+    ra = a.post("/api/game/start", json={"mode": "rush"}).json()
+    assert b.post("/api/game/answer", json={"round": ra["round"], "item_id": ra["items"][0]["id"], "choice": "scam"}).status_code == 404
+    assert b.post("/api/game/finish", json={"round": ra["round"]}).status_code == 404
+    for it in ra["items"]:
+        a.post("/api/game/answer", json={"round": ra["round"], "item_id": it["id"], "choice": "unsure"})
+    a.post("/api/game/finish", json={"round": ra["round"]})
+    assert a.get("/api/game/state").json()["xp"] > 0 and b.get("/api/game/state").json()["xp"] == 0
+
+
+def test_starting_rounds_is_rate_limited(client, monkeypatch):
+    monkeypatch.setattr(deps, "RATE", 2)
+    deps.HITS.clear()
+    assert [client.post("/api/game/start", json={"mode": "rush"}).status_code for _ in range(3)] == [200, 200, 429]
+
+
+def test_playing_improves_the_resilience_score_shown_on_the_hub(client):
+    before = client.get("/api/game/state").json()["resilience"]
+    r = start(client)
+    for it in r["items"]:
+        client.post("/api/game/answer", json={"round": r["round"], "item_id": it["id"], "choice": "scam"})
+    client.post("/api/game/finish", json={"round": r["round"]})
+    assert client.get("/api/game/state").json()["resilience"] >= before and client.get("/api/map").json()["score"] >= before

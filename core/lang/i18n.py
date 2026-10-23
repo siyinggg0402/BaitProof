@@ -12,9 +12,9 @@ import json
 import re
 from pathlib import Path
 
-LANGS = ("en", "zh", "zh-Hant")
-NAMES = {"en": "English", "zh": "简体中文", "zh-Hant": "繁體中文"}
-PROMPT_NAMES = {"en": "English", "zh": "Simplified Chinese (简体中文)", "zh-Hant": "Traditional Chinese (繁體中文)"}
+LANGS = ("en", "zh", "zh-Hant", "ms")
+NAMES = {"en": "English", "zh": "简体中文", "zh-Hant": "繁體中文", "ms": "Bahasa Melayu"}
+PROMPT_NAMES = {"en": "English", "zh": "Simplified Chinese (简体中文)", "zh-Hant": "Traditional Chinese (繁體中文)", "ms": "Malay (Bahasa Melayu)"}
 
 
 def norm(lang: str | None) -> str:
@@ -24,6 +24,8 @@ def norm(lang: str | None) -> str:
         return "zh-Hant"
     if s.startswith("zh") or s in ("cn", "chinese"):
         return "zh"
+    if s == "ms" or s.startswith("ms-") or s in ("bm", "may", "malay", "bahasa", "bahasa-melayu"):
+        return "ms"
     return "en"
 
 
@@ -124,6 +126,7 @@ ZH: dict[str, str] = {
     "is a raw IP address": "只是一串IP地址",
     "is a link shortener that hides the real address": "是短链接，隐藏了真实网址",
     "ends in {tld}, common in throwaway scam sites": "以 {tld} 结尾，这是一次性骗局网站常用的后缀",
+    "looks one letter away from {brand} ({official})": "和 {brand}（{official}）只差一个字母",
     "stacks words like 'secure' and 'login' that scam sites love": "堆砌了“secure”“login”这类骗局网站爱用的词",
     "has many hyphens": "含有很多连字符",
     # ---- payment rails
@@ -196,11 +199,15 @@ ZH: dict[str, str] = {
 
 from core.lang.i18n_bot import BOT_ZH  # noqa: E402  (website, game and bot strings live in their own files)
 from core.lang.i18n_inputs import INPUTS_ZH  # noqa: E402
+from core.lang.i18n_ms import MS, TACTICS_MS  # noqa: E402  (Malay: Latin script, so no Simplified/Traditional step)
 from core.lang.i18n_ui import UI_ZH  # noqa: E402
+from core.lang.i18n_social import SOCIAL_MS, SOCIAL_ZH  # noqa: E402
 
 ZH.update(UI_ZH)
 ZH.update(BOT_ZH)
 ZH.update(INPUTS_ZH)
+ZH.update(SOCIAL_ZH)
+MS.update(SOCIAL_MS)
 
 TACTICS_ZH = {
     "urgency-pressure": {"label": "催你马上行动", "blurb": "他们说你必须立刻行动，让你来不及多想。", "tell": "正规公司会给你时间。只给几个小时的期限，是施压的手段。",
@@ -229,6 +236,7 @@ TACTICS_ZH = {
 _WHY_PATTERNS = (
     (re.compile(r"^imitates (?P<brand>.+) but is not (?P<official>.+)$"), "imitates {brand} but is not {official}"),
     (re.compile(r"^ends in (?P<tld>\S+), common in throwaway scam sites$"), "ends in {tld}, common in throwaway scam sites"),
+    (re.compile(r"^looks one letter away from (?P<brand>\S+) \((?P<official>[^)]+)\)$"), "looks one letter away from {brand} ({official})"),
 )
 
 
@@ -236,7 +244,9 @@ def tr(text: str, lang: str = "en", **kw) -> str:
     """Translate an English template and fill it in. Unknown text and unknown languages fall back to English."""
     lang = norm(lang)
     out = text
-    if lang != "en":
+    if lang == "ms":
+        out = MS.get(text, text)
+    elif lang != "en":
         z = ZH.get(text)
         if z is not None:
             out = to_traditional(z) if lang == "zh-Hant" else z
@@ -248,6 +258,8 @@ def tactic_text(tid: str, field: str, lang: str, english: dict) -> str:
     lang = norm(lang)
     if lang == "en":
         return english[tid][field]
+    if lang == "ms":
+        return TACTICS_MS.get(tid, {}).get(field) or english[tid][field]
     z = TACTICS_ZH.get(tid, {}).get(field)
     if z is None:
         return english[tid][field]

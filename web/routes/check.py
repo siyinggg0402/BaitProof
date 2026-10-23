@@ -11,14 +11,19 @@ import threading
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
+from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel
 
 from core import obs
+from core.inputs import image
+from core.inputs.errors import InputError
 from core.pipelines import check
+from core.pipelines.check.origin import make as make_origin
 from core.storage import history
 from web import results
 from web.deps import limit_expensive, request_lang
 from web.pages import page, templates
+from web.routes import pwa
 from web.routes.inputs import capabilities_now
 
 router = APIRouter()
@@ -33,27 +38,62 @@ def clean_source(value: str | None) -> str:
     return v
 
 
-def run_check(text: str, lang: str, source: str = "text", on_event=None):
+def run_check(text: str, lang: str, source: str = "text", on_event=None, origin=None):
     """check_message, told where the message came from (the result then says so). Falls back to setting the fields itself on a core that does not take them yet."""
     params = inspect.signature(check.check_message).parameters
     extra = {k: v for k, v in (("source", source), ("read_text", text)) if source != "text" and k in params}
+    if origin is not None:
+        extra["origin"] = origin
     r = check.check_message(text, store=True, on_event=on_event, log=True, lang=lang, **extra)
     if source != "text":
         r.source, r.read_text = source, r.read_text or text
     return r
 
 
+SHARE_NOTES = {
+    "too_big": "That picture is too big. Please try a smaller screenshot.",
+    "empty": "Nothing came through from the Share menu. Please paste the message instead.",
+    "busy": "Baitproof is busy right now. Please try sharing again in a minute.",
+}
+
+
+async def shared_item(request: Request, item: dict) -> dict:
+    """What the Share menu sent, turned into what the front page shows: the words (read from the picture, if there was one), where they came from, and
+    whether to check them at once. A picture is read here, in the visitor's own request, because reading it costs a model call."""
+    text = item["text"]
+    if item["image"]:
+        await limit_expensive(request)
+        try:
+            reading = await run_in_threadpool(image.read_image, item["image"], lang=request_lang(request))
+            text = reading.text
+            return {"text": text, "source": "screenshot", "origin": {"channel": reading.channel, "app": reading.app, "sender": reading.sender},
+                    "autocheck": True, "notice": "Shared from another app. Checking it now…"}
+        except InputError as e:
+            if not text.strip():
+                return {"notice": e.message}
+        except Exception as e:  # noqa: BLE001 (a reader that is down: fall back to the words that came with it, or say so)
+            obs.emit({"kind": "error", "where": "share_image", "type": type(e).__name__})
+            if not text.strip():
+                return {"notice": "I couldn't read that. Please try again, or paste the text instead."}
+    return {"text": text, "autocheck": bool(text.strip()), "notice": "Shared from another app. Checking it now…" if text.strip() else SHARE_NOTES["empty"]}
+
+
 @router.get("/", response_class=HTMLResponse)
-def index(request: Request):
-    return page(request, "index.html", result=None, text="", source="text", caps=capabilities_now())
+async def index(request: Request, share: str = "", shared: str = ""):
+    ctx = {"result": None, "text": "", "source": "text", "caps": capabilities_now(), "notice": "", "autocheck": False, "origin": {}}
+    if shared in SHARE_NOTES:
+        ctx["notice"] = SHARE_NOTES[shared]
+    elif share and (item := pwa.take(share)):
+        ctx.update(await shared_item(request, item))
+    return page(request, "index.html", **ctx)
 
 
 @router.post("/check", response_class=HTMLResponse, dependencies=[Depends(limit_expensive)])
-def do_check(request: Request, message: str = Form(...), source: str = Form("text")):
+def do_check(request: Request, message: str = Form(...), source: str = Form("text"), origin_channel: str = Form(""), origin_app: str = Form(""), origin_sender: str = Form("")):
     source = clean_source(source)
     if not message.strip():
         raise HTTPException(400, "Paste a message to check.")
-    result = run_check(message, request_lang(request), source)
+    result = run_check(message, request_lang(request), source, origin=make_origin(origin_channel, origin_app, origin_sender) if source == "screenshot" else None)
     history.add(result, "web", message)
     return page(request, "index.html", result=result, text=message[:4000], source=source, caps=capabilities_now())
 
@@ -61,6 +101,9 @@ def do_check(request: Request, message: str = Form(...), source: str = Form("tex
 class StreamIn(BaseModel):
     message: str
     source: str = "text"  # text | screenshot | voice
+    origin_channel: str = ""  # what a screenshot showed about where the message came from (unverified; cleaned before use)
+    origin_app: str = ""
+    origin_sender: str = ""
 
 
 @router.post("/api/check/stream", dependencies=[Depends(limit_expensive)])
@@ -76,7 +119,8 @@ async def check_stream(request: Request, body: StreamIn):
 
     def work() -> None:
         try:
-            r = ctx.run(run_check, text, lang, source, lambda step: q.put(("step", step.model_dump())))
+            r = ctx.run(run_check, text, lang, source, lambda step: q.put(("step", step.model_dump())),
+                        make_origin(body.origin_channel, body.origin_app, body.origin_sender) if source == "screenshot" else None)
             ctx.run(results.put, r)
             ctx.run(history.add, r, "web", text)
             q.put(("done", r.check_id))
