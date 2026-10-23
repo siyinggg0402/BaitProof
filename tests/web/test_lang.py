@@ -159,9 +159,9 @@ def test_titles_and_share_tags_follow_the_language():
     assert "<title>练习 · Baitproof</title>" in c.get("/train").text
     cid = new_challenge(c)
     page = c.get(f"/card/{cid}?s=3").text
-    assert '<meta property="og:title" content="我的防骗力 50% 🛡️">' in page and "3条" in page and "<title>我的防骗力 50%</title>" in page
+    assert '<meta property="og:title" content="我的防骗力 50%">' in page and "3条" in page and "<title>我的防骗力 50%</title>" in page
     en = lang_client("en").get(f"/card/{cid}?s=3").text
-    assert '<meta property="og:title" content="I&#39;m 50% Baitproof 🛡️">' in en and "<title>I&#39;m 50% Baitproof</title>" in en
+    assert '<meta property="og:title" content="I&#39;m 50% Baitproof">' in en and "<title>I&#39;m 50% Baitproof</title>" in en
 
 
 def test_a_link_preview_follows_the_language_of_the_link_not_the_crawlers():
@@ -296,7 +296,7 @@ def test_a_chinese_scam_checked_with_the_chinese_cookie_returns_a_chinese_result
     c = lang_client("zh")
     html = c.post("/check", data={"message": SCAM_ZH}).text
     assert html_lang(html) == "zh-Hans" and "这是骗局" in html and "破绽" in html and "该怎么做" in html and "证据（" in html and "红旗" in html and "我是怎么判断的" in html
-    assert 'data-say="🚨 这是骗局' in html and "朗读" in html and "这个回答对吗？" in html and "练习这种套路" in html
+    assert 'data-say="这是骗局' in html and "朗读" in html and "这个回答对吗？" in html and "练习这种套路" in html
     assert "已加入你的练习：" in html and "催你马上行动" in html  # the tricks are named in Chinese
 
 

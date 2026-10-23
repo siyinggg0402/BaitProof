@@ -12,7 +12,7 @@ from core.ai import llm
 from core.domain import helplines, seasons
 from core.lang import i18n
 from core.storage import accounts, db, groups, links, model
-from web import ui
+from web import icons, ui
 from web.deps import request_lang
 
 BASE = Path(__file__).parent
@@ -41,9 +41,10 @@ def ui_context(request: Request) -> dict:
 templates = Jinja2Templates(directory=BASE / "templates", context_processors=[ui_context])
 templates.env.globals.update({"_": ui.translate, "_h": ui.translate_html, "tr_in": ui.translate_in, "STAGES": ui.STAGES, "help_lines": helplines.lines, "help_verified": helplines.VERIFIED})
 templates.env.globals["zip_cells"] = zip
+templates.env.globals.update({"icon": icons.icon, "avatar": icons.avatar, "sprite": icons.sprite})
 templates.env.filters.update({
     "timestamp": lambda t: time.strftime("%H:%M:%S", time.localtime(t)),
-    "ago": ui.ago_filter, "script": ui.script_filter, "trick_names": ui.trick_names,
+    "ago": ui.ago_filter, "script": ui.script_filter, "trick_names": ui.trick_names, "plain": ui.plain,
 })
 
 

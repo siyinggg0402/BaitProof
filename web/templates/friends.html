@@ -10,7 +10,7 @@
 {% if not multiuser %}<p class="muted">{{ _("Friends work on the public site, where every visitor has their own profile. This copy has only one.") }}</p>{% endif %}
 {% else %}
 <h1 class="rise d1">{{ _("You and your friends") }}</h1>
-<p class="muted rise d1"><a href="/family">👪 {{ family_name or _("Family group") }}</a> · {{ _("Share scams with your family and race each other.") }}</p>
+<p class="muted rise d1"><a href="/family">{{ icon('users') }} {{ family_name or _("Family group") }}</a> · {{ _("Share scams with your family and race each other.") }}</p>
 {% if added %}<p class="added">{{ _("You and {name} are now friends.", name=added) }}</p>{% endif %}
 {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
 
@@ -46,7 +46,7 @@
   <h2>{{ _("Your friends") }}</h2>
   <ul class="plain friends">
     {% for f in friends %}
-    <li><span class="who"><span aria-hidden="true">{{ f.avatar }}</span> {{ f.nickname }}</span>
+    <li><span class="who">{{ avatar(f.avatar) }} {{ f.nickname }}</span>
       <form method="post" action="/friends/remove"><input type="hidden" name="pub" value="{{ f.pub }}"><button class="ghost" type="submit" aria-label="{{ _('Remove {name}', name=f.nickname) }}">{{ _("Remove") }}</button></form></li>
     {% endfor %}
   </ul>

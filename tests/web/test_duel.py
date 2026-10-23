@@ -50,7 +50,7 @@ def pid(c):
 
 
 def sign_up(c, name):
-    assert c.post("/me/create", data={"nickname": name, "avatar": "🦊"}).status_code == 200
+    assert c.post("/me/create", data={"nickname": name, "avatar": "fox"}).status_code == 200
 
 
 def friends(a, b):

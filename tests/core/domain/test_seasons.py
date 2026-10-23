@@ -43,7 +43,7 @@ def test_a_window_can_reach_across_new_year():
 
 def test_what_the_page_gets():
     s = on("2026-11-05")
-    assert s == {"id": "deepavali", "name": "Deepavali", "emoji": "🪔", "greeting": "Happy Deepavali!", "day": "2026-11-08", "days_to": 3}
+    assert s == {"id": "deepavali", "name": "Deepavali", "icon": "fest-deepavali", "greeting": "Happy Deepavali!", "day": "2026-11-08", "days_to": 3}
     assert on("2026-11-10")["days_to"] == -2
 
 

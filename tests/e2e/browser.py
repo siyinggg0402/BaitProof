@@ -93,6 +93,10 @@ def overflow_checker(page, problems, W: int = 390):
         }""", W)
         if bad[0] > W or len(bad) > 1:
             problems.append(f"{label}: overflow/clipping {bad}")
+        broken = page.evaluate("""() => [...document.querySelectorAll('use')].filter((u) => !document.getElementById((u.getAttribute('href') || '').slice(1))).map((u) => u.getAttribute('href'))
+            .concat([...document.querySelectorAll('svg.ic')].filter((s) => s.getClientRects().length && s.getBoundingClientRect().width < 6).map((s) => 'tiny in ' + (s.parentElement.className || s.parentElement.tagName)))""")
+        if broken:
+            problems.append(f"{label}: icons missing or too small {broken[:5]}")
     return no_overflow
 
 
@@ -177,7 +181,7 @@ def inputs_off_pass(page, base, no_overflow, lang: str, quiet) -> None:
     no_overflow(f"{lang}-inputs-heard")
     page.click("#check-form button.big")
     page.wait_for_selector("#result .banner")
-    assert w["chip_voice"] in page.inner_text("#result .src") and "🎤" in page.inner_text("#result .src")
+    assert w["chip_voice"] in page.inner_text("#result .src") and page.locator("#result .src use[href='#i-mic']").count() == 1
     no_overflow(f"{lang}-inputs-voice-result")
 
     # the browser's speech service can fail: a plain message, the old text comes back, nothing breaks
@@ -242,10 +246,10 @@ def inputs_on_pass(browser, base, problems, lang: str) -> None:
     assert "dhl-fee-pay.xyz" in page.input_value("#message") and page.get_attribute("#source", "value") == "screenshot"
     notice = page.inner_text("#input-status .in-notice")
     assert w["read"] in notice and page.locator("#input-status .in-thumb").count() == 1
-    assert w["chip_shot"] in page.inner_text("#result .src") and "📷" in page.inner_text("#result .src")
+    assert w["chip_shot"] in page.inner_text("#result .src") and page.locator("#result .src use[href='#i-camera']").count() == 1
     assert not page.is_disabled("#shot-btn") and not page.is_visible("#live")
     panel = page.locator("#result .links")  # the links panel: a real lookalike, an official site and a short link, none of them tappable
-    assert w["links"].lower() in panel.inner_text().lower() and panel.locator("li").count() >= 1 and panel.locator("a").count() == 0 and panel.locator("[href]").count() == 0
+    assert w["links"].lower() in panel.inner_text().lower() and panel.locator("li").count() >= 1 and panel.locator("a").count() == 0 and panel.locator("[href]:not(use)").count() == 0
     assert "dhl-fee-pay.xyz" in panel.inner_text() and w["lookalike"] in panel.inner_text()
     assert page.evaluate("[...document.querySelectorAll('#result .links .lk-host')].every((e) => getComputedStyle(e).fontFamily.includes('mono'))")
     no_overflow(f"{lang}-inputs-on-result")
@@ -823,7 +827,7 @@ def social_pass(p, base, problems, truth) -> None:
     aiman.goto(base + "/family/dashboard")
     aiman.wait_for_selector("table.matrix")
     assert aiman.locator("table.matrix tbody tr").count() == 12 and "Family score" in aiman.inner_text("main") and "Mei" in aiman.inner_text(".people") and "Aiman" in aiman.inner_text(".people")
-    assert "This week, for the family chat" in aiman.inner_text("main") and "👪 The Lims on Baitproof this week" in aiman.inner_text(".summary")
+    assert "This week, for the family chat" in aiman.inner_text("main") and "The Lims on Baitproof this week" in aiman.inner_text(".summary")
     assert aiman.locator(".avgbar i").first.evaluate("e => e.style.width") != ""      # (the bars are drawn by the script: the page's policy forbids style attributes)
     ov_a("family-dashboard")
     aiman.click("button:has-text('Hide my progress')")
@@ -1101,7 +1105,7 @@ def main() -> int:
             no_overflow("admin")
             body = page.inner_text("body")
             assert "Recent checks" in body and "gift" not in body.lower().split("recent checks")[1][:2000]
-            assert page.locator("table.tbl tbody tr").count() >= 1 and "👍 1" in body
+            assert page.locator("table.tbl tbody tr").count() >= 1 and page.locator(".kpi use[href='#i-thumb-up']").count() >= 1 and "feedback" in body
             page.goto(base)
 
             # screenshot and voice on a server with nothing switched on (the AI is off here): no dead buttons, a clear answer, the page keeps working
@@ -1188,7 +1192,7 @@ def main() -> int:
             assert "Level" in page.inner_text(".hud-card") and "XP" in page.inner_text(".hud-card")
             page.click(".boss-grid .tile >> nth=0")
             page.wait_for_selector(".hearts")
-            assert page.inner_text(".hearts").count("♥") == 3
+            assert page.locator(".hearts use[href='#i-heart-fill']").count() == 3
             page.click(".choice.c-unsure")
             page.wait_for_selector(".reveal-card")
             page.click("button.ghost.quit")

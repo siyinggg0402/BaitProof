@@ -12,17 +12,17 @@
     <div class="hearts" id="hearts" role="img"></div>
     <div class="odo" aria-live="off"><span id="odo">0</span></div>
     <div class="hud-right"><span class="combo" id="combo" hidden></span><span class="combo daily" id="mode-chip" hidden>{{ _("Daily Road") }}</span>
-      <button type="button" id="sound" class="icon" aria-pressed="true" aria-label="{{ _('Sound is on') }}">🔊</button><button type="button" id="pause" class="icon" aria-label="{{ _('Pause') }}">⏸</button></div>
+      <button type="button" id="sound" class="icon" aria-pressed="true" aria-label="{{ _('Sound is on') }}">{{ icon('volume') }}</button><button type="button" id="pause" class="icon" aria-label="{{ _('Pause') }}">{{ icon('pause') }}</button></div>
   </div>
-  <div class="race" id="race" hidden><div class="track" id="track" aria-hidden="true"><i class="mk you" id="you-marker">🚗</i></div><p class="race-text" id="race-text"></p></div>
+  <div class="race" id="race" hidden><div class="track" id="track" aria-hidden="true"><i class="mk you" id="you-marker">{{ icon('car') }}</i></div><p class="race-text" id="race-text"></p></div>
   <div class="topstack">
     <div class="msgcard" id="msg" hidden aria-live="polite"><span class="chip" id="msg-gate"></span> <span class="chip from" id="msg-from" hidden></span><p id="msg-text"></p></div>
     <p class="toast" id="toast" role="status" hidden></p>
   </div>
   <div class="lanes" id="lanes" hidden role="group" aria-label="{{ _('Choose a lane') }}">
-    <button type="button" data-lane="0" class="l-scam"><span aria-hidden="true">🚨</span><b>{{ _("Scam") }}</b><kbd aria-hidden="true">1</kbd></button>
-    <button type="button" data-lane="1" class="l-check"><span aria-hidden="true">🤔</span><b>{{ _("Check first") }}</b><kbd aria-hidden="true">2</kbd></button>
-    <button type="button" data-lane="2" class="l-safe"><span aria-hidden="true">✅</span><b>{{ _("Looks fine") }}</b><kbd aria-hidden="true">3</kbd></button>
+    <button type="button" data-lane="0" class="l-scam">{{ icon('alert') }}<b>{{ _("Scam") }}</b><kbd aria-hidden="true">1</kbd></button>
+    <button type="button" data-lane="1" class="l-check">{{ icon('question') }}<b>{{ _("Check first") }}</b><kbd aria-hidden="true">2</kbd></button>
+    <button type="button" data-lane="2" class="l-safe">{{ icon('check-circle') }}<b>{{ _("Looks fine") }}</b><kbd aria-hidden="true">3</kbd></button>
   </div>
 
   <div class="over" id="intro"{% if duel_code %} hidden{% endif %}>
@@ -32,7 +32,7 @@
       <h2>{{ _("Ready to drive?") }}</h2>
       <p>{{ _("A message appears on the road ahead. Steer into the lane that fits it: left for a scam, middle to check first, right if it looks fine.") }}</p>
       <p>{{ _("Right lanes take you farther. Three wrong turns and the drive is over.") }}</p>
-      {% if season %}<p class="season-line"><span aria-hidden="true">{{ season.emoji }}</span> <b>{{ season.greeting }}</b> {{ _("The road is dressed for {name}.", name=season.name) }}</p>{% endif %}
+      {% if season %}<p class="season-line">{{ icon(season.icon) }} <b>{{ season.greeting }}</b> {{ _("The road is dressed for {name}.", name=season.name) }}</p>{% endif %}
       <p class="keys"><kbd>←</kbd><kbd>→</kbd> {{ _("steer") }} <span class="dot">·</span> <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> {{ _("pick a lane") }} <span class="dot">·</span> {{ _("or tap the buttons") }}</p>
       {% if best %}<p class="best">{{ _("Your best: {n} m", n=best) }}</p>{% endif %}
       <div class="modes">
@@ -77,7 +77,7 @@
   <div class="over" id="duel-wait" hidden><div class="sheet" aria-live="polite"><h2>{{ _("You're across the line!") }}</h2><p id="duel-wait-note">{{ _("Waiting for the others to finish…") }}</p><ol class="board mini" id="duel-live"></ol></div></div>
   <div class="over" id="duel-end" hidden>
     <div class="sheet" aria-live="polite">
-      <p class="newbest" id="duel-won" hidden>🏆 {{ _("You won!") }}</p>
+      <p class="newbest" id="duel-won" hidden>{{ icon('trophy') }} {{ _("You won!") }}</p>
       <h2 id="duel-title">{{ _("Race over") }}</h2>
       <ol class="board mini" id="duel-board"></ol>
       <p class="chips-row" id="duel-chips"></p>
@@ -106,7 +106,7 @@
 
   <div class="over" id="end" hidden>
     <div class="sheet" aria-live="polite">
-      <p class="newbest" id="end-best" hidden>🏆 {{ _("New personal best!") }}</p>
+      <p class="newbest" id="end-best" hidden>{{ icon('trophy') }} {{ _("New personal best!") }}</p>
       <h2 id="end-title">{{ _("Drive over") }}</h2>
       <p class="bigdist"><span id="end-dist">0</span></p>
       <ul class="stats" id="end-stats"></ul>

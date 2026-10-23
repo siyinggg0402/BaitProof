@@ -35,7 +35,7 @@ def key_of(html):
     return re.search(r'id="the-key">([A-Z0-9-]{19})<', html).group(1)
 
 
-def sign_up(c, name="Aiman", avatar="🦊"):
+def sign_up(c, name="Aiman", avatar="fox"):
     r = c.post("/me/create", data={"nickname": name, "avatar": avatar})
     assert r.status_code == 200, r.text[:300]
     return key_of(r.text)
@@ -54,14 +54,14 @@ def test_a_visitor_sees_log_in_and_a_profile_shows_their_avatar_and_name():
     a = visitor()
     html = a.get("/").text
     assert 'class="me login" href="/signin"' in html and "Log in" in html
-    sign_up(a, "Aiman", "🦊")
+    sign_up(a, "Aiman", "fox")
     html = a.get("/").text
-    assert 'class="me" href="/me"' in html and "Aiman" in html and "🦊" in html and "me login" not in html
+    assert 'class="me" href="/me"' in html and "Aiman" in html and 'data-av="fox"' in html and "me login" not in html
 
 
 def test_creating_a_profile_shows_the_key_once_and_never_stores_it():
     a = visitor()
-    r = a.post("/me/create", data={"nickname": "Aiman", "avatar": "🦊"})
+    r = a.post("/me/create", data={"nickname": "Aiman", "avatar": "fox"})
     key = key_of(r.text)
     assert r.headers["cache-control"] == "no-store" and "Save it somewhere safe" in r.text
     again = a.get("/me").text
@@ -71,7 +71,7 @@ def test_creating_a_profile_shows_the_key_once_and_never_stores_it():
 
 def test_a_bad_nickname_is_refused_with_a_message_and_makes_no_profile():
     a = visitor()
-    r = a.post("/me/create", data={"nickname": "evil.com", "avatar": "🦊"})
+    r = a.post("/me/create", data={"nickname": "evil.com", "avatar": "fox"})
     assert r.status_code == 400 and "letters or numbers" in r.text and accounts.get(pid(a)) is None
     assert 'value="evil.com"' in r.text  # what they typed is kept so they can fix it
 
@@ -110,8 +110,8 @@ def test_a_new_key_replaces_the_old_and_a_new_friend_code_replaces_the_old():
 def test_changing_the_name_and_deleting_the_profile():
     a = visitor()
     sign_up(a, "Aiman")
-    assert a.post("/me/update", data={"nickname": "Aiman Z", "avatar": "🐼"}, follow_redirects=False).status_code == 303
-    assert accounts.get(pid(a))["nickname"] == "Aiman Z" and accounts.get(pid(a))["avatar"] == "🐼"
+    assert a.post("/me/update", data={"nickname": "Aiman Z", "avatar": "panda"}, follow_redirects=False).status_code == 303
+    assert accounts.get(pid(a))["nickname"] == "Aiman Z" and accounts.get(pid(a))["avatar"] == "panda"
     a.post("/me/delete", data={})      # without the tick box nothing happens
     assert accounts.get(pid(a)) is not None
     a.post("/me/delete", data={"confirm": "yes"})
@@ -121,11 +121,11 @@ def test_changing_the_name_and_deleting_the_profile():
 # ---------------------------------------------------------------- invites and friends
 def test_an_invite_link_makes_a_stranger_a_friend_in_one_step():
     a, b = visitor(), visitor()
-    sign_up(a, "Aiman", "🦊")
+    sign_up(a, "Aiman", "fox")
     code = code_of(a)
     landing = b.get(f"/join/{code}").text
-    assert "Aiman invited you to be friends" in unescape(landing) and "🦊" in landing and "Make my profile and add Aiman" in landing
-    r = b.post(f"/join/{code}", data={"nickname": "Mei", "avatar": "🐼"})
+    assert "Aiman invited you to be friends" in unescape(landing) and 'data-av="fox"' in landing and "Make my profile and add Aiman" in landing
+    r = b.post(f"/join/{code}", data={"nickname": "Mei", "avatar": "panda"})
     assert r.status_code == 200 and "You and Aiman are now friends." in r.text and key_of(r.text)
     assert [f["nickname"] for f in accounts.friends(pid(a))] == ["Mei"] and [f["nickname"] for f in accounts.friends(pid(b))] == ["Aiman"]
 
@@ -189,14 +189,14 @@ def test_the_profile_cookie_is_http_only():
 
 def test_the_leaderboard_shows_friends_ranked_and_this_week_versus_all_time():
     a, b = visitor(), visitor()
-    sign_up(a, "Aiman", "🦊")
-    sign_up(b, "Mei", "🐼")
+    sign_up(a, "Aiman", "fox")
+    sign_up(b, "Mei", "panda")
     b.post(f"/join/{code_of(a)}")
     runs.record(pid(b), runs.ROAD, 640, 8)
     runs.record(pid(a), runs.ROAD, 400, 5)
     html = a.get("/friends").text
     board = html[html.index('<ol class="board">'):html.index("</ol>")]
-    assert board.index("Mei") < board.index("Aiman") and "640 m" in html and "400 m" in html and "🥇" in html and "🥈" in html and "(you)" in html
+    assert board.index("Mei") < board.index("Aiman") and "640 m" in html and "400 m" in html and "m-gold" in html and "m-silver" in html and "(you)" in html
     assert 'aria-current="true">This week' in html and "/friends?game=road&scope=all" in html
     assert "640 m" in a.get("/friends?scope=all").text and 'aria-current="true">This week' in a.get("/friends?scope=bogus").text  # (an unknown range falls back to this week)
 
@@ -476,7 +476,7 @@ def test_during_a_festival_the_home_page_and_the_road_say_so(monkeypatch):
     assert 'class="season-strip' in home and "Happy Deepavali!" in home and "red-packet links" in home
     road = visitor().get("/road").text
     data = json.loads(unescape(re.search(r"data-season='([^']*)'", road).group(1)))
-    assert data["id"] == "deepavali" and data["emoji"] == "🪔" and data["greeting"] == "Happy Deepavali!"
+    assert data["id"] == "deepavali" and data["icon"] == "fest-deepavali" and data["greeting"] == "Happy Deepavali!"
     assert "The road is dressed for Deepavali." in road and 'class="season-line"' in road
 
 

@@ -4,7 +4,7 @@
 {% block content %}
 {% if card %}
 <span class="pill rise"><b>{{ _("INVITE") }}</b> {{ _("Family group") }}</span>
-<h1 class="rise d1">👪 {{ _("Join {name}?", name=card.name) }}</h1>
+<h1 class="rise d1">{{ icon('users') }} {{ _("Join {name}?", name=card.name) }}</h1>
 <p class="lead rise d2">{{ _("Share the scams you meet, learn to spot the ones your family meets, and race each other on Scam Road. Members see only your nickname, avatar and scores, plus the scams you choose to share.") }}</p>
 {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
 <section class="card rise d3 narrow">

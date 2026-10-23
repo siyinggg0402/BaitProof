@@ -21,7 +21,7 @@
   <div class="kpi"><b>{{ s.avg_rounds }}</b><span>rounds per check</span></div>
   <div class="kpi"><b>${{ s.llm.est_cost_usd }}</b><span>estimated model spend</span></div>
   <div class="kpi"><b>{{ (s.llm.fallback_rate * 100)|round|int }}%</b><span>model fell back to rules</span></div>
-  <div class="kpi"><b>👍 {{ s.feedback.up }} · 👎 {{ s.feedback.down }}</b><span>feedback</span></div>
+  <div class="kpi"><b>{{ icon('thumb-up') }} {{ s.feedback.up }} · {{ icon('thumb-down') }} {{ s.feedback.down }}</b><span>feedback</span></div>
 </div>
 
 <div class="grid2">
@@ -29,7 +29,7 @@
     {% set vmax = (s.verdicts.values()|list|max) if s.verdicts else 1 %}
     <ul class="bars-list">{% for k, v in s.verdicts.items() %}<li><span>{{ k }}</span><meter min="0" max="{{ vmax }}" value="{{ v }}"></meter><b>{{ v }}</b></li>{% endfor %}</ul>
     <p class="muted">Confidence: {% for k, v in s.confidence.items() %}{{ k }} {{ v }}{{ " · " if not loop.last }}{% endfor %}<br>Rounds: {% for k, v in s.rounds_dist.items() %}{{ k }}→{{ v }}{{ " · " if not loop.last }}{% endfor %}</p>
-    {% if s.feedback_by_verdict %}<h3>Feedback by verdict</h3><ul class="bars-list">{% for k, v in s.feedback_by_verdict.items() %}<li><span>{{ k }}</span><b>👍 {{ v.up }} · 👎 {{ v.down }}</b></li>{% endfor %}</ul>{% endif %}
+    {% if s.feedback_by_verdict %}<h3>Feedback by verdict</h3><ul class="bars-list">{% for k, v in s.feedback_by_verdict.items() %}<li><span>{{ k }}</span><b>{{ icon('thumb-up') }} {{ v.up }} · {{ icon('thumb-down') }} {{ v.down }}</b></li>{% endfor %}</ul>{% endif %}
   </section>
   <section class="card"><h2>Model usage</h2>
     <p>{{ s.llm.calls }} calls · {{ s.llm.tokens_in }} tokens in · {{ s.llm.tokens_out }} out<br>
@@ -56,7 +56,7 @@
 <section class="card"><h2>Recent checks</h2>
   <div class="tbl-wrap"><table class="tbl"><thead><tr><th>When</th><th>Id</th><th>Verdict</th><th>Conf.</th><th>Rounds</th><th>Time</th><th>AI</th><th>Tokens</th><th>Extra tools</th><th>Gates flagged</th></tr></thead><tbody>
   {% for c in recent %}<tr><td>{{ c.ts|int|timestamp }}</td><td><code>{{ c.id }}</code></td><td>{{ c.verdict }}</td><td>{{ c.confidence }}</td><td>{{ c.rounds }}</td><td>{{ (c.latency_ms or 0) // 100 / 10 }}s</td>
-    <td>{{ '✓' if c.ai else 'rules' }}</td><td>{{ c.tokens }}</td><td>{{ c.tools|join(', ') }}</td><td>{{ c.flags|join(', ') }}</td></tr>
+    <td>{% if c.ai %}{{ icon('check') }}{% else %}rules{% endif %}</td><td>{{ c.tokens }}</td><td>{{ c.tools|join(', ') }}</td><td>{{ c.flags|join(', ') }}</td></tr>
   {% else %}<tr><td colspan="10" class="muted">No checks in this window.</td></tr>{% endfor %}</tbody></table></div>
 </section>
 <meta http-equiv="refresh" content="60">

@@ -105,7 +105,7 @@
   }
   function recording(on) {
     speakBtn.classList.toggle("rec", on);
-    speakBtn.querySelector(".ico").textContent = on ? "⏹" : "🎤";
+    speakBtn.querySelector(".ico").replaceChildren(icon(on ? "stop" : "mic"));
     speakBtn.querySelector(".lbl").textContent = on ? t("Stop") : t("Speak");
     if (shotBtn) shotBtn.disabled = on;
     if (langSel) langSel.disabled = on;

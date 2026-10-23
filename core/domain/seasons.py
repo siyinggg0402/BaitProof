@@ -18,15 +18,15 @@ try:
 except Exception:  # (no timezone database on this machine: Singapore has no daylight saving, so a fixed +8 is exact)
     _SG = timezone(timedelta(hours=8))
 
-# festival -> (theme id, emoji, days before the day the theme starts, days after it ends)
+# festival -> (theme id, icon name, days before the day the theme starts, days after it ends)
 FESTIVALS: dict[str, tuple[str, str, int, int]] = {
-    "cny": ("cny", "🧧", 5, 15),               # Chinese New Year runs fifteen days, to Chap Goh Mei
-    "raya": ("raya", "🌙", 5, 10),             # Hari Raya Aidilfitri (Hari Raya Puasa in Singapore)
-    "deepavali": ("deepavali", "🪔", 5, 4),
-    "midautumn": ("midautumn", "🏮", 5, 2),
-    "christmas": ("christmas", "🎄", 10, 2),
-    "national": ("national", "🇸🇬", 8, 1),      # National Day, Singapore, 9 August
-    "merdeka": ("merdeka", "🇲🇾", 6, 16),       # Merdeka (31 August) through Malaysia Day (16 September)
+    "cny": ("cny", "fest-cny", 5, 15),               # Chinese New Year runs fifteen days, to Chap Goh Mei
+    "raya": ("raya", "fest-raya", 5, 10),             # Hari Raya Aidilfitri (Hari Raya Puasa in Singapore)
+    "deepavali": ("deepavali", "fest-deepavali", 5, 4),
+    "midautumn": ("midautumn", "fest-midautumn", 5, 2),
+    "christmas": ("christmas", "fest-christmas", 10, 2),
+    "national": ("national", "fest-national", 8, 1),      # National Day, Singapore, 9 August
+    "merdeka": ("merdeka", "fest-merdeka", 6, 16),       # Merdeka (31 August) through Malaysia Day (16 September)
 }
 # the day of each festival, by year. 2026 and 2027 are the governments' lists; later years are estimates (see the note above).
 DAYS: dict[str, dict[int, tuple[int, int]]] = {
@@ -73,14 +73,14 @@ def active(on: date) -> list[tuple[int, str, date]]:
 
 
 def current(lang: str = "en", on: date | None = None) -> dict | None:
-    """The festival on today, if any: {id, name, emoji, greeting, day}. Where two windows overlap, the one whose day is nearer wins."""
+    """The festival on today, if any: {id, name, icon, greeting, day}. Where two windows overlap, the one whose day is nearer wins."""
     on = on or today()
     hits = sorted(active(on))
     if not hits:
         return None
     _, fest, day = hits[0]
-    theme, emoji, _, _ = FESTIVALS[fest]
-    return {"id": theme, "name": tr(NAMES[fest], lang), "emoji": emoji, "greeting": tr(GREETINGS[fest], lang), "day": day.isoformat(), "days_to": (day - on).days}
+    theme, icon, _, _ = FESTIVALS[fest]
+    return {"id": theme, "name": tr(NAMES[fest], lang), "icon": icon, "greeting": tr(GREETINGS[fest], lang), "day": day.isoformat(), "days_to": (day - on).days}
 
 
 def upcoming(on: date | None = None, n: int = 3) -> list[dict]:

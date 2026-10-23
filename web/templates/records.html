@@ -23,7 +23,7 @@
     <p class="muted">{{ _h("The code works once and expires in {timer}.", timer=timer) }}</p>
   </div>
   <div id="tg-done" {% if not linked %}hidden{% endif %}>
-    <p>{{ _h("✅ Checks you run in Telegram now appear below. In Telegram you can also send {history} and {score}.", history=hist, score=score) }}</p>
+    <p>{{ icon('check-circle') }} {{ _h("Checks you run in Telegram now appear below. In Telegram you can also send {history} and {score}.", history=hist, score=score) }}</p>
     <button class="ghost" id="tg-unlink" type="button">{{ _("Disconnect Telegram") }}</button>
   </div>
 </section>
@@ -45,7 +45,7 @@
 {% for r in rows %}
   <li class="rec v-{{ r.verdict }} reveal" data-id="{{ r.id }}">
     <div class="rec-top"><span class="rec-v">{{ _({'scam': 'Scam', 'likely_scam': 'Likely scam', 'safe': 'Looks safe', 'unsure': 'Not sure', 'victim_support': 'Support'}[r.verdict]) }}</span>
-      <span class="rec-meta">{{ '✈️ Telegram' if r.channel == 'telegram' else '🌐 ' + _('Website') }} · {{ r.ts|ago }}</span>
+      <span class="rec-meta">{% if r.channel == 'telegram' %}{{ icon('send') }} Telegram{% else %}{{ icon('globe') }} {{ _('Website') }}{% endif %} · {{ r.ts|ago }}</span>
       <button class="ghost rec-del" type="button" aria-label="{{ _('Delete this record') }}">{{ _("Delete") }}</button></div>
     {% if r.preview %}<p class="rec-preview">“{{ r.preview }}”</p>{% endif %}
     {% if r.tell %}<p class="rec-tell">{{ r.tell|script }}</p>{% endif %}

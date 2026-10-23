@@ -11,10 +11,12 @@
 <link rel="stylesheet" href="/static/css/style.css">
 <link rel="stylesheet" href="/static/css/polish.css">
 <link rel="stylesheet" href="/static/css/mascot.css">
+<link rel="stylesheet" href="/static/css/icons.css">
 {% if i18n_json %}<script type="application/json" id="i18n">{{ i18n_json|safe }}</script>
 {% endif %}<script src="/static/js/boot.js"></script>
 </head>
 <body{% block bodyattrs %}{% endblock %}>
+{{ sprite() }}
 <div class="glow" aria-hidden="true"><i></i><i></i><i></i></div>
 {% set path = request.url.path %}
 {% set on_train = path == '/train' or path.startswith('/game') or path.startswith('/road') or path.startswith('/link') or path.startswith('/duel') %}
@@ -35,7 +37,7 @@
       <li><a href="/lang/{{ code }}?next={{ lang_next|urlencode }}" lang="{{ hl }}" hreflang="{{ hl }}" {% if code == lang %}aria-current="true"{% endif %}>{{ name }}</a></li>{% endfor %}
     </ul>
   </details>
-  {% if account %}<a class="me" href="/me" aria-label="{{ _('My profile') }}: {{ account.nickname }}"><span aria-hidden="true">{{ account.avatar }}</span><span class="me-name">{{ account.nickname }}</span></a>
+  {% if account %}<a class="me" href="/me" aria-label="{{ _('My profile') }}: {{ account.nickname }}">{{ avatar(account.avatar) }}<span class="me-name">{{ account.nickname }}</span></a>
   {% else %}<a class="me login" href="/signin">{{ _("Log in") }}</a>{% endif %}
 </div></div></header>
 <main class="wrap">{% block content %}{% endblock %}</main>

@@ -55,7 +55,14 @@ function canvasTex(w, h, draw, repeat = false) {
   if (repeat) tx.wrapS = tx.wrapT = THREE.RepeatWrapping;
   return tx;
 }
-const EMOJI_FONT = "'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif";
+// One of the site's icons (read from the sprite in the page) drawn on a canvas, centred on (cx, cy), `size` pixels across.
+function drawIcon(g, name, cx, cy, size, color = "#fff") {
+  g.save(); g.translate(cx - size / 2, cy - size / 2); g.scale(size / 24, size / 24);
+  g.strokeStyle = color; g.fillStyle = color; g.lineWidth = 2; g.lineCap = "round"; g.lineJoin = "round";
+  for (const p of iconPaths(name)) { const path = new Path2D(p.d); if (p.fill) g.fill(path); g.stroke(path); }
+  g.restore();
+}
+const avatarIcon = (name) => "av-" + (document.getElementById("i-av-" + name) ? name : "fish");
 const TEXT_FONT = "system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Noto Sans CJK SC', sans-serif";
 
 const skyCanvas = document.createElement("canvas"); skyCanvas.width = 4; skyCanvas.height = 256;
@@ -226,11 +233,11 @@ function signTexture(emoji, label, color) {
     g.fillStyle = color; pill(g, 4, 4, w - 8, h - 8, 26); g.fill();
     g.strokeStyle = "rgba(255,255,255,.85)"; g.lineWidth = 6; g.stroke();
     g.fillStyle = "#fff"; g.textAlign = "center"; g.textBaseline = "middle";
-    g.font = `54px ${EMOJI_FONT}`; g.fillText(emoji, w / 2, 48);
+    drawIcon(g, emoji, w / 2, 46, 52);
     g.font = `800 34px ${TEXT_FONT}`; g.fillText(label, w / 2, 104, w - 24);
   });
 }
-const signTexs = [signTexture("🚨", t("Scam"), LANE_COLORS[0]), signTexture("🤔", t("Check first"), LANE_COLORS[1]), signTexture("✅", t("Looks fine"), LANE_COLORS[2])];
+const signTexs = [signTexture("alert", t("Scam"), LANE_COLORS[0]), signTexture("question", t("Check first"), LANE_COLORS[1]), signTexture("check-circle", t("Looks fine"), LANE_COLORS[2])];
 const postM = new THREE.MeshLambertMaterial({ color: 0x5b4f85 });
 function makeGate() {
   const g = new THREE.Group();
@@ -381,7 +388,7 @@ function flagTexture(g2) {
   return canvasTex(256, 112, (g, w, h) => {
     g.fillStyle = "rgba(60,36,130,.9)"; pill(g, 3, 3, w - 6, h - 6, 22); g.fill();
     g.strokeStyle = "#fff"; g.lineWidth = 4; g.stroke();
-    g.textBaseline = "middle"; g.textAlign = "left"; g.font = `46px ${EMOJI_FONT}`; g.fillStyle = "#fff"; g.fillText(g2.avatar, 16, h / 2 + 2);
+    g.textBaseline = "middle"; g.textAlign = "left"; drawIcon(g, avatarIcon(g2.avatar), 40, h / 2, 46); g.fillStyle = "#fff";
     g.font = `800 28px ${TEXT_FONT}`; g.fillText(g2.nickname, 78, 38, w - 90);
     g.font = "700 24px ui-monospace, Menlo, monospace"; g.fillStyle = "#FFE3A3"; g.fillText(t("{n} m", { n: g2.best }), 78, 78, w - 90);
   });
@@ -404,7 +411,7 @@ const ghosts = [];
 function ghostLabel(avatar, name) {
   return canvasTex(256, 90, (g, w, h) => {
     g.fillStyle = "rgba(60,36,130,.88)"; pill(g, 3, 3, w - 6, h - 6, 24); g.fill(); g.strokeStyle = "#fff"; g.lineWidth = 4; g.stroke();
-    g.textBaseline = "middle"; g.textAlign = "left"; g.font = `44px ${EMOJI_FONT}`; g.fillStyle = "#fff"; g.fillText(avatar, 14, h / 2 + 2);
+    g.textBaseline = "middle"; g.textAlign = "left"; drawIcon(g, avatarIcon(avatar), 37, h / 2, 42); g.fillStyle = "#fff";
     g.font = `800 30px ${TEXT_FONT}`; g.fillText(name, 72, h / 2 + 1, w - 84);
   });
 }
@@ -452,7 +459,7 @@ function stepGhosts(dt) {
     gh.obj.visible = G.state !== "intro" && z > -SEE && z < 6 && !(st.done && G.clock > (gh.tl[gh.tl.length - 1] || 0) + 1.5);
     for (const w of gh.wheels) w.rotation.x -= (G.state === "driving" ? speedNow() * dt : 0) * 2.0;
     const ahead = st.T > G.T;
-    if (gh.wasAhead && !ahead && G.state === "driving") { toast("🏁 " + t("You passed {name}'s best!", { name: gh.rp.you ? t("You (best today)") : gh.rp.nickname }), "good", 3000); emit(0, 3, -2, 30, "#FFE08A", 5, 8); Snd.passed(); }
+    if (gh.wasAhead && !ahead && G.state === "driving") { toast(t("You passed {name}'s best!", { name: gh.rp.you ? t("You (best today)") : gh.rp.nickname }), "good", 3000, "flag"); emit(0, 3, -2, 30, "#FFE08A", 5, 8); Snd.passed(); }
     gh.wasAhead = ahead; gh.score = st.score;
   }
 }
@@ -527,17 +534,16 @@ function resize() {
 new ResizeObserver(resize).observe($("road")); resize();
 
 function speedNow() { return speedAt(G.answered) * (G.easy ? 0.7 : 1); }
-const hearts = () => "❤️".repeat(Math.max(0, G.lives)) + "🖤".repeat(Math.max(0, 3 - G.lives));
 function paintHud() {
-  $("hearts").textContent = hearts(); $("hearts").setAttribute("aria-label", t("{n} lives left", { n: G.lives }));
+  $("hearts").replaceChildren(...heartIcons(Math.max(0, G.lives), 3)); $("hearts").setAttribute("aria-label", t("{n} lives left", { n: G.lives }));
   $("odo").textContent = t("{n} m", { n: Math.round(G.Sshown) });
   $("combo").hidden = G.combo < 2; $("combo").textContent = t("Combo x{n}", { n: G.combo });
   $("mode-chip").hidden = G.mode === "road";
   $("mode-chip").textContent = G.mode === "duel" ? t("Gate {n} of {m}", { n: Math.min(G.answered + 1, G.limit || 12), m: G.limit || 12 }) : t("Daily Road");
 }
 let toastTimer = 0;
-function toast(text, kind = "", ms = 3600) {
-  const el = $("toast"); el.textContent = text; el.className = "toast " + kind; el.hidden = false;
+function toast(text, kind = "", ms = 3600, ic = "") {
+  const el = $("toast"); el.replaceChildren(...(ic ? [icon(ic), " "] : []), text); el.className = "toast " + kind; el.hidden = false;
   clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; }, ms);
 }
 function showMessage() {
@@ -545,8 +551,8 @@ function showMessage() {
   $("msg").hidden = !g;
   if (g) {
     $("msg-text").textContent = g.text;
-    const from = g.family ? "👪 " + t("From your family") : g.yours ? "📥 " + t("From your own inbox") : "";
-    $("msg-from").textContent = from; $("msg-from").hidden = !from;
+    const from = g.family ? ["users", t("From your family")] : g.yours ? ["inbox", t("From your own inbox")] : null;
+    $("msg-from").replaceChildren(...(from ? [icon(from[0]), " " + from[1]] : [])); $("msg-from").hidden = !from;
   }
 }
 function setLane(i) {
@@ -573,7 +579,8 @@ function race() {
   list.forEach((gh, i) => {
     const mk = raceMarks[i]; if (!mk) return;
     const pos = 10 + ((gh.at - S) / 900) * 85;
-    mk.textContent = gh.avatar; mk.style.left = clamp(pos, 4, 95) + "%"; mk.classList.toggle("far", pos > 95 || pos < 4);
+    if (mk.dataset.av !== gh.avatar) { mk.dataset.av = gh.avatar; mk.replaceChildren(avatarEl(gh.avatar)); }
+    mk.style.left = clamp(pos, 4, 95) + "%"; mk.classList.toggle("far", pos > 95 || pos < 4);
     if (gh.at > S && (!ahead || gh.at < ahead.at)) ahead = gh;
   });
   const text = !list.length ? (G.mode === "daily" ? t("Nobody has driven today's road yet. Be the first!") : t("Add friends to race their best.")) :
@@ -583,8 +590,9 @@ function race() {
 
 // ------------------------------------------------------------------------------------------------ the garage, themes and settings on the first screen
 const drawer = { catalog: null };
-function chip(label, pressed, onclick, extra = {}) {
-  const b = Object.assign(document.createElement("button"), { type: "button", className: "opt-chip", textContent: label, ...extra });
+function chip(label, pressed, onclick, extra = {}) {   // (label: text, or an icon element)
+  const b = Object.assign(document.createElement("button"), { type: "button", className: "opt-chip", ...extra });
+  b.append(label);
   b.setAttribute("aria-pressed", String(!!pressed)); b.addEventListener("click", onclick); return b;
 }
 async function loadGarage() {
@@ -600,12 +608,12 @@ function paintGarage() {
   $("garage-cars").replaceChildren(...c.cars.map((x) => {
     const b = chip("", c.selected.car === x.id, () => pick(x.id, c.selected.hat), { title: label(x) });
     b.classList.add("swatch"); b.style.setProperty("--c", x.color === "rainbow" ? "conic-gradient(#e5546b,#e9a23b,#f5d742,#33b27c,#3fa7e8,#7a5cd0,#e5546b)" : x.color);
-    b.disabled = !x.unlocked; b.setAttribute("aria-label", label(x)); b.append(Object.assign(document.createElement("span"), { textContent: x.unlocked ? "" : "🔒" }));
+    b.disabled = !x.unlocked; b.setAttribute("aria-label", label(x)); if (!x.unlocked) b.append(icon("lock"));
     return b;
   }));
-  const hatIcon = { none: "🚫", cap: "🧢", shades: "🕶️", party: "🥳", scarf: "🧣", crown: "👑" };
+  const hatIcon = { none: "ban", cap: "cap", shades: "shades", party: "party-hat", scarf: "scarf", crown: "crown" };
   $("garage-hats").replaceChildren(...c.hats.map((x) => {
-    const b = chip(x.unlocked ? hatIcon[x.id] : "🔒", c.selected.hat === x.id, () => pick(c.selected.car, x.id), { title: label(x) });
+    const b = chip(icon(x.unlocked ? hatIcon[x.id] || "ban" : "lock"), c.selected.hat === x.id, () => pick(c.selected.car, x.id), { title: label(x) });
     b.disabled = !x.unlocked; b.setAttribute("aria-label", label(x));
     return b;
   }));
@@ -629,7 +637,7 @@ function paintThemes() {
     chip(label, G.theme === id, () => { G.theme = id; pref.set("theme", id); applyTheme(id); paintThemes(); })));
 }
 function paintSound() {
-  $("sound").setAttribute("aria-pressed", String(Snd.on)); $("sound").textContent = Snd.on ? "🔊" : "🔇";
+  $("sound").setAttribute("aria-pressed", String(Snd.on)); $("sound").replaceChildren(icon(Snd.on ? "volume" : "volume-off"));
   $("sound").setAttribute("aria-label", Snd.on ? t("Sound is on") : t("Sound is off"));
   $("opt-sound").checked = Snd.on; $("opt-music").checked = Snd.music; $("opt-vibe").checked = Snd.vibe;
   $("opt-vibe").closest("label").hidden = !navigator.vibrate;
@@ -655,7 +663,7 @@ async function begin(mode = G.mode) {
     ["intro", "end", "why", "pause-sheet", "lost"].forEach((id) => { $(id).hidden = true; });
     ["hud", "race", "lanes"].forEach((id) => { $(id).hidden = false; });
     $("toast").hidden = true; setLane(1); showMessage(); paintHud(); race(); G.state = "driving";
-    if (SEASON && G.themeKey === SEASON.id) toast(SEASON.emoji + " " + SEASON.greeting, "good", 3600);
+    if (SEASON && G.themeKey === SEASON.id) toast(SEASON.greeting, "good", 3600, SEASON.icon);
   } catch (e) {
     $("intro").hidden = true; lost();
   } finally { $("go").disabled = $("go-daily").disabled = false; }
@@ -685,10 +693,10 @@ function applyResult(res, lane) {
   const x = LANE_X[lane];
   if (ok) {
     emit(x, 2, -4, 36, "#FFE08A", 4, 7); emit(x, 2, -4, 24, "#8CF0B8", 3, 6); Snd.right();
-    toast("✅ " + (res.tell ? t("Right! {tell}", { tell: res.tell }) : t("Right!")), "good", 4200);
+    toast(res.tell ? t("Right! {tell}", { tell: res.tell }) : t("Right!"), "good", 4200, "check-circle");
   } else if (res.outcome === "partial") {
     Snd.careful();
-    toast("🤔 " + t("Careful, but that goes nowhere. This one was {what}.", { what: res.truth === "scam" ? t("a scam") : t("fine") }), "warn", 4200);
+    toast(t("Careful, but that goes nowhere. This one was {what}.", { what: res.truth === "scam" ? t("a scam") : t("fine") }), "warn", 4200, "question");
   } else {
     crash(res, lane);
   }
@@ -706,7 +714,7 @@ function crash(res, lane) {
 }
 function showWhy(res) {
   const what = res.truth === "scam" ? t("That one was a scam.") : res.truth === "safe" ? t("That one was fine.") : t("That one was hard to tell. Checking first was right.");
-  $("why-title").textContent = "💥 " + what;
+  $("why-title").replaceChildren(icon("zap"), " " + what);
   for (const [id, text] of [["why-tell", res.tell], ["why-action", res.action]]) { $(id).textContent = text || ""; $(id).parentElement.hidden = !text; }   // (a genuine message has nothing to "do")
   $("why-tricks").replaceChildren(...(res.tricks || []).map((n) => Object.assign(document.createElement("span"), { className: "chip", textContent: n })));
   $("why-go").textContent = res.over ? t("See my result") : t("Keep driving");
@@ -729,14 +737,13 @@ async function finishDrive() {
     ].map((x) => Object.assign(document.createElement("li"), { textContent: x })));
     const passed = $("end-passed");
     passed.hidden = !s.passed.length;
-    if (s.passed.length) passed.textContent = "🏁 " + t("You passed {names}!", { names: s.passed.map((p) => `${p.avatar} ${p.nickname}`).join(", ") });
-    $("end-badges").replaceChildren(...s.badges_new.map((b) => Object.assign(document.createElement("span"), { className: "chip", textContent: "🏅 " + b.title })),
-      ...s.unlocked.map((u) => Object.assign(document.createElement("span"), { className: "chip unlock", textContent: (u.kind === "car" ? "🚗 " : "🎩 ") + t("Unlocked: {name}", { name: u.name }) })));
+    if (s.passed.length) passed.replaceChildren(icon("flag"), " " + t("You passed {names}!", { names: s.passed.map((p) => p.nickname).join(", ") }));
+    $("end-badges").replaceChildren(...s.badges_new.map((b) => tag("medal", b.title)),
+      ...s.unlocked.map((u) => tag(u.kind === "car" ? "car" : "top-hat", t("Unlocked: {name}", { name: u.name }), "chip unlock")));
     const board = $("end-board"); board.hidden = !s.board.length;
     board.replaceChildren(...s.board.map((r) => {
       const li = document.createElement("li"); if (r.you) li.className = "you"; if (!r.runs) li.className += " idle";
-      const rank = document.createElement("span"); rank.className = "rank"; rank.textContent = r.rank === 1 ? "🥇" : r.rank === 2 ? "🥈" : r.rank === 3 ? "🥉" : r.rank ? String(r.rank) : "–";
-      const who = document.createElement("span"); who.className = "who"; who.textContent = `${r.avatar} ${r.nickname}`;
+      const rank = rankSpan(r.rank), who = whoSpan(r);
       const far = document.createElement("span"); far.className = "far"; far.textContent = r.runs ? t("{n} m", { n: r.best }) : "–";
       li.append(rank, who, far); return li;
     }));
@@ -765,12 +772,14 @@ function gone(title, note) {
 }
 function li(cls, ...kids) { const n = document.createElement("li"); n.className = cls || ""; n.append(...kids); return n; }
 function span(cls, text) { const n = document.createElement("span"); n.className = cls; n.textContent = text; return n; }
-const medal = (r) => (r === 1 ? "🥇" : r === 2 ? "🥈" : r === 3 ? "🥉" : String(r));
+function tag(ic, text, cls = "chip") { const n = document.createElement("span"); n.className = cls; n.append(icon(ic), " " + text); return n; }
+function rankSpan(rank, ic) { const n = document.createElement("span"); n.className = "rank"; n.append(...(ic ? [icon(ic)] : rankMark(rank))); return n; }
+function whoSpan(p, ...extra) { const n = document.createElement("span"); n.className = "who"; n.append(avatarEl(p.avatar), " " + p.nickname, ...extra); return n; }
 function recordText(p) { return p.record && (p.record[0] || p.record[1]) ? t("you {w}–{l}", { w: p.record[0], l: p.record[1] }) : ""; }
 
 function paintLobby(v) {
   sheetsOff(); $("lobby").hidden = false; G.state = "intro";
-  $("lobby-players").replaceChildren(...v.players.map((p) => li("", span("who", `${p.avatar} ${p.nickname}${p.host ? " 👑" : ""}${p.you ? " " + t("(you)") : ""}`), span("muted", recordText(p)))));
+  $("lobby-players").replaceChildren(...v.players.map((p) => li("", whoSpan(p, ...(p.host ? [" ", icon("crown")] : []), p.you ? " " + t("(you)") : ""), span("muted", recordText(p)))));
   $("lobby-start").hidden = !v.can_start;
   $("lobby-note").textContent = v.you_host ? (v.can_start ? t("Ready when you are.") : t("Waiting for friends to join…")) : t("Waiting for the host to start…");
 }
@@ -790,7 +799,7 @@ function countdownTick() {
   const left = Dl.view.start_at - serverNow();
   $("count-num").textContent = left > 0 ? String(Math.ceil(left)) : t("Go!");
   if (left <= 0) {
-    G.state = "driving"; G.ramp = 0; G.clock = 0; showMessage(); toast("🏁 " + t("Go!"), "good", 1500); Snd.passed();
+    G.state = "driving"; G.ramp = 0; G.clock = 0; showMessage(); toast(t("Go!"), "good", 1500, "flag"); Snd.passed();
     setTimeout(() => { $("count").hidden = true; }, 600);
   } else if (Math.ceil(left) !== G.lastTick) { G.lastTick = Math.ceil(left); Snd.careful(); }
 }
@@ -798,14 +807,14 @@ function updateRivals(v) {
   rivalsFrom(v).forEach((rp, i) => { const gh = ghosts[i]; if (!gh) return; Object.assign(gh.rp, rp); gh.tl = ghostTimeline(gh.rp); });
 }
 function paintLive(v) {
-  $("duel-live").replaceChildren(...v.players.map((p) => { const pr = p.progress || {}; return li(p.you ? "you" : "", span("rank", pr.finished ? "🏁" : "🚗"), span("who", `${p.avatar} ${p.nickname}`), span("far", t("{n} right", { n: pr.correct || 0 }))); }));
+  $("duel-live").replaceChildren(...v.players.map((p) => { const pr = p.progress || {}; return li(p.you ? "you" : "", rankSpan(0, pr.finished ? "flag" : "car"), whoSpan(p), span("far", t("{n} right", { n: pr.correct || 0 }))); }));
 }
 function showRaceResult(v) {
   if (Dl.shown) return; Dl.shown = true; clearInterval(Dl.timer); sheetsOff();
   const res = v.result, me = res.you;
   $("duel-won").hidden = !me.won; $("duel-title").textContent = me.won ? t("You won the race!") : t("Race over");
-  $("duel-board").replaceChildren(...res.ranking.map((r) => li(r.pub === Dl.me.pub ? "you" : "", span("rank", medal(r.rank)), span("who", `${r.avatar} ${r.nickname}`), span("far", r.forfeit ? t("left the race") : t("{n} right", { n: r.correct })))));
-  $("duel-chips").replaceChildren(...[`+${me.xp} XP`].concat(me.badges.map((b) => "🏅 " + b.title)).map((x) => Object.assign(document.createElement("span"), { className: "chip", textContent: x })));
+  $("duel-board").replaceChildren(...res.ranking.map((r) => li(r.pub === Dl.me.pub ? "you" : "", rankSpan(r.rank), whoSpan(r), span("far", r.forfeit ? t("left the race") : t("{n} right", { n: r.correct })))));
+  $("duel-chips").replaceChildren(span("chip", `+${me.xp} XP`), ...me.badges.map((b) => tag("medal", b.title)));
   $("duel-record").textContent = v.players.filter((p) => !p.you && p.record).map((p) => t("You and {name}: {w}–{l}", { name: p.nickname, w: p.record[0], l: p.record[1] })).join(" · ");
   $("duel-end").hidden = false; $("duel-rematch").focus();
   if (me.won) { Snd.passed(); emit(0, 3, -2, 50, "#FFE08A", 5, 8); } else Snd.over();
@@ -957,7 +966,7 @@ function placeFlags() {
     f.obj.position.z = z;
     if (z > 4 && !G.passedFlags.has(f.gh.nickname + f.gh.best) && G.state === "driving" && G.mode === "road") {
       G.passedFlags.add(f.gh.nickname + f.gh.best);
-      toast("🏁 " + t("You passed {name}'s best!", { name: f.gh.nickname }), "good", 3200);
+      toast(t("You passed {name}'s best!", { name: f.gh.nickname }), "good", 3200, "flag");
       emit(0, 3, -2, 40, "#FFE08A", 5, 8); Snd.passed();
     }
   }

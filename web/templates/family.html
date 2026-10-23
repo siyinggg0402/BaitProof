@@ -35,7 +35,7 @@
 </div>
 <p class="muted">{{ _("Only the scam's redacted text is ever shared (phone numbers, e-mail addresses and link paths removed), and you choose each one. Nobody sees your messages.") }}</p>
 {% else %}
-<h1 class="rise d1">👪 {{ group.name }}</h1>
+<h1 class="rise d1">{{ icon('users') }} {{ group.name }}</h1>
 {% if shared %}<p class="added">{{ _("Shared! It will turn up as a gate in your family's games.") }}</p>{% endif %}
 {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
 
@@ -48,7 +48,7 @@
   <h2>{{ _("Invite your family") }}</h2>
   <p>{{ _("Send this code or link. Up to 12 people can be in a group.") }}</p>
   <p class="code" aria-label="{{ _('Family code') }}">{{ group.code }}</p>
-  <p><a class="btn" href="/family/dashboard">📊 {{ _("Family dashboard") }}</a></p>
+  <p><a class="btn" href="/family/dashboard">{{ icon('chart') }} {{ _("Family dashboard") }}</a></p>
   <div class="actions">
     <button type="button" class="btn sec" data-copy="{{ invite }}" data-done="{{ _('Copied') }}">{{ _("Copy invite link") }}</button>
     <a class="btn sec" target="_blank" rel="noopener" href="https://wa.me/?text={{ (_('Join our family group on Baitproof to share scams and learn to spot them:') ~ ' ' ~ invite)|urlencode }}">{{ _("Share on WhatsApp") }}</a>
@@ -60,7 +60,7 @@
   <h2>{{ _("Who is in") }}</h2>
   <ul class="plain friends">
     {% for m in group.members %}
-    <li><span class="who"><span aria-hidden="true">{{ m.avatar }}</span> {{ m.nickname }}{% if m.owner %} <em>{{ _("(started the group)") }}</em>{% endif %}{% if m.you %} <em>{{ _("(you)") }}</em>{% endif %}</span>
+    <li><span class="who">{{ avatar(m.avatar) }} {{ m.nickname }}{% if m.owner %} <em>{{ _("(started the group)") }}</em>{% endif %}{% if m.you %} <em>{{ _("(you)") }}</em>{% endif %}</span>
       {% if group.is_owner and not m.owner %}<form method="post" action="/family/remove"><input type="hidden" name="pub" value="{{ m.pub }}"><button class="ghost" type="submit" aria-label="{{ _('Remove {name}', name=m.nickname) }}">{{ _("Remove") }}</button></form>{% endif %}</li>
     {% endfor %}
   </ul>
@@ -86,7 +86,7 @@
   <ul class="plain shared">
     {% for e in mine %}
     <li><blockquote>{{ e.text }}</blockquote>
-      <form method="post" action="/family/share"><input type="hidden" name="ex" value="{{ e.id }}"><button class="btn sec" type="submit">👪 {{ _("Share with my family") }}</button></form></li>
+      <form method="post" action="/family/share"><input type="hidden" name="ex" value="{{ e.id }}"><button class="btn sec" type="submit">{{ icon('users') }} {{ _("Share with my family") }}</button></form></li>
     {% endfor %}
   </ul>
   {% else %}<p class="muted">{{ _("No new scams to share. Check a suspicious message and it will appear here.") }}</p>{% endif %}

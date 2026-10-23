@@ -108,6 +108,12 @@ def _migrate(conn) -> None:
             conn.execute(f"ALTER TABLE runs ADD COLUMN {column} TEXT NOT NULL DEFAULT ''")
     if "share" not in {r["name"] for r in conn.execute("PRAGMA table_info(family_members)")}:
         conn.execute("ALTER TABLE family_members ADD COLUMN share INTEGER NOT NULL DEFAULT 1")
+    if conn.execute("SELECT 1 FROM accounts WHERE avatar NOT GLOB '[a-z]*' LIMIT 1").fetchone():  # emoji avatars from before the pictures were drawn
+        from core.storage.accounts import LEGACY_AVATARS
+
+        for emoji, name in LEGACY_AVATARS.items():
+            conn.execute("UPDATE accounts SET avatar=? WHERE avatar=?", (name, emoji))
+        conn.execute("UPDATE accounts SET avatar='fish' WHERE avatar NOT GLOB '[a-z]*'")
 
 
 @contextmanager

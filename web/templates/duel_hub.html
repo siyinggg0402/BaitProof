@@ -13,7 +13,7 @@
 {% if invites %}
 <section class="card rise d2">
   <h2>{{ _("Challenges for you") }}</h2>
-  <ul class="plain friends">{% for i in invites %}<li><span class="who"><span aria-hidden="true">{{ i.avatar }}</span> {{ _("{name} challenged you", name=i.host) }}</span><a class="btn" href="/duel/{{ i.code }}">{{ _("Join the race") }}</a></li>{% endfor %}</ul>
+  <ul class="plain friends">{% for i in invites %}<li><span class="who">{{ avatar(i.avatar) }} {{ _("{name} challenged you", name=i.host) }}</span><a class="btn" href="/duel/{{ i.code }}">{{ _("Join the race") }}</a></li>{% endfor %}</ul>
 </section>
 {% endif %}
 
@@ -29,7 +29,7 @@
   {% if friends %}
   <form method="post" action="/duel/new" class="stack">
     <ul class="plain pick">{% for f in friends %}
-      <li><label class="check"><input type="checkbox" name="pub" value="{{ f.pub }}"> <span class="who"><span aria-hidden="true">{{ f.avatar }}</span> {{ f.nickname }}</span>{% set r = records.get(f.pub) %}{% if r and (r[0] or r[1]) %} <em class="muted">{{ _("you {w}–{l}", w=r[0], l=r[1]) }}</em>{% endif %}</label></li>{% endfor %}
+      <li><label class="check"><input type="checkbox" name="pub" value="{{ f.pub }}"> <span class="who">{{ avatar(f.avatar) }} {{ f.nickname }}</span>{% set r = records.get(f.pub) %}{% if r and (r[0] or r[1]) %} <em class="muted">{{ _("you {w}–{l}", w=r[0], l=r[1]) }}</em>{% endif %}</label></li>{% endfor %}
     </ul>
     <button class="big" type="submit">{{ _("Open a race") }}</button>
     <p class="muted">{{ _("The friends you tick get a notification if they have turned them on. You can also share the race link.") }}</p>

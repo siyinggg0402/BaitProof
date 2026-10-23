@@ -9,7 +9,7 @@ async function api(path, body) {
   return r.json();
 }
 function paint() {
-  $("lh-hearts").textContent = "❤️".repeat(Math.max(0, S.lives)) + "🖤".repeat(Math.max(0, 3 - S.lives));
+  $("lh-hearts").replaceChildren(...heartIcons(Math.max(0, S.lives), 3));
   $("lh-hearts").setAttribute("aria-label", t("{n} lives left", { n: S.lives }));
   $("lh-score").textContent = t("{n} points", { n: S.score });
   $("lh-combo").hidden = S.combo < 2; $("lh-combo").textContent = t("Combo x{n}", { n: S.combo });
@@ -41,8 +41,8 @@ async function pick(i) {
     S.lives = r.lives; S.score = r.score; S.combo = r.combo; S.next = r.next; S.over = r.over;
     const btns = [...$("lh-opts").children];
     btns.forEach((b, k) => { b.disabled = true; if (k === r.fake) b.classList.add("fake"); if (k === i && !r.correct) b.classList.add("wrong"); });
-    btns[r.fake].append(el("span", { className: "flag", textContent: "🚩 " + t("fake") }));
-    $("lh-verdict").textContent = r.correct ? "✅ " + t("Yes, that one is fake!") : "❌ " + t("Not that one. The fake was marked with a flag.");
+    btns[r.fake].append(el("span", { className: "flag" }, icon("flag"), " " + t("fake")));
+    $("lh-verdict").replaceChildren(icon(r.correct ? "check-circle" : "x-circle"), " " + (r.correct ? t("Yes, that one is fake!") : t("Not that one. The fake was marked with a flag.")));
     $("lh-verdict").className = "lh-verdict " + (r.correct ? "good" : "bad");
     $("lh-tell").textContent = r.tell;
     $("lh-next").textContent = r.over ? t("See my result") : t("Next link");
@@ -55,12 +55,12 @@ async function done() {
     $("lh-final").textContent = t("{n} points", { n: s.score });
     $("lh-newbest").hidden = !s.new_best;
     $("lh-stats").replaceChildren(...[t("{n} right", { n: s.correct }), t("Best combo x{n}", { n: s.best_combo }), t("+{n} XP", { n: s.xp_gained })].map((x) => el("li", { textContent: x })));
-    $("lh-badges").replaceChildren(...s.badges_new.map((b) => el("span", { className: "chip", textContent: "🏅 " + b.title })));
+    $("lh-badges").replaceChildren(...s.badges_new.map((b) => el("span", { className: "chip" }, icon("medal"), " " + b.title)));
     $("lh-board").hidden = !s.board.length;
     $("lh-board").replaceChildren(...s.board.map((r) => {
       const li = el("li", { className: (r.you ? "you" : "") + (r.runs ? "" : " idle") });
-      li.append(el("span", { className: "rank", textContent: r.rank === 1 ? "🥇" : r.rank === 2 ? "🥈" : r.rank === 3 ? "🥉" : r.rank ? String(r.rank) : "–" }),
-        el("span", { className: "who", textContent: `${r.avatar} ${r.nickname}` }), el("span", { className: "far", textContent: r.runs ? t("{n} points", { n: r.best }) : "–" }));
+      li.append(el("span", { className: "rank" }, ...rankMark(r.rank)),
+        el("span", { className: "who" }, avatarEl(r.avatar), ` ${r.nickname}`), el("span", { className: "far", textContent: r.runs ? t("{n} points", { n: r.best }) : "–" }));
       return li;
     }));
     $("lh-login").hidden = s.account;

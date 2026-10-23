@@ -145,8 +145,8 @@ def test_a_pool_that_is_too_small_is_refused():
 
 
 def test_finishing_records_the_distance_on_the_board_and_awards_badges():
-    mei, _ = accounts.create(MEI, "Mei", "🐼")
-    accounts.create(ME, "Aiman", "🦊")
+    mei, _ = accounts.create(MEI, "Mei", "panda")
+    accounts.create(ME, "Aiman", "fox")
     accounts.add_friend(ME, mei["friend_code"])
     runs.record(MEI, runs.ROAD, 300, 4)
     r, out = begin()
@@ -244,8 +244,8 @@ def test_a_finished_drive_keeps_the_pace_of_every_gate_and_the_skin_but_no_answe
 
 
 def test_friends_ghosts_are_todays_best_paths_and_include_your_own():
-    mei, _ = accounts.create(MEI, "Mei", "🐼")
-    accounts.create(ME, "Aiman", "🦊")
+    mei, _ = accounts.create(MEI, "Mei", "panda")
+    accounts.create(ME, "Aiman", "fox")
     accounts.add_friend(ME, mei["friend_code"])
     m, _ = daily(MEI)
     drive(m, 4)

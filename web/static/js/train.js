@@ -34,9 +34,9 @@ async function answer(d, body) {
   results.push(r.result);
   if (r.correct_index != null) step.querySelectorAll(".opt").forEach((b, i) => { if (i === r.correct_index) b.classList.add("right"); });
   const last = idx === items.length - 1;
-  const mark = r.result === "correct" ? "✅" : r.result === "partial" ? "🟡" : "💡";
+  const mark = r.result === "correct" ? "check-circle" : r.result === "partial" ? "alert" : "bulb";
   step.append(
-    el("p", { className: "feedback " + r.result, textContent: `${mark} ${r.note}` }),
+    el("p", { className: "feedback " + r.result }, icon(mark), ` ${r.note}`),
     el("button", { className: "big", textContent: last ? t("Finish") : t("Next →"), onclick: () => (last ? finish(r.map.score) : (idx++, show())) })
   );
 }

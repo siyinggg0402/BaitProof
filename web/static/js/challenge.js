@@ -20,9 +20,9 @@ async function next(v) {
   })).json();
   const link = location.origin + r.card_url;
   stage.replaceChildren(el("div", { className: "step" },
-    el("h2", { textContent: t("I'm {pct}% Baitproof 🛡️ ({right} of {total})", { pct: r.pct, right: r.right, total: r.total }) }),
-    ...r.review.map((x, i) => el("p", { className: "feedback " + (x.correct ? "correct" : "incorrect"),
-      textContent: `${i + 1}. ${x.correct ? "✅" : "💡"} ${x.is_scam ? t("Scam. {tell}", { tell: x.tell }) : t("Fine. {tell}", { tell: x.tell })}` })),
+    el("h2", { textContent: t("I'm {pct}% Baitproof ({right} of {total})", { pct: r.pct, right: r.right, total: r.total }) }),
+    ...r.review.map((x, i) => el("p", { className: "feedback " + (x.correct ? "correct" : "incorrect") },
+      `${i + 1}. `, icon(x.correct ? "check-circle" : "bulb"), ` ${x.is_scam ? t("Scam. {tell}", { tell: x.tell }) : t("Fine. {tell}", { tell: x.tell })}`)),
     familyBox(r.pct, link),
     el("a", { className: "big", href: link, textContent: t("Open my result card") })));
 }

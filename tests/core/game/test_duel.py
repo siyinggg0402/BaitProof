@@ -25,7 +25,7 @@ def arena(monkeypatch):
     duel.reset()
     monkeypatch.setattr(gp, "build_pool", lambda lang="en": pool())
     for pid, name in ((A, "Mum"), (B, "Aiman"), (C, "Mei"), (D, "Raj")):
-        accounts.create(pid, name, "🦊")
+        accounts.create(pid, name, "fox")
     return clock
 
 
@@ -266,7 +266,7 @@ def test_only_friends_are_asked_in_and_the_invites_show_up_for_them():
     befriend((A, B))
     d = duel.create(A, "en", invite_pubs=[accounts.get(B)["pub"], accounts.get(C)["pub"]])
     assert d.invited == [accounts.get(B)["pub"]]                      # (Mei is not Mum's friend)
-    assert duel.invites_for(B) == [{"code": d.code, "host": "Mum", "avatar": "🦊", "players": 1}] and duel.invites_for(C) == [] and duel.invites_for(A) == []
+    assert duel.invites_for(B) == [{"code": d.code, "host": "Mum", "avatar": "fox", "players": 1}] and duel.invites_for(C) == [] and duel.invites_for(A) == []
     assert duel.invited_profiles(d, A) == [B]
     duel.join(d.code, B, "en")
     assert duel.invites_for(B) == [] and [m["code"] for m in duel.mine(B)] == [d.code]

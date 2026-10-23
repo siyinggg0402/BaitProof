@@ -50,7 +50,7 @@ function el(tag, props, ...kids) {
   return e;
 }
 function speakBtn(text) {
-  return el("button", { className: "speak", textContent: "🔊 " + t("Read aloud"), onclick: () => say(text) });
+  return el("button", { className: "speak", onclick: () => say(text) }, icon("volume"), " " + t("Read aloud"));
 }
 function progress(done, total) {
   const bar = el("div", { className: "progress", ariaHidden: "true" });

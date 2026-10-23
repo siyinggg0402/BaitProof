@@ -12,8 +12,8 @@ def make(profile, name, avatar=""):
 
 
 def test_a_profile_becomes_an_account_with_a_key_shown_once():
-    acct, key = make(ME, "  Aiman   Z ", "🦊")
-    assert acct["nickname"] == "Aiman Z" and acct["avatar"] == "🦊" and len(acct["friend_code"]) == 6
+    acct, key = make(ME, "  Aiman   Z ", "fox")
+    assert acct["nickname"] == "Aiman Z" and acct["avatar"] == "fox" and len(acct["friend_code"]) == 6
     assert len(key) == 19 and key.count("-") == 3
     with db.connect(shared=True) as c:  # the key is not stored, only its hash
         stored = " ".join(str(v) for r in c.execute("SELECT * FROM accounts").fetchall() for v in tuple(r))
@@ -63,9 +63,9 @@ def test_a_new_key_replaces_the_old_one_and_signing_in_is_rate_limited(monkeypat
 
 
 def test_changing_the_name_and_the_avatar():
-    make(ME, "Mei", "🐟")
-    assert accounts.update(ME, nickname="Mei Ling", avatar="🐼")["nickname"] == "Mei Ling"
-    assert accounts.update(ME, avatar="not-an-avatar")["avatar"] == "🐼"
+    make(ME, "Mei", "fish")
+    assert accounts.update(ME, nickname="Mei Ling", avatar="panda")["nickname"] == "Mei Ling"
+    assert accounts.update(ME, avatar="not-an-avatar")["avatar"] == "panda"
     with pytest.raises(AccountError):
         accounts.update(ME, nickname="x")
     with pytest.raises(AccountError):

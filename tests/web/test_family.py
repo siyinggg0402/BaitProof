@@ -35,7 +35,7 @@ def pid(c):
 
 
 def sign_up(c, name):
-    r = c.post("/me/create", data={"nickname": name, "avatar": "🦊"})
+    r = c.post("/me/create", data={"nickname": name, "avatar": "fox"})
     assert r.status_code == 200
     return r
 
@@ -64,7 +64,7 @@ def test_starting_a_group_and_a_bad_name():
     assert r.status_code == 400 and "2 to 24" in r.text
     start(mum)
     html = mum.get("/family").text
-    assert "👪 The Lims" in html and family_code(mum) in html and "/family/join/" in html and "(started the group)" in html
+    assert "The Lims" in html and "#i-users" in html and family_code(mum) in html and "/family/join/" in html and "(started the group)" in html
     assert mum.post("/family/create", data={"name": "Second"}).status_code == 400   # one group each
 
 
@@ -75,7 +75,7 @@ def test_an_invite_link_makes_a_new_person_a_member_in_one_step_and_shows_their_
     code = family_code(mum)
     landing = kid.get(f"/family/join/{code}").text
     assert "Join The Lims?" in unescape(landing) and "Make my profile and join The Lims" in landing
-    r = kid.post(f"/family/join/{code}", data={"nickname": "Aiman", "avatar": "🐼"})
+    r = kid.post(f"/family/join/{code}", data={"nickname": "Aiman", "avatar": "panda"})
     assert r.status_code == 200 and "the-key" in r.text and "You and The Lims are now friends." in unescape(r.text)
     assert [m["nickname"] for m in groups.of(pid(kid))["members"]] == ["Mum", "Aiman"]
     assert "Aiman" in mum.get("/family").text
@@ -236,7 +236,7 @@ def test_the_dashboard_shows_the_family_what_they_chose_to_share_and_nothing_mor
     practise(mum, "urgency-pressure", 3)
     practise(kid, "lookalike-link", 2)
     page = mum.get("/family/dashboard").text
-    assert "📊 The Lims" in page and "Who is ready for which trick" in page and 'stat muted">keeps their progress private' in page and "Your progress is visible to your family." in page
+    assert "The Lims" in page and "#i-chart" in page and "Who is ready for which trick" in page and 'stat muted">keeps their progress private' in page and "Your progress is visible to your family." in page
     assert page.count('class="lv lv-') >= 12 and 'class="matrix"' in page and "Aiman" in page
     assert "Hide my progress" in page and "Family score, out of 100" in page
     kid_page = kid.get("/family/dashboard").text
@@ -266,8 +266,8 @@ def test_a_quiet_family_member_can_be_nudged_and_the_answer_says_what_happened(m
     mum, kid = make_family()
     practise(mum, "urgency-pressure", 2)
     page = mum.get("/family/dashboard").text
-    assert "👋 Nudge" in page and "hasn't started yet" in unescape(page)
-    assert "👋 Nudge" not in kid.get("/family/dashboard").text      # (Mum is active: the kid has nobody to nudge)
+    assert "#i-bell" in page and "Nudge" in page and "hasn't started yet" in unescape(page)
+    assert 'action="/family/nudge"' not in kid.get("/family/dashboard").text      # (Mum is active: the kid has nobody to nudge)
     pub = groups.of(pid(mum))["members"][1]["pub"]
     r = mum.post("/family/nudge", data={"pub": pub}, follow_redirects=False)
     assert r.headers["location"] == "/family/dashboard?nudged=nopush"
@@ -297,7 +297,7 @@ def test_the_weekly_summary_is_there_to_copy_and_share():
     mum, kid = make_family()
     practise(mum, "urgency-pressure", 3)
     page = unescape(mum.get("/family/dashboard").text)
-    assert "👪 The Lims on Baitproof this week" in page and "1 of 2 practised" in page and 'data-copy="👪 The Lims' in page and "https://wa.me/?text=" in page
+    assert "The Lims on Baitproof this week" in page and "👪" not in page and "1 of 2 practised" in page and 'data-copy="The Lims' in page and "https://wa.me/?text=" in page
 
 
 def test_the_dashboard_is_translated():

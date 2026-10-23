@@ -15,14 +15,14 @@
       {# Other ways in: shown by inputs.js only when something works (no script, no buttons). The server decides what it can do; the browser decides how to listen. #}
       <div class="inputs" id="inputs" role="group" aria-label="{{ _('Add the message another way') }}" data-audio="{{ 1 if caps.audio else 0 }}" hidden>
         <div class="in-buttons">
-          {% if caps.image %}<button type="button" class="inbtn" id="shot-btn"><span class="ico" aria-hidden="true">📷</span><span>{{ _("Screenshot") }}</span></button>{% endif %}
-          <button type="button" class="inbtn" id="speak-btn" hidden><span class="ico" aria-hidden="true">🎤</span><span class="lbl">{{ _("Speak") }}</span></button>
+          {% if caps.image %}<button type="button" class="inbtn" id="shot-btn"><span class="ico">{{ icon('camera') }}</span><span>{{ _("Screenshot") }}</span></button>{% endif %}
+          <button type="button" class="inbtn" id="speak-btn" hidden><span class="ico">{{ icon('mic') }}</span><span class="lbl">{{ _("Speak") }}</span></button>
           {% if lang == 'en' %}<select id="speak-lang" aria-label="{{ _('Language you will speak') }}" hidden><option value="en-US">English</option><option value="ms-MY">Bahasa Melayu</option></select>{% endif %}
         </div>
         <div class="in-privacy">
-          {% if caps.image %}<p><span aria-hidden="true">📷</span> {{ _("The AI reads your screenshot to get the text. We don't keep the picture.") }}</p>{% endif %}
-          {% if caps.audio %}<p id="priv-server" hidden><span aria-hidden="true">🎤</span> {{ _("Your voice note is turned into text on our server and is not kept.") }}</p>{% endif %}
-          <p id="priv-browser" hidden><span aria-hidden="true">🎤</span> {{ _("Your browser's speech service turns your voice into text. Baitproof never receives the audio.") }}</p>
+          {% if caps.image %}<p>{{ icon('camera') }} {{ _("The AI reads your screenshot to get the text. We don't keep the picture.") }}</p>{% endif %}
+          {% if caps.audio %}<p id="priv-server" hidden>{{ icon('mic') }} {{ _("Your voice note is turned into text on our server and is not kept.") }}</p>{% endif %}
+          <p id="priv-browser" hidden>{{ icon('mic') }} {{ _("Your browser's speech service turns your voice into text. Baitproof never receives the audio.") }}</p>
         </div>
       </div>
       <input type="file" id="shot-file" class="sr-only" accept="image/*" tabindex="-1" aria-hidden="true">
@@ -53,7 +53,7 @@
 <section class="card live" id="live" hidden aria-live="polite"><h2>{{ _("Checking your message…") }}</h2><ol class="live-steps" id="live-steps"></ol></section>
 <div id="result-slot">{% if result %}{% include "_result.html" %}{% endif %}</div>
 
-{% if season %}<p class="season-strip reveal"><span aria-hidden="true">{{ season.emoji }}</span> <b>{{ season.greeting }}</b> {{ _("Festive times are busy for scammers: fake delivery notices, red-packet links and prize texts. Paste anything odd before you tap it.") }}</p>{% endif %}
+{% if season %}<p class="season-strip reveal">{{ icon(season.icon) }} <b>{{ season.greeting }}</b> {{ _("Festive times are busy for scammers: fake delivery notices, red-packet links and prize texts. Paste anything odd before you tap it.") }}</p>{% endif %}
 
 <section class="play-promo reveal" aria-labelledby="play-h">
   <div><h2 id="play-h">{{ _("Spot scams, then race your friends") }}</h2>

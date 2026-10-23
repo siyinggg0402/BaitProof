@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ _("I'm {pct}% Baitproof", pct=pct) }}{% endblock %}
 {% block meta %}
-<meta property="og:title" content="{{ tr_in(og_lang, "I'm {pct}% Baitproof 🛡️", pct=pct) }}">
+<meta property="og:title" content="{{ tr_in(og_lang, "I'm {pct}% Baitproof", pct=pct) }}">
 <meta property="og:description" content="{{ tr_in(og_lang, "I spotted {right} of {total} scam messages. Can you beat me?", right=right, total=total) }}">
 <meta property="og:url" content="{{ url }}">
 <meta property="og:image" content="{{ image }}">
@@ -12,11 +12,11 @@
 <section class="card share narrow rise">
   <span class="pill"><b>BAITPROOF</b> {{ _("Family challenge") }}</span>
   <p class="bigpct">{{ pct }}%</p>
-  <h1>{{ _("I'm {pct}% Baitproof 🛡️", pct=pct) }}</h1>
+  <h1>{{ _("I'm {pct}% Baitproof", pct=pct) }}</h1>
   <p class="lead">{{ _("I spotted {right} of {total} messages. Can you beat me?", right=right, total=total) }}</p>
   <p><a class="big" href="{{ url }}">{{ _("Take the challenge") }}</a></p>
   <div id="family" data-pct="{{ pct }}" data-url="{{ url }}"></div>
-  <button class="big sec" id="share" data-url="{{ url }}" data-text="{{ _("I'm {pct}% Baitproof 🛡️ Can you beat me?", pct=pct) }}">{{ _("More ways to share") }}</button>
+  <button class="big sec" id="share" data-url="{{ url }}" data-text="{{ _("I'm {pct}% Baitproof. Can you beat me?", pct=pct) }}">{{ _("More ways to share") }}</button>
   <p class="muted" id="shared" aria-live="polite">{{ _("Challenge link: {url}", url=url) }}</p>
 </section>
 {% endblock %}

@@ -3,8 +3,8 @@
 {% block meta %}<link rel="stylesheet" href="/static/css/social.css">{% endblock %}
 {% block content %}
 <span class="pill rise"><b>{{ _("FAMILY") }}</b> {{ _("How are we doing at spotting scams?") }}</span>
-<h1 class="rise d1">📊 {{ fam.name }}</h1>
-{% if nudged == 'sent' %}<p class="added">{{ _("Nudge sent. 🐟") }}</p>
+<h1 class="rise d1">{{ icon('chart') }} {{ fam.name }}</h1>
+{% if nudged == 'sent' %}<p class="added">{{ _("Nudge sent.") }}</p>
 {% elif nudged == 'nopush' %}<p class="error">{{ _("They haven't turned on notifications on any device, so nothing was sent. Copy the summary below and send it in your family chat instead.") }}</p>
 {% elif nudged == 'limit' %}<p class="error">{{ _("You already nudged them today. Give them a little time.") }}</p>{% endif %}
 
@@ -36,28 +36,28 @@
   <div class="scroll-x">
   <table class="matrix">
     <caption class="sr">{{ _("Each person's mastery of each trick") }}</caption>
-    <thead><tr><th scope="col">{{ _("Trick") }}</th>{% for m in fam.members %}<th scope="col" title="{{ m.nickname }}"><span aria-hidden="true">{{ m.avatar }}</span><span class="sr">{{ m.nickname }}</span></th>{% endfor %}<th scope="col">{{ _("Family") }}</th></tr></thead>
+    <thead><tr><th scope="col">{{ _("Trick") }}</th>{% for m in fam.members %}<th scope="col" title="{{ m.nickname }}">{{ avatar(m.avatar) }}<span class="sr">{{ m.nickname }}</span></th>{% endfor %}<th scope="col">{{ _("Family") }}</th></tr></thead>
     <tbody>
     {% for t in fam.tactics %}
     <tr class="{{ 'soft' if t.soft }}"><th scope="row">{{ t.label }}</th>
-      {% for c, m in zip_cells(t.cells, fam.members) %}<td>{% if c %}<span class="lv lv-{{ c }}" title="{{ m.nickname }}: {{ levels[c] }}" role="img" aria-label="{{ m.nickname }}: {{ levels[c] }}">{{ {'untested': '○', 'weak': '◔', 'learning': '◑', 'strong': '●'}[c] }}</span>{% else %}<span class="lv lv-none" aria-label="{{ _('private') }}">·</span>{% endif %}</td>{% endfor %}
+      {% for c, m in zip_cells(t.cells, fam.members) %}<td>{% if c %}<span class="lv lv-{{ c }}" title="{{ m.nickname }}: {{ levels[c] }}" role="img" aria-label="{{ m.nickname }}: {{ levels[c] }}">{{ icon({'untested': 'lv-none', 'weak': 'lv-weak', 'learning': 'lv-mid', 'strong': 'lv-strong'}[c]) }}</span>{% else %}<span class="lv lv-none" role="img" aria-label="{{ _('private') }}">{{ icon('minus') }}</span>{% endif %}</td>{% endfor %}
       <td><span class="avgbar" role="img" aria-label="{{ t.avg if t.avg is not none else 0 }}%"><i data-w="{{ t.avg if t.avg is not none else 0 }}"></i></span></td></tr>
     {% endfor %}
     </tbody>
   </table>
   </div>
-  <p class="muted">{{ _("● strong, ◑ getting there, ◔ weak, ○ not tried yet, · keeps their progress private") }}</p>
+  <p class="muted legend">{% for c, i in (("strong", "lv-strong"), ("learning", "lv-mid"), ("weak", "lv-weak"), ("untested", "lv-none")) %}<span class="lv lv-{{ c }}">{{ icon(i) }}</span> {{ levels[c] }}{{ " · " if not loop.last }}{% endfor %} · <span class="lv lv-none">{{ icon('minus') }}</span> {{ _("private") }}</p>
 </section>
 
 <section class="card rise d4">
   <h2>{{ _("The family") }}</h2>
   <ul class="plain people">
   {% for m in fam.members %}
-    <li><span class="who"><span aria-hidden="true">{{ m.avatar }}</span> {{ m.nickname }}{% if m.you %} <em>{{ _("(you)") }}</em>{% endif %}</span>
+    <li><span class="who">{{ avatar(m.avatar) }} {{ m.nickname }}{% if m.you %} <em>{{ _("(you)") }}</em>{% endif %}</span>
       {% if m.stats and (m.shares or m.you) %}
       <span class="stat"><b>{{ m.stats.score }}</b>/100</span>
-      <span class="stat muted">{% if m.stats.streak %}🔥 {{ _("{n} day streak", n=m.stats.streak) }} · {% endif %}{% if m.stats.last_active %}{{ _("last practised {when}", when=m.stats.last_active|ago) }}{% else %}{{ _("hasn't started yet") }}{% endif %}</span>
-      {% if m.needs_nudge %}<form method="post" action="/family/nudge"><input type="hidden" name="pub" value="{{ m.pub }}"><button class="ghost" type="submit">👋 {{ _("Nudge") }}</button></form>{% endif %}
+      <span class="stat muted">{% if m.stats.streak %}{{ icon('flame') }} {{ _("{n} day streak", n=m.stats.streak) }} · {% endif %}{% if m.stats.last_active %}{{ _("last practised {when}", when=m.stats.last_active|ago) }}{% else %}{{ _("hasn't started yet") }}{% endif %}</span>
+      {% if m.needs_nudge %}<form method="post" action="/family/nudge"><input type="hidden" name="pub" value="{{ m.pub }}"><button class="ghost" type="submit">{{ icon('bell') }} {{ _("Nudge") }}</button></form>{% endif %}
       {% else %}<span class="stat muted">{{ _("keeps their progress private") }}</span>{% endif %}
     </li>
   {% endfor %}

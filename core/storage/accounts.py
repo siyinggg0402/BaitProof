@@ -15,7 +15,9 @@ from core.storage import db
 ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"  # no 0/O/1/I: easy to read out or retype
 CODE_LEN = 6
 KEY_GROUPS, KEY_GROUP_LEN = 4, 4  # a key like K7M2-QX9P-R4TW-H8NB: 16 characters of 32 = 80 bits, far too many to guess
-AVATARS = ("🐟", "🦊", "🐼", "🐯", "🐸", "🦉", "🐙", "🐢", "🦄", "🐳", "🐧", "🦁")
+AVATARS = ("fish", "fox", "panda", "tiger", "frog", "owl", "octopus", "turtle", "unicorn", "cat", "penguin", "lion")  # names of the pictures the website draws (web/icons.py)
+# what profiles made before the pictures were drawn have stored: converted when the database is opened (db._migrate)
+LEGACY_AVATARS = {"🐟": "fish", "🦊": "fox", "🐼": "panda", "🐯": "tiger", "🐸": "frog", "🦉": "owl", "🐙": "octopus", "🐢": "turtle", "🦄": "unicorn", "🐳": "cat", "🐧": "penguin", "🦁": "lion"}
 MAX_FRIENDS = 50
 NAME_MIN, NAME_MAX = 2, 16
 _NAME_OK = re.compile(r"[\w \-]+", re.UNICODE)  # letters (any script), digits, underscore, space, hyphen: no dots, slashes or @, so a name is never a web address
@@ -23,6 +25,11 @@ _NAME_OK = re.compile(r"[\w \-]+", re.UNICODE)  # letters (any script), digits, 
 
 class AccountError(ValueError):
     """The message is plain language, shown to the person (and translated by the website)."""
+
+
+def _avatar(raw: str, fallback: str | None = None) -> str:
+    raw = LEGACY_AVATARS.get(raw, raw)  # (a page open from before the pictures were drawn still sends an emoji)
+    return raw if raw in AVATARS else (fallback or secrets.choice(AVATARS))
 
 
 def clean_name(raw: str) -> str:
@@ -84,7 +91,7 @@ def invite_card(code: str) -> dict | None:
 def create(profile: str, nickname: str, avatar: str = "") -> tuple[dict, str]:
     """Turn this profile into an account. Returns it and the sign-in key, which is not stored and cannot be shown again."""
     name = clean_name(nickname)
-    avatar = avatar if avatar in AVATARS else secrets.choice(AVATARS)
+    avatar = _avatar(avatar)
     key = _new_key()
     with db.connect(shared=True) as c:
         if c.execute("SELECT 1 FROM accounts WHERE profile=?", (profile,)).fetchone():
@@ -99,7 +106,7 @@ def update(profile: str, nickname: str | None = None, avatar: str | None = None)
     if acct is None:
         raise AccountError("Create your profile first.")
     name = clean_name(nickname) if nickname is not None else acct["nickname"]
-    avatar = avatar if avatar in AVATARS else acct["avatar"]
+    avatar = _avatar(avatar or "", acct["avatar"])
     with db.connect(shared=True) as c:
         c.execute("UPDATE accounts SET nickname=?, avatar=? WHERE profile=?", (name, avatar, profile))
     return get(profile)

@@ -406,13 +406,13 @@ def stream_done(c, message, **extra):
     return ids[0]
 
 
-@pytest.mark.parametrize("source, chip", [("screenshot", "📷 Read from a screenshot"), ("voice", "🎤 Heard from a voice note"), ("text", None)])
+@pytest.mark.parametrize("source, chip", [("screenshot", "Read from a screenshot"), ("voice", "Heard from a voice note"), ("text", None)])
 def test_the_result_says_where_the_message_came_from(client, source, chip):
     cid = stream_done(client, SCAM, source=source)
     part = client.get(f"/result/{cid}").text
     text = re.sub(r"<[^>]+>", "", part)
     labels = ("Read from a screenshot", "Heard from a voice note")
-    assert (chip.split(" ", 1)[1] in text) if chip else not any(x in text for x in labels)
+    assert (chip in text) if chip else not any(x in text for x in labels)
     assert sum(x in text for x in labels) == (1 if chip else 0)
     assert "SCAM" in text  # the verdict itself does not depend on the source
 
@@ -512,7 +512,7 @@ def test_the_links_panel_lists_every_link_with_its_status(client):
 def test_a_link_on_the_public_phishing_list_has_its_own_red_chip(client):
     html = client.get(f"/result/{result_with([link('pay-now-parcel.top', 'known_phishing', 'Known phishing website', ['It is on a public list of known phishing websites'])])}").text
     panel = panel_of(html)
-    assert 'class="lk-known_phishing"' in panel and "Known phishing site" in panel and "Known phishing website" in panel and "✕" in panel
+    assert 'class="lk-known_phishing"' in panel and "Known phishing site" in panel and "Known phishing website" in panel and "#i-x" in panel
     assert ".lk-known_phishing .lk-chip" in client.get("/static/css/style.css").text  # red, like a lookalike
 
 
@@ -524,7 +524,7 @@ def test_the_phishing_list_chip_is_translated():
 def test_links_are_never_clickable(client):
     html = client.get(f"/result/{result_with(LINKS)}").text
     panel = panel_of(html)
-    assert "<a " not in panel and "href" not in panel and "onclick" not in panel
+    assert "<a " not in panel and not re.search(r'href="(?!#i-)', panel) and "onclick" not in panel   # (the only href is an icon inside the page)
     for host in ("dhl-fee-pay.xyz", "bit.ly", "parcel-claim.top", "free-gift.top"):
         assert not re.search(rf"<a\b[^>]*>[^<]*{re.escape(host)}", html), host
         assert f'href="{host}' not in html and f"//{host}" not in html

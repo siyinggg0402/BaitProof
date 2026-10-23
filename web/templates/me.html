@@ -4,7 +4,7 @@
 {% block content %}
 <span class="pill rise"><b>{{ _("YOUR PROFILE") }}</b> {{ _("Friends, scores and signing in") }}</span>
 {% if account %}
-<h1 class="rise d1"><span aria-hidden="true">{{ account.avatar }}</span> {{ account.nickname }}</h1>
+<h1 class="rise d1">{{ avatar(account.avatar) }} {{ account.nickname }}</h1>
 {% if new_key %}
 <section class="card keybox rise d2" aria-live="polite">
   {% if joined %}<p class="added">{{ _("You and {name} are now friends.", name=joined) }}</p>{% endif %}

@@ -4,7 +4,7 @@
 {% block content %}
 {% if card %}
 <span class="pill rise"><b>{{ _("INVITE") }}</b> {{ _("Play with friends") }}</span>
-<h1 class="rise d1"><span aria-hidden="true">{{ card.avatar }}</span> {{ _("{name} invited you to be friends", name=card.nickname) }}</h1>
+<h1 class="rise d1">{{ avatar(card.avatar) }} {{ _("{name} invited you to be friends", name=card.nickname) }}</h1>
 <p class="lead rise d2">{{ _("See each other's best on Scam Road and race to spot scams. Friends see only your nickname, your avatar and your scores.") }}</p>
 {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
 <section class="card rise d3 narrow">

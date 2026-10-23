@@ -13,7 +13,7 @@ from core.storage.groups import GroupError
 from web.deps import request_lang
 from web.pages import page
 from web.routes.account import BOARDS, NO_STORE
-from web.ui import tr
+from web.ui import plain, tr
 
 router = APIRouter()
 
@@ -165,7 +165,7 @@ def dashboard_page(request: Request, nudged: str = ""):
     if fam is None:
         return RedirectResponse("/family", 303)
     levels = {k: (model.LEVEL_TEXT[k] if lang == "en" else tr(model.LEVEL_KEYS[k], lang)) for k in model.LEVEL_TEXT}
-    return _view(request, "family_dashboard.html", fam=fam, levels=levels, summary_text=dashboard.summary_text(fam, lang), nudged=nudged if nudged in ("sent", "nopush", "limit") else "")
+    return _view(request, "family_dashboard.html", fam=fam, levels=levels, summary_text=plain(dashboard.summary_text(fam, lang)), nudged=nudged if nudged in ("sent", "nopush", "limit") else "")
 
 
 @router.post("/family/share-progress")

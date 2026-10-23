@@ -1,0 +1,25 @@
+/* Icons: one set of line drawings (web/icons.py), used with <use href="#i-NAME">. They take the colour of the text around them. */
+.sprite{position:absolute;width:0;height:0;overflow:hidden}
+.ic{display:inline-block;width:1.15em;height:1.15em;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.2em;overflow:visible}
+.ic.lg{width:1.6em;height:1.6em}.ic.xl{width:2.2em;height:2.2em}
+/* a profile picture: the animal's face in a soft circle */
+.avt{display:inline-grid;place-items:center;flex:none;width:1.9em;height:1.9em;border-radius:50%;background:var(--brand-soft);color:var(--brand-deep,var(--brand));vertical-align:middle}
+.avt .ic{width:70%;height:70%;vertical-align:0}
+/* medals on the leaderboards */
+.m-gold{color:#D9A21B}.m-silver{color:#8996A8}.m-bronze{color:#B8743A}
+
+/* where icons stand in for what used to be a glyph */
+.mode-card .mode-ico .ic{width:1.9rem;height:1.9rem}
+.avatar .ic{width:2.1rem;height:2.1rem}
+.inbtn .ico .ic{width:1.45rem;height:1.45rem}
+.live-steps .dot .ic{width:.9rem;height:.9rem;vertical-align:0}
+.lanes button .ic{width:1.7rem;height:1.7rem}
+.mk > .ic{width:1em;height:1em;vertical-align:0}.mk .avt{width:1.7em;height:1.7em}
+.hearts .ic{width:1.1em;height:1.1em;margin:0 .06em;vertical-align:-.15em}.hearts .off{opacity:.35}
+.rank .ic{width:1.3em;height:1.3em}
+.lk-chip .ic{width:.95em;height:.95em;vertical-align:-.15em}
+.who .avt{width:1.8em;height:1.8em;margin-right:.3em}
+.lv .ic{width:1.15rem;height:1.15rem;vertical-align:0}
+.chip .ic,.badge-chip .ic,.newbest .ic,.added .ic{width:1em;height:1em;vertical-align:-.15em}
+.icon .ic{width:1.3rem;height:1.3rem;vertical-align:0}
+.ghost,.speak,.inbtn{gap:.45em}

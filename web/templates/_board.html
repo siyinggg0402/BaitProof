@@ -13,8 +13,8 @@
 <ol class="board">
   {% for r in board %}
   <li class="{{ 'you' if r.you }}{{ ' idle' if not r.runs }}">
-    <span class="rank">{% if r.rank == 1 %}🥇{% elif r.rank == 2 %}🥈{% elif r.rank == 3 %}🥉{% elif r.rank %}{{ r.rank }}{% else %}–{% endif %}</span>
-    <span class="who"><span aria-hidden="true">{{ r.avatar }}</span> {{ r.nickname }}{% if r.you %} <em>{{ _("(you)") }}</em>{% endif %}</span>
+    <span class="rank">{% if r.rank in (1, 2, 3) %}{{ icon('medal', ['m-gold', 'm-silver', 'm-bronze'][r.rank - 1]) }}<span class="sr">{{ r.rank }}</span>{% elif r.rank %}{{ r.rank }}{% else %}–{% endif %}</span>
+    <span class="who">{{ avatar(r.avatar) }} {{ r.nickname }}{% if r.you %} <em>{{ _("(you)") }}</em>{% endif %}</span>
     <span class="far">{% if r.runs %}{% if game == "link" %}{{ _("{n} points", n=r.best) }}{% else %}{{ _("{n} m", n=r.best) }}{% endif %}{% else %}{{ _("no drive yet") }}{% endif %}</span>
   </li>
   {% endfor %}

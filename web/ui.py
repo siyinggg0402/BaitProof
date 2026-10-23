@@ -89,6 +89,15 @@ def translate_html(ctx, text: str, **kw) -> Markup:
     return out.format(**kw) if kw else out
 
 
+# Emoji and pictograph symbols. The website draws icons instead (web/icons.py); text that is also written for chat apps (the Telegram bot, a family summary, the
+# headline of a result) keeps its emoji there, and passes through `plain` on its way to a page.
+_EMOJI = re.compile("[\U0001F000-\U0001FAFF\u2600-\u27BF\u2B00-\u2BFF\u2300-\u23FF\u25A0-\u25FF\uFE0F\u200D]")
+
+
+def plain(text) -> str:
+    return "\n".join(re.sub(r"[ \t]{2,}", " ", _EMOJI.sub("", line)).strip() for line in str(text or "").split("\n"))
+
+
 def translate_in(lang: str, text: str, **kw) -> str:
     return tr(text, lang, **kw)
 

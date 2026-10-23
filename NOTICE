@@ -18,3 +18,6 @@ Authors (https://github.com/rsms/inter), licensed under the SIL Open Font Licens
 
 three.js r160 (web/static/vendor/three.module.min.js, the unmodified single-file ES build from the `three` npm package, used for the 3D Scam Road game) is Copyright 2010-2023
 three.js authors, licensed under the MIT License. The license text is in web/static/vendor/LICENSE-three.txt.
+
+The website's icons (web/icons.py) are line drawings on a 24x24 grid. Several follow the shapes of the Feather icon set (MIT License, Copyright (c) 2013-2017 Cole Bemis) and the
+Lucide icon set (ISC License, Copyright (c) Lucide Contributors, with portions derived from Feather); the rest, and all of the animal avatars, were drawn for this project.

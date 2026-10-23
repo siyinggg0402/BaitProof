@@ -6,7 +6,7 @@ const LABEL = {
   "second-look": t("Taking a second look"), sufficiency: t("Confidence check"), critic: t("Second reviewer"), output: t("Final safety checks"),
   flywheel: t("Adding to your practice"), guard: t("Safety net"),
 };
-const ICON = { pass: "✓", flag: "!", skip: "–", block: "✕" };
+const ICON = { pass: "check", flag: "alert", skip: "minus", block: "x" };
 
 if (form && window.fetch && window.ReadableStream) {
   form.addEventListener("submit", async (e) => {
@@ -34,7 +34,7 @@ if (form && window.fetch && window.ReadableStream) {
           if (ev.type === "step") {
             const s = ev.data;
             list.append(el("li", { className: "rise st-" + s.status },
-              el("span", { className: "dot", textContent: ICON[s.status] || "•" }),
+              el("span", { className: "dot" }, icon(ICON[s.status] || "minus")),
               el("span", { className: "lbl" }, el("strong", { textContent: LABEL[s.stage] || s.stage }), el("small", { textContent: s.detail }))));
           } else if (ev.type === "done") doneId = ev.data;
           else if (ev.type === "error") return fallback();
