@@ -29,7 +29,7 @@ class TacticHit(BaseModel):
 class Evidence(BaseModel):
     """One structured fact behind a verdict. `kind` says who produced it; model-only evidence is weighed less."""
     id: str = ""
-    kind: str  # rule | intent | tool | model
+    kind: str  # rule | intent | tool | reference | model
     source: str  # e.g. pattern, domain_check, payment_rail, reputation, analysis, critic
     supports: str  # scam | safe | neutral
     strength: str  # weak | medium | strong

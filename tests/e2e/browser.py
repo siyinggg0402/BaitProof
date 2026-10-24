@@ -78,6 +78,13 @@ def picture(width: int = 320, height: int = 220) -> bytes:
     return out.getvalue()
 
 
+def open_challenge(page, base):
+    """The header has no "Challenge family" button any more (Friends covers it), but a challenge link a parent was sent still works: open one the way that link would be."""
+    r = page.request.post(base + "/challenge/new", max_redirects=0)
+    assert r.status == 303, r.status
+    page.goto(base + r.headers["location"])
+
+
 def overflow_checker(page, problems, W: int = 390):
     """The phone-width check used for every page: nothing sticks out to the right of the screen (tables scroll inside their own box)."""
     def no_overflow(label):
@@ -85,7 +92,7 @@ def overflow_checker(page, problems, W: int = 390):
             const bar = document.querySelector('.bar'), br = bar ? bar.getBoundingClientRect().right : W;
             const out = [];
             for (const e of document.querySelectorAll('body *')) {
-                if (e.closest('.glow, .tbl-wrap, .scroll-x, .sr-only, .finn-root, .finn-bubble') || !e.getClientRects().length) continue;  // tables scroll inside their own container; the mascot is a fixed overlay that swims in from off-screen
+                if (e.closest('.glow, .tbl-wrap, .scroll-x, .sr-only, .finn-root, .finn-bubble, .hh-tabs, .hh-list') || !e.getClientRects().length) continue;  // tables scroll inside their own container; the mascot is a fixed overlay that swims in from off-screen
                 const r = e.getBoundingClientRect().right;
                 if (r > W + 1 || (bar && bar.contains(e) && r > br + 1)) out.push(e.tagName.toLowerCase() + '.' + (e.className || '') + '@' + Math.round(r));
             }
@@ -198,8 +205,8 @@ def inputs_off_pass(page, base, no_overflow, lang: str, quiet) -> None:
     page.keyboard.press("Escape")  # Escape gives up listening
     page.wait_for_timeout(200)
     assert page.locator("#input-status").inner_text().strip() == "" and w["speak"] in page.inner_text("#speak-btn") and page.input_value("#message") == "keep me"
-    if lang == "en":  # an English page can listen for Malay too
-        assert [o.strip() for o in page.locator("#speak-lang option").all_inner_texts()] == ["English", "Bahasa Melayu"]
+    if lang == "en":  # an English page can listen for Malay, Tamil and Chinese too
+        assert [o.strip() for o in page.locator("#speak-lang option").all_inner_texts()] == ["English", "Bahasa Melayu", "தமிழ்", "中文"]
         page.select_option("#speak-lang", "ms-MY")
         page.click("#speak-btn")
         assert page.evaluate("window.__srLang") == "ms-MY"
@@ -451,8 +458,7 @@ def zh_pass(page, base, no_overflow, expect_401, quiet) -> None:
     no_overflow("zh-records-code")
 
     # family challenge, the family box and the share card
-    page.goto(base)
-    page.click("nav .cta")
+    open_challenge(page, base)
     page.wait_for_selector("#start")
     assert "你能识破骗局吗" in page.inner_text("h1")
     no_overflow("zh-challenge")
@@ -553,8 +559,7 @@ def ms_pass(page, base, no_overflow, quiet) -> None:
     page.wait_for_selector("#tg")
     no_overflow("ms-records")
     assert "Rekod saya" in page.inner_text("h1") and page.locator(".rec").count() >= 1
-    page.goto(base)
-    page.click("nav .cta")
+    open_challenge(page, base)
     page.wait_for_selector("#start")
     assert "Bolehkah anda mengesan penipuan" in page.inner_text("h1"), page.inner_text("h1")
     no_overflow("ms-challenge")
@@ -569,6 +574,79 @@ def ms_pass(page, base, no_overflow, quiet) -> None:
     no_overflow("en-after-ms")
 
 
+SCAM_TA = "உங்கள் DBS கணக்கு முடக்கப்படும். உடனே இங்கே சரிபார்க்கவும்: http://dbs-verify.top/login"
+
+
+def ta_pass(page, base, no_overflow, quiet) -> None:
+    """தமிழ்: pick it from the header menu, then check, practise, play, records, the house and the road, all at phone width. The words are looked up in the
+    translation table, so the test follows the wording rather than repeating it."""
+    import re
+
+    from core.lang.i18n import tr
+
+    def ta(text: str, **kw) -> str:
+        return tr(text, "ta", **kw)
+
+    no_tamil_gaps = lambda text: not re.search("[一-鿿]", text)
+    page.goto(base)
+    switch_language(page, "ta", "ta")
+    no_overflow("ta-home")
+    assert ta("harder to fool") in page.inner_text("h1") and page.locator(".tabs a").count() == 4 and no_tamil_gaps(page.inner_text("main"))
+    for word in ("Check", "Train", "Friends", "Records"):
+        assert ta(word) in page.inner_text(".tabs"), word
+    assert not page.query_selector("#speak-lang")        # (the speech choice is for English pages)
+
+    # a Tamil scam (no rule pack: the lookalike link and the model's absence give "scam" or "not sure", never "safe")
+    page.fill("#message", SCAM_TA)
+    page.click("#check-form button.big")
+    page.wait_for_selector("#result .banner")
+    banner = page.inner_text("#result .banner")
+    assert re.search("[஀-௿]", banner) and ta("SCAM").upper() != "" and "safe" not in banner.lower(), banner
+    result = page.inner_text("#result")
+    for key in ("The giveaway", "What to do", "Need help, or want to report it?", "Read aloud"):
+        assert ta(key).upper() in result.upper(), (key, result[:300])
+    assert "1799" in result and "997" in result and "The giveaway" not in result and no_tamil_gaps(result)
+    no_overflow("ta-result")
+    page.evaluate("(() => { window.__lang = null; speechSynthesis.speak = (u) => { window.__lang = u.lang; }; })()")
+    page.click("#result .speak")
+    assert page.evaluate("window.__lang") == "ta-IN", page.evaluate("window.__lang")
+
+    # practice on Tamil messages
+    page.goto(base + "/train")
+    no_overflow("ta-train")
+    assert ta("Quick practice") in page.inner_text("#practice h2")
+    page.click("#start")
+    for i in range(4):
+        page.wait_for_selector(".step .opt, .step textarea")
+        if page.query_selector(".step .opt"):
+            page.click(".step .opt >> nth=0")
+        else:
+            page.fill(".step textarea", "நான் இதை புறக்கணித்து வங்கியை அழைத்துச் சரிபார்ப்பேன்")
+            page.click(".step button.big")
+        page.wait_for_selector(".feedback")
+        assert no_tamil_gaps(page.inner_text(".feedback"))
+        if i == 0:
+            no_overflow("ta-train-feedback")
+        page.click(".step > button.big")
+    page.goto(base + "/game")
+    page.wait_for_selector(".mode-card")
+    no_overflow("ta-game-hub")
+    page.click(".mode-card >> nth=0")
+    page.wait_for_selector(".choice")
+    buttons = " ".join(page.locator(".choice").all_inner_texts())
+    assert ta("Scam") in buttons and no_tamil_gaps(buttons)
+    no_overflow("ta-game-play")
+    for url, key in (("/records", "My records"), ("/friends", "Friends"), ("/house", "Your house"), ("/link", "Link Hunt"), ("/road", "Scam Road")):
+        page.goto(base + url)
+        page.wait_for_selector("main")
+        no_overflow("ta" + url.replace("/", "-"))
+        assert ta(key) in page.inner_text("main") or ta(key) in page.title() or ta(key) in page.inner_text("h1"), (url, key)
+        assert url == "/records" or no_tamil_gaps(page.inner_text("main")), url      # (the records hold the messages checked earlier, in whatever language they were)
+    switch_language(page, "en", "en")
+    assert "Train" in page.inner_text(".tabs") and not re.search("[஀-௿]", page.inner_text(".tabs"))
+    no_overflow("en-after-ta")
+
+
 SOFTWARE_GL = ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"]  # a headless Chrome with no graphics card still draws WebGL
 
 
@@ -581,7 +659,274 @@ def blank_check(page, selector: str) -> float:
     return (sum((v - mean) ** 2 for v in px) / len(px)) ** 0.5
 
 
-def social_pass(p, base, problems, truth) -> None:
+def grant_xp(ctx, social_db: str, xp: int) -> None:
+    """Give the profile in this browser some XP to spend (written straight into the server's throw-away database: playing for it takes minutes)."""
+    pid = next(c["value"] for c in ctx.cookies() if c["name"] == "bp")
+    old = {k: os.environ.get(k) for k in ("BAITPROOF_DB", "BAITPROOF_MULTIUSER")}
+    os.environ.update({"BAITPROOF_DB": social_db, "BAITPROOF_MULTIUSER": "1"})
+    try:
+        from core.game import state as gs
+        from core.storage import db
+
+        db.set_profile(pid)
+        s = gs.get()
+        s["xp"] = xp
+        gs.save(s)
+        db.set_profile(None)
+    finally:
+        for k, v in old.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+
+
+def tap_start(social_db: str, chat_id: int, code: str) -> str:
+    """What the bot does when someone taps the Open Telegram link and presses Start: /start with the code, run here against the server's throw-away database."""
+    old = {k: os.environ.get(k) for k in ("BAITPROOF_DB", "BAITPROOF_MULTIUSER")}
+    os.environ.update({"BAITPROOF_DB": social_db, "BAITPROOF_MULTIUSER": "1"})
+    try:
+        from bot import handlers
+        from core.storage import db
+
+        return handlers.on_start(chat_id, code)
+    finally:
+        db.set_profile(None)
+        for k, v in old.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+
+
+def house_pass(browser, key, friend, base, problems, social_db) -> None:
+    """The house: Mei buys a fern, a sofa and a carpet with the XP she was given, drags things around (a bad spot is refused), turns and puts away, makes her character,
+    and her friend Aiman visits on a phone: sees the room, cannot shop, and can make the character walk."""
+    ctx_lap = browser.new_context(viewport={"width": 1100, "height": 800})
+    lap = ctx_lap.new_page()
+    lap.on("console", lambda m: problems.append(f"house console {m.type}: {m.text}") if m.type == "error" else None)
+    lap.on("pageerror", lambda e: problems.append(f"house pageerror: {e}"))
+    lap.goto(base + "/signin")
+    lap.fill("#key", key.lower())
+    lap.click("button:has-text('Log in')")
+    lap.wait_for_selector("h1:has-text('Mei')")
+    no_overflow = overflow_checker(lap, problems, W=1100)
+    from core.game import house as shop
+
+    price = lambda i: shop.CATALOG[i].price
+    spendable = 4000
+    grant_xp(ctx_lap, social_db, spendable)
+    lap.goto(base + "/house")
+    ready = "() => !!(window.__house && window.__house.state.view)"
+    for _ in range(80):
+        if lap.evaluate(ready):
+            break
+        lap.wait_for_timeout(250)
+    assert lap.evaluate(ready), "the house loaded"
+    H = "window.__house"
+    assert blank_check(lap, "#scene") > 6, "the 3D room drew something"
+    assert lap.inner_text("#points-n") == str(spendable) and lap.evaluate(f"() => {H}.checkModels()") == [], "every model exists and fits its footprint"
+    assert lap.locator(".hh-tab").count() == 7 and lap.locator(".hh-card").count() == 7
+    no_overflow("house")
+
+    def count():
+        return lap.evaluate(f"() => {H}.state.placed.length")
+
+    def card_button(name, label):
+        return lap.locator(".hh-card", has=lap.locator("b", has_text=name)).locator(".hh-buy", has_text=label)
+
+    # ---- buy a fern: it appears in the room at once, is picked, and the XP went down
+    card_button("Fern", "Buy").click()
+    for _ in range(40):
+        if count() == 1:
+            break
+        lap.wait_for_timeout(150)
+    assert count() == 1 and lap.inner_text("#points-n") == str(spendable - price("fern")) and lap.is_visible("#tools") and lap.inner_text("#tool-name") == "Fern" and lap.is_visible("#t-rotate")
+    saved = "() => fetch('/api/house').then((r) => r.json()).then((d) => d.layout.length)"
+    for _ in range(40):                                        # (the layout is saved a moment after it changes)
+        if lap.evaluate(saved) == 1:
+            break
+        lap.wait_for_timeout(150)
+    lap.reload()
+    for _ in range(80):
+        if lap.evaluate(ready) and count() == 1:
+            break
+        lap.wait_for_timeout(250)
+    assert count() == 1 and lap.inner_text("#points-n") == str(spendable - price("fern")), "what you bought and where you put it is still there after a reload"
+
+    # ---- drag it to another cell (the middle of that cell on the screen), and it stays there
+    e = lap.evaluate(f"() => {H}.entity(0)")
+    target = lap.evaluate(f"() => {H}.screenOf(8.5, 2.5, 0.3)")
+    lap.mouse.move(e["center"]["x"], e["center"]["y"])
+    lap.mouse.down()
+    lap.mouse.move((e["center"]["x"] + target["x"]) / 2, (e["center"]["y"] + target["y"]) / 2, steps=6)
+    lap.mouse.move(target["x"], target["y"], steps=8)
+    lap.mouse.up()
+    moved = lap.evaluate(f"() => {H}.entity(0)")
+    assert (moved["x"], moved["z"]) == (8, 2), moved
+    for _ in range(40):
+        if lap.evaluate("() => fetch('/api/house').then((r) => r.json()).then((d) => d.layout[0].x)") == 8:
+            break
+        lap.wait_for_timeout(150)
+
+    # ---- a sofa: bought, placed, turned, put away and placed again from the cupboard
+    lap.click(".hh-tab:has-text('Furniture')")
+    card_button("Sofa", "Buy").click()
+    for _ in range(40):
+        if count() == 2:
+            break
+        lap.wait_for_timeout(150)
+    assert count() == 2 and lap.inner_text("#points-n") == str(spendable - price("fern") - price("sofa")) and lap.inner_text("#tool-name") == "Sofa" and lap.is_visible("#t-rotate")
+    before = lap.evaluate(f"() => {H}.state.sel.r")
+    lap.click("#t-rotate")
+    assert lap.evaluate(f"() => {H}.state.sel.r") == (before + 1) % 4
+    lap.click("#t-pick")
+    assert count() == 1 and not lap.is_visible("#tools") and card_button("Sofa", "Place").count() == 1 and "1 owned" in lap.inner_text(".hh-card:has(b:has-text('Sofa'))")
+    card_button("Sofa", "Place").click()
+    assert count() == 2
+
+    # ---- dragging the sofa onto the fern is refused: it goes back where it was
+    sofa = lap.evaluate(f"() => {H}.entity(1)")
+    fern = lap.evaluate(f"() => {H}.entity(0)")
+    lap.mouse.move(sofa["center"]["x"], sofa["center"]["y"])
+    lap.mouse.down()
+    lap.mouse.move(fern["center"]["x"] + 3, fern["center"]["y"] + 3, steps=10)
+    lap.mouse.up()
+    after = lap.evaluate(f"() => {H}.entity(1)")
+    assert (after["x"], after["z"]) == (sofa["x"], sofa["z"]) and "fit" in lap.inner_text("#msg"), after
+
+    # ---- tapping a thing picks it, the arrow keys nudge it, R turns it, Escape lets go
+    lap.click("#scene", position={"x": 60, "y": 560})                  # (empty space: nothing picked)
+    assert not lap.is_visible("#tools")
+    lap.mouse.click(sofa["center"]["x"], sofa["center"]["y"])
+    assert lap.is_visible("#tools") and lap.inner_text("#tool-name") == "Sofa"
+    lap.keyboard.press("ArrowLeft")
+    assert lap.evaluate(f"() => {H}.state.sel.x") == sofa["x"] - 1
+    lap.keyboard.press("r")
+    assert lap.evaluate(f"() => {H}.state.sel.r") == (sofa["r"] + 1) % 4
+    lap.keyboard.press("Escape")
+    assert not lap.is_visible("#tools")
+
+    # ---- a new floor, paid for once
+    lap.click(".hh-tab:has-text('Floors and walls')")
+    lap.locator(".hh-card.style", has=lap.locator("b", has_text="Carpet")).locator(".hh-buy").click()
+    for _ in range(40):
+        if lap.evaluate(f"() => {H}.state.view.floor") == "carpet":
+            break
+        lap.wait_for_timeout(150)
+    assert lap.evaluate(f"() => {H}.state.view.floor") == "carpet" and lap.inner_text("#points-n") == str(spendable - price("fern") - price("sofa") - shop.FLOORS["carpet"][1])
+
+    # ---- the character: the creator opens, a new look shows at once and is saved
+    lap.click("#open-char")
+    assert lap.is_visible("#char-sheet") and lap.locator("#char-sheet .cr-group").count() == 7
+    lap.click("#char-sheet .cr-group >> nth=1 >> .cr-opt >> nth=8")                  # tudung
+    lap.click("#char-sheet .cr-group >> nth=0 >> .cr-opt >> nth=6")                  # a deep skin tone
+    look = lap.evaluate(f"() => {H}.state.look")
+    assert look.startswith("p.6.8.") and lap.locator("#char-sheet .cr-opt:disabled").count() == 2, look           # (a songkok and a cap do not go on a tudung)
+    lap.click("#char-save")
+    lap.wait_for_selector("#char-sheet", state="hidden")
+    lap.reload()
+    for _ in range(80):
+        if lap.evaluate(ready):
+            break
+        lap.wait_for_timeout(250)
+    assert lap.evaluate(f"() => {H}.state.look") == look and lap.inner_text("#points-n") == str(spendable - price("fern") - price("sofa") - shop.FLOORS["carpet"][1]) and count() == 2
+    # a man's look: a side part, a polo and a beard (the seventh number is the face), saved and still there after a reload, and drawn in 3D without a page error
+    lap.click("#open-char")
+    lap.click("#char-sheet .cr-group >> nth=1 >> .cr-opt >> nth=9")                  # side part
+    lap.click("#char-sheet .cr-group >> nth=3 >> .cr-opt >> nth=5")                  # polo
+    lap.click("#char-sheet .cr-group >> nth=6 >> .cr-opt >> nth=5")                  # beard
+    import re
+
+    man = lap.evaluate(f"() => {H}.state.look")
+    assert re.fullmatch(r"p\.6\.9\.\d+\.5\.\d+\.\d+\.5", man), man
+    lap.click("#char-save")
+    lap.wait_for_selector("#char-sheet", state="hidden")
+    lap.reload()
+    for _ in range(80):
+        if lap.evaluate(ready):
+            break
+        lap.wait_for_timeout(250)
+    assert lap.evaluate(f"() => {H}.state.look") == man
+    look = man                                                                          # the visitor below sees this look
+
+    # ---- tapping the floor makes the character walk there
+    spot = lap.evaluate(f"() => {H}.screenOf(9.5, 8.5, 0)")
+    lap.mouse.click(spot["x"], spot["y"])
+    lap.wait_for_timeout(300)
+    walking = lap.evaluate(f"() => {H}.state.char.path.length")
+    assert walking > 0, lap.evaluate(f"() => JSON.stringify({{spot: {H}.screenOf(9.5, 8.5, 0), sel: !!{H}.state.sel, char: {H}.state.char.pos, placed: {H}.state.placed.map((e) => [e.id, e.x, e.z, e.r])}})")
+    # ---- a pet that follows: bought, put down, told to follow; the character walks to the far corner and the fox comes along
+    lap.click(".hh-tab:has-text('Pets')")
+    card_button("Fox", "Buy").click()
+    for _ in range(40):
+        if count() == 3:
+            break
+        lap.wait_for_timeout(150)
+    assert count() == 3 and lap.inner_text("#tool-name") == "Fox" and lap.is_visible("#t-follow") and lap.get_attribute("#t-follow", "aria-pressed") == "false"
+    assert lap.is_visible("#t-rotate") and "Follow me" in lap.inner_text("#t-follow")
+    lap.click("#t-follow")
+    assert lap.get_attribute("#t-follow", "aria-pressed") == "true" and lap.evaluate(f"() => {H}.state.sel.follow") is True
+    lap.keyboard.press("Escape")
+    corner = lap.evaluate(f"() => {H}.screenOf(1.5, 9.5, 0)")
+    lap.mouse.click(corner["x"], corner["y"])
+    gap = "() => { const H = window.__house.state, c = H.char.pos, e = H.placed.find((p) => p.id === 'pet-fox'); return Math.hypot(c.x - e.pos.x, c.z - e.pos.z); }"
+    for _ in range(60):                                                  # (the walk takes a few seconds; the fox sets off after the character and catches up)
+        if lap.evaluate(f"() => {H}.state.char.path.length") == 0 and lap.evaluate(gap) < 3.6:
+            break
+        lap.wait_for_timeout(250)
+    assert lap.evaluate(gap) < 3.6 and lap.evaluate(f"() => {H}.state.char.pos.x") < 3, lap.evaluate(gap)
+    for _ in range(40):
+        if lap.evaluate("() => fetch('/api/house').then((r) => r.json()).then((d) => d.layout.filter((e) => e.follow).length)") == 1:
+            break
+        lap.wait_for_timeout(150)
+    assert lap.evaluate("() => fetch('/api/house').then((r) => r.json()).then((d) => d.layout.filter((e) => e.follow).map((e) => e.item))") == ["pet-fox"], "following is kept"
+    fox = lap.evaluate(f"() => {H}.entity(2)")
+    lap.mouse.click(fox["center"]["x"], fox["center"]["y"])                # pick it again and tell it to stay
+    assert lap.inner_text("#tool-name") == "Fox" and lap.get_attribute("#t-follow", "aria-pressed") == "true"
+    lap.click("#t-follow")
+    assert lap.evaluate(f"() => {H}.state.placed[2].follow") is False and lap.get_attribute("#t-follow", "aria-pressed") == "false"
+    for _ in range(40):
+        if lap.evaluate("() => fetch('/api/house').then((r) => r.json()).then((d) => d.layout.filter((e) => e.follow).length)") == 0:
+            break
+        lap.wait_for_timeout(150)
+    assert lap.evaluate("() => fetch('/api/house').then((r) => r.json()).then((d) => d.layout.filter((e) => e.follow).length)") == 0
+    lap.keyboard.press("Escape")
+
+    # ---- the home page shows where you are in the game
+    lap.goto(base)
+    card = lap.locator(".home-card")
+    assert card.is_visible() and card.locator(".avt svg.pt").count() == 1 and card.locator("a[href='/house']").count() == 1 and card.locator("button, a.btn").count() == 0
+    left = spendable - price("fern") - price("sofa") - shop.FLOORS["carpet"][1] - price("pet-fox")
+    assert f"{left} XP" in card.inner_text() and "Your progress" in card.inner_text()
+    lap.goto(base + "/house")
+    for _ in range(80):
+        if lap.evaluate(ready):
+            break
+        lap.wait_for_timeout(250)
+
+    no_overflow("house-after")
+
+    # ---- Aiman visits on a phone: the room, no shop, and the character can walk
+    friend.goto(base + "/friends")
+    friend.click("a:has-text('Visit house')")
+    for _ in range(80):
+        if friend.evaluate(ready):
+            break
+        friend.wait_for_timeout(250)
+    assert friend.evaluate(ready) and friend.evaluate(f"() => {H}.state.view.visit") is True and friend.evaluate(f"() => {H}.state.placed.length") == 3
+    assert "Mei" in friend.inner_text(".hh-title") and friend.locator("#shop").count() == 0 and friend.locator("#open-char").count() == 0 and friend.is_visible(".hh-hint")
+    assert friend.evaluate(f"() => {H}.state.look") == look and blank_check(friend, "#scene") > 6
+    overflow_checker(friend, problems)("house-visit")
+    spot = friend.evaluate(f"() => {H}.screenOf(9.5, 8.5, 0)")
+    friend.mouse.click(spot["x"], spot["y"])
+    friend.wait_for_timeout(300)
+    assert friend.evaluate(f"() => {H}.state.char.path.length") > 0
+    friend.goto(base + "/friends")
+    ctx_lap.close()
+
+
+def social_pass(p, base, problems, truth, social_db) -> None:
     """Public mode, three browsers: Aiman makes a profile and an invite; Mei joins from the link on a phone; Mei then signs in on a laptop and drives the 3D road;
     Aiman's phone sees Mei's distance on the board and her flag-marker on the road."""
     import re
@@ -608,7 +953,8 @@ def social_pass(p, base, problems, truth) -> None:
     aiman.wait_for_selector("input[name=nickname]")
     ov_a("me-new")
     aiman.fill("#nick", "Aiman")
-    aiman.click(".avatars .av >> nth=2")
+    aiman.click(".creator .cr-group >> nth=1 >> .cr-opt >> nth=3")      # the character creator: a hair style
+    assert aiman.locator(".creator .cr-opt[aria-pressed=true]").count() == 7 and aiman.get_attribute("input[name=avatar]", "value").startswith("p.")
     aiman.click("button:has-text('Create my profile')")
     aiman.wait_for_selector("#the-key")
     key_a = aiman.inner_text("#the-key").strip()
@@ -902,6 +1248,31 @@ def social_pass(p, base, problems, truth) -> None:
     assert fest.evaluate("() => window.__road.theme") == "deepavali"      # (Auto: the festival that is on; Mei never picked a look of her own in this browser)
     fest.close()
 
+    # ---- the house: buy, place, move, turn, put away, character, and a friend's visit
+    house_pass(b, key_m, aiman, base, problems, social_db)
+
+    # ---- Telegram in one tap: the page puts a one-time code in the "Open Telegram" link, the bot gets /start with it (called here as Telegram would), and the page notices by itself
+    mei.goto(base + "/me")
+    mei.wait_for_selector("#tg-open:not(.wait)")
+    m = re.fullmatch(r"https://t\.me/BaitproofBot\?start=([A-HJ-NP-Z2-9]{6})", mei.get_attribute("#tg-open", "href") or "")
+    assert m, "the link carries a code"
+    assert not mei.is_visible("#tg-codetext") and "not connected" in mei.inner_text("#tg-badge").lower()      # (the typed code is folded away)
+    mei.click("#tg .tg-alt summary")
+    assert mei.inner_text("#tg-codetext").strip() == m.group(1) and mei.is_visible("#tg-timer")      # (and it is the same code, when someone prefers to type it)
+    reply = tap_start(social_db, 4242, m.group(1))
+    assert reply.startswith("✅ Linked") and "Connected to Mei." in reply
+    for _ in range(80):                                                                               # (the page asks every few seconds, then reloads itself)
+        if mei.inner_text("#tg-badge").lower() == "connected":      # (the badge is set in capitals: inner_text gives what is shown)
+            break
+        mei.wait_for_timeout(250)
+    assert mei.inner_text("#tg-badge").lower() == "connected" and mei.is_visible("#tg-done") and not mei.is_visible("#tg-open")
+    overflow_checker(mei, problems)("me-telegram")
+    mei.goto(base + "/records")
+    assert mei.inner_text("#tg-badge").lower() == "connected" and mei.is_visible("#tg-unlink")
+    mei.click("#tg-unlink")
+    mei.wait_for_selector("#tg-open", state="visible")
+    assert mei.inner_text("#tg-badge").lower() == "not connected"
+
     # ---- signing out leaves the account for its key; deleting removes the profile and its place on the board
     mei.goto(base + "/me")
     mei.click("button:has-text('Sign out of this device')")
@@ -970,15 +1341,6 @@ def finn_pass(browser, base, problems) -> None:
     page.keyboard.press("Enter")
     page.wait_for_timeout(300)
     assert page.evaluate(FINN_SAYS), "Enter gives a tip"
-    # the footer switch sends him away, and brings him back
-    page.click("#mascot-toggle")
-    page.wait_for_load_state()
-    page.wait_for_timeout(900)
-    assert page.query_selector(".finn-root") is None and page.get_attribute("#mascot-toggle", "aria-pressed") == "false"
-    page.click("#mascot-toggle")
-    page.wait_for_load_state()
-    page.wait_for_timeout(1500)
-    assert page.query_selector(".finn-root") is not None
     ctx.close()
     # reduce motion: he is simply there, and does not move
     ctx = browser.new_context(viewport={"width": 1280, "height": 820}, reduced_motion="reduce")
@@ -1009,7 +1371,7 @@ def desktop_pass(browser, base, problems) -> None:
         page.goto(base + url)
         assert [a.strip() for a in page.locator("nav .navlink").all_inner_texts()] == ["Check", "Train", "Friends", "Records"], url
         assert page.locator("nav .navlink").first.is_visible() and not page.is_visible(".tabs"), url
-        assert page.is_visible("#textsize") and page.is_visible("nav .cta") and page.is_visible("#lang summary"), url  # "Aa", the family challenge and the language menu stay
+        assert page.is_visible("#textsize") and not page.query_selector("nav .cta") and page.is_visible("#lang summary"), url  # "Aa" and the language menu stay; there is no family-challenge button any more
         assert page.evaluate("document.documentElement.scrollWidth") <= 1280, url
     page.goto(base)
     assert page.is_visible(".home-demo") and page.is_visible("#message") and page.locator("#map").count() == 0
@@ -1030,7 +1392,7 @@ def desktop_pass(browser, base, problems) -> None:
 
 def main() -> int:
     # NEBIUS_API_KEY="" forces offline rules: the e2e test must never spend model credit (dotenv does not override set vars)
-    env = {**os.environ, "BAITPROOF_DB": tempfile.mkdtemp() + "/e2e.sqlite", "BAITPROOF_LOG_DIR": tempfile.mkdtemp(), "NEBIUS_API_KEY": "", "VAPID_PRIVATE_KEY": "", "VAPID_PUBLIC_KEY": "", "BAITPROOF_STT": "0", "BAITPROOF_BLOCKLIST": "0", "BAITPROOF_ADMIN_TOKEN": "e2e-token"}  # (no AI and no server speech-to-text, even if faster-whisper is installed here)
+    env = {**os.environ, "BAITPROOF_DB": tempfile.mkdtemp() + "/e2e.sqlite", "BAITPROOF_LOG_DIR": tempfile.mkdtemp(), "NEBIUS_API_KEY": "", "VAPID_PRIVATE_KEY": "", "VAPID_PUBLIC_KEY": "", "BAITPROOF_STT": "0", "BAITPROOF_RATE": "300", "BAITPROOF_BLOCKLIST": "0", "BAITPROOF_ADMIN_TOKEN": "e2e-token", "TELEGRAM_BOT_USERNAME": ""}  # (no AI and no server speech-to-text, even if faster-whisper is installed here)
     srv = subprocess.Popen([sys.executable, "-m", "uvicorn", "web.main:app", "--port", str(PORT)], env=env,
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     base, problems = f"http://127.0.0.1:{PORT}", []
@@ -1088,7 +1450,28 @@ def main() -> int:
             assert page.url.endswith("/train")
             no_overflow("train-hub")
             assert page.is_visible("#practice #start") and page.is_visible("#games") and page.is_visible("#map")
-            assert page.locator("#games a.mode-card").count() == 6 and "Inbox Rush" in page.inner_text("#games") and "Quick practice" in page.inner_text("#practice")
+            assert page.locator("#games a.gm").count() == 6 and "Inbox Rush" in page.inner_text("#games") and "Quick practice" in page.inner_text("#practice")
+            # the house is the first thing on the page: above the games, with the one button that opens it; the room draws itself and the character walks where you tap
+            assert page.locator("#house").bounding_box()["y"] < page.locator("#games").bounding_box()["y"] < page.locator("#practice").bounding_box()["y"]
+            assert page.locator(".hub a.btn.big[href='/house']").count() == 1 and page.locator(".hub .btn").count() == 1
+            for _ in range(60):
+                if page.evaluate("() => document.getElementById('house').classList.contains('ready')"):
+                    break
+                page.wait_for_timeout(250)
+            assert page.evaluate("() => document.getElementById('house').classList.contains('ready')"), "the preview drew the room"
+            page.evaluate("window.scrollTo(0, 0)")  # ("Practise this trick" lands on the practice section, further down the page)
+            page.wait_for_timeout(300)
+            walking = False
+            for cell in ((2.5, 2.5), (3.5, 3.5), (9.5, 2.5), (2.5, 7.5)):  # a floor spot nothing (a piece of furniture, Finn) is covering
+                spot = page.evaluate("([x, z]) => window.__house.screenOf(x, z)", list(cell))
+                if not page.evaluate("([x, y]) => document.elementFromPoint(x, y)?.id === 'scene'", [spot["x"], spot["y"]]):
+                    continue
+                page.mouse.click(spot["x"], spot["y"])
+                page.wait_for_timeout(500)
+                if page.evaluate("() => window.__house.state.char.path.length > 0"):
+                    walking = True
+                    break
+            assert walking, "tapping the floor sends the character walking"
             assert page.inner_text(".tabs a[aria-current=page]").strip() == "Train"
 
             # operator dashboard: login, then numbers without any message text
@@ -1138,8 +1521,7 @@ def main() -> int:
             print(f"practice: score {before} -> {page.inner_text('#score')}")
 
             # Challenge flow + family box
-            page.goto(base)
-            page.click("nav .cta")
+            open_challenge(page, base)
             page.wait_for_selector("#start")
             no_overflow("challenge")
             page.click("#start")
@@ -1225,6 +1607,7 @@ def main() -> int:
             # ---- Chinese pass: switch language with the header menu, then check, practise, play, records and challenge at phone width
             zh_pass(page, base, no_overflow, expect_401, quiet)
             ms_pass(page, base, no_overflow, quiet)
+            ta_pass(page, base, no_overflow, quiet)
 
             # ---- a laptop: the menu in the header, the form above the fold with the demo beside it, no tab bar
             desktop_pass(b, base, problems)
@@ -1237,12 +1620,13 @@ def main() -> int:
 
             truth = {i.text: i.truth for i in gp.build_pool("en")}
             social_base = f"http://127.0.0.1:{SOCIAL_PORT}"
+            social_db = tempfile.mkdtemp() + "/social.sqlite"
             social = subprocess.Popen([sys.executable, "-m", "uvicorn", "web.main:app", "--port", str(SOCIAL_PORT)],
-                                      env={**env, "BAITPROOF_MULTIUSER": "1", "BAITPROOF_DB": tempfile.mkdtemp() + "/social.sqlite", "BAITPROOF_RATE": "1000", "BAITPROOF_TODAY": "2026-11-08"},
+                                      env={**env, "BAITPROOF_MULTIUSER": "1", "BAITPROOF_DB": social_db, "BAITPROOF_RATE": "1000", "BAITPROOF_TODAY": "2026-11-08", "TELEGRAM_BOT_USERNAME": "BaitproofBot"},
                                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             try:
                 wait_until_up(social_base)
-                social_pass(p, social_base, problems, truth)
+                social_pass(p, social_base, problems, truth, social_db)
             finally:
                 social.terminate()
 

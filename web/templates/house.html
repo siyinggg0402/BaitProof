@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}{% if visit_pub %}{{ _("{name}'s house", name=visit_name) }}{% else %}{{ _("Your house") }}{% endif %} · Baitproof{% endblock %}
+{% block meta %}<link rel="stylesheet" href="/static/css/social.css"><link rel="stylesheet" href="/static/css/road.css"><link rel="stylesheet" href="/static/css/house.css">{% endblock %}
+{% block bodyattrs %} data-game="house"{% endblock %}
+{% block content %}
+<h1 class="sr">{% if visit_pub %}{{ _("{name}'s house", name=visit_name) }}{% else %}{{ _("Your house") }}{% endif %}</h1>
+
+<section class="house rise d2{{ ' visiting' if visit_pub }}" id="house" data-visit="{{ visit_pub }}" aria-label="{{ _('Your house') }}">
+  <canvas id="scene" aria-hidden="true"></canvas>
+
+  <div class="hh-bar">
+    {% if visit_pub %}
+    <p class="hh-title">{{ icon('home') }} <b>{{ _("{name}'s house", name=visit_name) }}</b></p>
+    <a class="hh-btn" href="/friends">{{ icon('users') }} <span>{{ _("Friends") }}</span></a>
+    {% else %}
+    <p class="hh-points" title="{{ _('XP to spend') }}">{{ icon('star') }} <b id="points-n">0</b> <span>{{ _("XP to spend") }}</span></p>
+    <button type="button" class="hh-btn" id="open-char">{{ icon('user') }} <span>{{ _("My character") }}</span></button>
+    {% endif %}
+    <span class="hh-zoom"><button type="button" class="hh-btn sq" id="zoom-in" aria-label="{{ _('Zoom in') }}">{{ icon('plus') }}</button><button type="button" class="hh-btn sq" id="zoom-out" aria-label="{{ _('Zoom out') }}">{{ icon('minus') }}</button></span>
+  </div>
+
+  <div class="hh-stack">
+    <div class="hh-tools" id="tools" hidden role="toolbar" aria-label="{{ _('The item you picked') }}">
+      <b id="tool-name"></b>
+      <button type="button" class="hh-btn" id="t-rotate">{{ icon('rotate') }} <span>{{ _("Turn") }}</span></button>
+      <button type="button" class="hh-btn" id="t-follow" aria-pressed="false" hidden>{{ icon('paw') }} <span>{{ _("Follow me") }}</span></button>
+      <button type="button" class="hh-btn" id="t-pick">{{ icon('inbox') }} <span>{{ _("Put away") }}</span></button>
+      <button type="button" class="hh-btn on" id="t-done">{{ icon('check') }} <span>{{ _("Done") }}</span></button>
+    </div>
+    <p class="hh-msg" id="msg" role="status" hidden></p>
+    {% if visit_pub %}<p class="hh-hint" id="hint">{{ _("Tap the floor to make the character walk there.") }}</p>{% endif %}
+  </div>
+
+  {% if not visit_pub %}
+  <aside class="hh-shop" id="shop" aria-label="{{ _('Shop') }}">
+    <div class="hh-tabs" id="tabs" role="tablist" aria-label="{{ _('Shop sections') }}"></div>
+    <p class="hh-hint" id="hint">{{ _("Buy something and it appears in your room. Drag it to move it, or tap it to turn it or put it away.") }}</p>
+    <div class="hh-list" id="list"></div>
+  </aside>
+  {% endif %}
+
+  <div class="over" id="nogl" hidden>
+    <div class="sheet"><h2>{{ _("The 3D house can't start here") }}</h2>
+      <p>{{ _("This browser or device can't show 3D graphics. Inbox Rush plays the same scam-or-not game without them.") }}</p>
+      <a class="btn big" href="/game#rush">{{ _("Play Inbox Rush") }}</a></div>
+  </div>
+  <div class="over" id="lost" hidden>
+    <div class="sheet"><h2>{{ _("The house didn't load") }}</h2><p>{{ _("The connection dropped. Check it and try again.") }}</p>
+      <button class="big" id="retry" type="button">{{ _("Try again") }}</button></div>
+  </div>
+  {% if not visit_pub %}
+  <div class="over" id="char-sheet" hidden>
+    <div class="sheet" role="dialog" aria-modal="true" aria-label="{{ _('My character') }}">
+      {% set current = '' %}{% include "_avatars.html" %}
+      <div class="actions"><button class="big" id="char-save" type="button">{{ _("Save") }}</button><button class="btn sec" id="char-close" type="button">{{ _("Close") }}</button></div>
+    </div>
+  </div>
+  {% endif %}
+</section>
+<noscript><p class="error">{{ _("The house needs JavaScript. Inbox Rush also needs it, but Check works without.") }}</p></noscript>
+{% endblock %}
+{% block scripts %}<script type="module" src="/static/js/house.js"></script>{% endblock %}

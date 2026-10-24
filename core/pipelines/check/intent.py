@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from core.ai import llm
 from core.domain import intents
 from core.lang import ms as MS
+from core.lang import ta as TA
 from core.lang import zh as ZH
 from core.lang.i18n import tr
 from core.lang.text import CJK, CURRENT, Dual, Z, canon
@@ -21,18 +22,18 @@ ASKS = ("pay", "share_code", "share_credentials", "install", "click", "call", "r
 HIGH_RISK_ASKS = {"pay", "share_code", "share_credentials", "install"}
 
 ASK_RULES = {
-    "pay": Dual(r"\b(?:txt|text|sms|send|reply)\b[^.!?\n]{0,70}\b(?:to|2)\s*\d{4,6}\b|\b(?:pay|send|transfer|wire|deposit|top up|buy|move)\b[^.!?\n]{0,40}(?:[$€£]|\d+ ?(?:dollars|usd|eur)|\bfee\b|\btax\b|gift ?cards?|bitcoin|crypto|usdt|voucher|balance|savings|money|cash)|\bpag(?:ue|ar)\b|\b(?:send|return|refund|pay|transfer) (?:it|that|the money|the funds|them) back\b", ZH.ASK["pay"], MS.ASK["pay"]),
-    "share_code": Dual(r"\b(?:repl(?:y|ying)|send(?:ing)?|read|shar(?:e|ing)|giv(?:e|ing)|forward|tell|submit(?:ting)?|provid(?:e|ing)|enter(?:ing)?)\b[^.!?\n]{0,25}\b(?:code|otp|pin)\b|\bread (?:it|them) (?:out )?to me\b", ZH.ASK["share_code"], MS.ASK["share_code"]),
-    "share_credentials": Dual(r"\b(?:enter|confirm|verify|provide|share|give|send|need|require|ask(?:ed)? for)\s+(?:only |just )?(?:us |me )?(?:your |the )?(?:password|pin|ssn|social security number|card number|medicare number|date of birth|bank details|login|(?:personal |bank |card |account |contact |full )?(?:details|info(?:rmation)?|id\b))", ZH.ASK["share_credentials"], MS.ASK["share_credentials"]),
-    "install": Dual(r"\binstall\b|\bdownload (?:the |this )?(?:app|software)\b", ZH.ASK["install"], MS.ASK["install"]),
-    "click": Dual(r"\b(?:click|tap|open)\b[^.!?\n]{0,15}\b(?:link|here)\b", ZH.ASK["click"], MS.ASK["click"]),
-    "call": Dual(r"\bcall\b", ZH.ASK["call"], MS.ASK["call"]),
-    "reply": Dual(r"\breply\b|\brespond\b", ZH.ASK["reply"], MS.ASK["reply"]),
+    "pay": Dual(r"\b(?:txt|text|sms|send|reply)\b[^.!?\n]{0,70}\b(?:to|2)\s*\d{4,6}\b|\b(?:pay|send|transfer|wire|deposit|top up|buy|move)\b[^.!?\n]{0,40}(?:[$€£]|\d+ ?(?:dollars|usd|eur)|\bfee\b|\btax\b|gift ?cards?|bitcoin|crypto|usdt|voucher|balance|savings|money|cash)|\bpag(?:ue|ar)\b|\b(?:send|return|refund|pay|transfer) (?:it|that|the money|the funds|them) back\b", ZH.ASK["pay"], MS.ASK["pay"], TA.ASK["pay"]),
+    "share_code": Dual(r"\b(?:repl(?:y|ying)|send(?:ing)?|read|shar(?:e|ing)|giv(?:e|ing)|forward|tell|submit(?:ting)?|provid(?:e|ing)|enter(?:ing)?)\b[^.!?\n]{0,25}\b(?:code|otp|pin)\b|\bread (?:it|them) (?:out )?to me\b", ZH.ASK["share_code"], MS.ASK["share_code"], TA.ASK["share_code"]),
+    "share_credentials": Dual(r"\b(?:enter|confirm|verify|provide|share|give|send|need|require|ask(?:ed)? for)\s+(?:only |just )?(?:us |me )?(?:your |the )?(?:password|pin|ssn|social security number|card number|medicare number|date of birth|bank details|login|(?:personal |bank |card |account |contact |full )?(?:details|info(?:rmation)?|id\b))", ZH.ASK["share_credentials"], MS.ASK["share_credentials"], TA.ASK["share_credentials"]),
+    "install": Dual(r"\binstall\b|\bdownload (?:the |this )?(?:app|software)\b|[\w-]+\.apk\b", ZH.ASK["install"], MS.ASK["install"], TA.ASK["install"]),
+    "click": Dual(r"\b(?:click|tap|open)\b[^.!?\n]{0,15}\b(?:link|here)\b", ZH.ASK["click"], MS.ASK["click"], TA.ASK["click"]),
+    "call": Dual(r"\bcall\b", ZH.ASK["call"], MS.ASK["call"], TA.ASK["call"]),
+    "reply": Dual(r"\breply\b|\brespond\b", ZH.ASK["reply"], MS.ASK["reply"], TA.ASK["reply"]),
 }
-NEGATION = Dual(r"\b(?:never|don'?t|do not|won'?t|will not)\b[^.!?]{0,25}$", ZH.NEGATION, MS.NEGATION)
-RELATIONS = Dual(r"\b(mum|mom|dad|grandma|grandpa|nan|nana|gran|son|daughter|grandson|granddaughter|it'?s me)\b", ZH.RELATIONS, MS.RELATIONS)
-AUTHORITY = Dual(r"\b(officer|detective|police|irs|hmrc|social security|court|tax office|government|cyber ?crime|fraud department|security team)\b", ZH.AUTHORITY, MS.AUTHORITY)
-ORGANISATION = Dual(r"\b((?:your|the) bank(?! (?:details|account|transfer|statement|holiday|balance))|bank (?:alert|notice|security|team|fraud)|\w+ bank(?! (?:details|account|transfer|statement|holiday))|microsoft|apple|amazon|paypal|netflix|your provider|support team|customer service)\b", ZH.ORGANISATION, MS.ORGANISATION)
+NEGATION = Dual(r"\b(?:never|don'?t|do not|won'?t|will not)\b[^.!?]{0,25}$", ZH.NEGATION, MS.NEGATION, TA.NEGATION)
+RELATIONS = Dual(r"\b(mum|mom|dad|grandma|grandpa|nan|nana|gran|son|daughter|grandson|granddaughter|it'?s me)\b", ZH.RELATIONS, MS.RELATIONS, TA.RELATIONS)
+AUTHORITY = Dual(r"\b(officer|detective|police|irs|hmrc|social security|court|tax office|government|cyber ?crime|fraud department|security team)\b", ZH.AUTHORITY, MS.AUTHORITY, TA.AUTHORITY)
+ORGANISATION = Dual(r"\b((?:your|the) bank(?! (?:details|account|transfer|statement|holiday|balance))|bank (?:alert|notice|security|team|fraud)|\w+ bank(?! (?:details|account|transfer|statement|holiday))|microsoft|apple|amazon|paypal|netflix|your provider|support team|customer service)\b", ZH.ORGANISATION, MS.ORGANISATION, TA.ORGANISATION)
 OPENER = Dual(
     r"\b[Ii]s this [A-Z][a-z]+\s*\?|\bwrong (?:person|number)\b|\b(?:got|found|have) your (?:number|email|contact|details) (?:from|through|via|on)\b"
     r"|\b(?:gave|sent|passed|shared|given) (?:me|us) your (?:number|email|contact|details|address)\b|\bfriend of (?:your|a (?:friend|colleague))\b|\bmutual (?:friend|contact|acquaintance)\b"
@@ -40,16 +41,16 @@ OPENER = Dual(
     r"|\bcan you (?:check|confirm|see) (?:if )?you can (?:receive|get)\b|\bare you (?:available|at your desk)\b"
     r"|\b(?:add me on|message me on|find me on|move (?:to|this to)|continue (?:on|in)) (?:telegram|whatsapp|signal|wechat)\b"
     r"|\b(?:is (?:the|this) item|is it) still (?:available|for sale)\b|\bstill available\b"
-    r"|\b(?:saw|found|came across|noticed) your (?:profile|listing|ad|post|resume|cv)\b|\b(?:text|call|message) me (?:on|at) \+?[\d(]", ZH.OPENER, MS.OPENER)
+    r"|\b(?:saw|found|came across|noticed) your (?:profile|listing|ad|post|resume|cv)\b|\b(?:text|call|message) me (?:on|at) \+?[\d(]", ZH.OPENER, MS.OPENER, TA.OPENER)
 
 PRESSURE_KINDS = {
     "deadline": PRESSURE_RE,
-    "threat": Dual(r"\b(?:arrest\w*|warrant|court|legal action|lawsuit|account (?:will be )?(?:closed|suspended|blocked|deactivated)|disconnect\w*|detain\w*|penalty|lose access)\b", ZH.THREAT, MS.THREAT),
-    "secrecy": Dual(r"\b(?:don'?t tell|do not tell|keep (?:this|it) (?:a )?secret|between us|do not (?:speak|talk) to|don'?t call|please don'?t call)\b", ZH.SECRECY, MS.SECRECY),
-    "emotional": Dual(r"\b(?:emergency|hospital|in trouble|stuck|please hurry|i love you|lonely|bail|accident)\b", ZH.EMOTIONAL, MS.EMOTIONAL),
+    "threat": Dual(r"\b(?:arrest\w*|warrant|court|legal action|lawsuit|account (?:will be )?(?:closed|suspended|blocked|deactivated)|disconnect\w*|detain\w*|penalty|lose access)\b", ZH.THREAT, MS.THREAT, TA.THREAT),
+    "secrecy": Dual(r"\b(?:don'?t tell|do not tell|keep (?:this|it) (?:a )?secret|between us|do not (?:speak|talk) to|don'?t call|please don'?t call)\b", ZH.SECRECY, MS.SECRECY, TA.SECRECY),
+    "emotional": Dual(r"\b(?:emergency|hospital|in trouble|stuck|please hurry|i love you|lonely|bail|accident)\b", ZH.EMOTIONAL, MS.EMOTIONAL, TA.EMOTIONAL),
 }
-_PAY_VERB = Dual(r"\b(?:buy|send|pay)\b", r"转|汇|付|买|购|支付|充值|缴", r"\b(?:bayar|transfer|pindahkan|beli|kirim)\b")
-_NEW_NUMBER = Dual(r"\b(?:new (?:number|phone)|lost my|dropped my phone)\b", ZH.NEW_NUMBER, MS.NEW_NUMBER)
+_PAY_VERB = Dual(r"\b(?:buy|send|pay)\b", r"转|汇|付|买|购|支付|充值|缴", r"\b(?:bayar|transfer|pindahkan|beli|kirim)\b", TA.PAY_V)
+_NEW_NUMBER = Dual(r"\b(?:new (?:number|phone)|lost my|dropped my phone)\b", ZH.NEW_NUMBER, MS.NEW_NUMBER, TA.NEW_NUMBER)
 
 
 @dataclass
@@ -68,6 +69,7 @@ class Intent:
     purpose: str = ""  # what the message is FOR, chosen by rules from the closed catalogue (core/domain/intents.py)
     model_purpose: str = ""  # the model's choice from the same catalogue, kept only if the text supports it
     used_ai: bool = False
+    advisory: bool = False  # the whole message is a warning or public notice ("never share your OTP", "call 1799 before you pay"): nothing is asked of the reader
 
     @property
     def pressure(self) -> bool:
@@ -86,18 +88,23 @@ class Intent:
 
 def _heuristic(ing: Ingested) -> Intent:
     it = Intent()
+    scan = intents.WARNING_FOREIGN_STRICT.sub(" ", ing.text)  # a Chinese, Malay or Tamil "never share / never move money ..." sentence is not a request or a rush
+    # A message that is ONLY a warning or public notice, with no number to ring and no link to follow, asks nothing of the reader: it quotes the scam it warns about.
+    it.advisory = ing.english and not re.search(r"\w", intents._WARNING.sub(" ", ing.text)) and not (ing.entities.phones or ing.entities.hosts)
+    if it.advisory:
+        scan = ""
     for ask, pat in ASK_RULES.items():
-        for m in pat.finditer(ing.text):
-            if not NEGATION.search(ing.text[max(0, m.start() - 40) : m.start()]):
+        for m in pat.finditer(scan):
+            if not NEGATION.search(scan[max(0, m.start() - 40) : m.start()]):
                 it.asks.add(ask)
                 it.evidence.setdefault(ask, m.group(0)[:80])
                 break
     if ing.entities.hosts:
         it.asks.add("click")
-    if ing.entities.rails and "pay" not in it.asks and _PAY_VERB.search(ing.text):
+    if ing.entities.rails and "pay" not in it.asks and _PAY_VERB.search(scan):
         it.asks.add("pay")
     for kind, pat in PRESSURE_KINDS.items():
-        if m := pat.search(ing.text):
+        if m := pat.search(scan):
             it.pressure_kinds.add(kind)
             it.evidence.setdefault("pressure", m.group(0)[:80])
             it.evidence[f"pressure:{kind}"] = m.group(0)[:80]
@@ -155,8 +162,8 @@ SCENARIO_PURPOSE = {
 }
 
 
-ALARM = Dual(r"\b(?:blocked|hacked|suspended|locked|compromised|unauthori[sz]ed|suspicious|fraudulent|deactivat\w+|disabled|limited|expir\w+|delayed|on hold|is full|storage (?:is )?full|storage limit|failed login|violation)\b", ZH.ALARM, MS.ALARM)
-ACTION = Dual(r"\b(?:verify|verifying|reactivate|re-?activate|secure (?:it|your)|change (?:your )?password|open the app|click|tap|log ?in|sign in|renew now|track now|update (?:your )?(?:details|info|account)|confirm (?:your|identity)|act now|claim|call (?:us|now)|respond)\b", ZH.ACTION, MS.ACTION)
+ALARM = Dual(r"\b(?:blocked|hacked|suspended|locked|compromised|unauthori[sz]ed|suspicious|fraudulent|deactivat\w+|disabled|limited|expir\w+|delayed|on hold|is full|storage (?:is )?full|storage limit|failed login|violation)\b", ZH.ALARM, MS.ALARM, TA.ALARM)
+ACTION = Dual(r"\b(?:verify|verifying|reactivate|re-?activate|secure (?:it|your)|change (?:your )?password|open the app|click|tap|log ?in|sign in|renew now|track now|update (?:your )?(?:details|info|account)|confirm (?:your|identity)|act now|claim|call (?:us|now)|respond)\b", ZH.ACTION, MS.ACTION, TA.ACTION)
 
 
 def classify_purpose(ing: Ingested, it: Intent) -> str:
@@ -209,12 +216,14 @@ def _supported(ask: str, ing: Ingested) -> bool:
     """A model-added ask must be physically possible: no link in the message means nothing to click."""
     if ask == "click":
         return bool(ing.entities.hosts)
+    if ask in ("share_code", "share_credentials") and ing.english:
+        return bool(intents._CODE_REQ.search(intents._WARNING.sub(" ", ing.text)))  # a "do not share this code" warning is not a request: something must still ask once the warnings are taken out
     if ask == "call":
-        return bool(re.search(r"\bcall\b|\d{3}[\s.-]?\d{3,}", ing.text, re.I) or (CJK.search(ing.text) and Z(ZH.CALL_POSSIBLE).search(ing.text)) or (CURRENT.get() == "ms" and re.search(MS.CALL_POSSIBLE, ing.text, re.I)))
+        return bool(re.search(r"\bcall\b|\d{3}[\s.-]?\d{3,}", ing.text, re.I) or (CJK.search(ing.text) and Z(ZH.CALL_POSSIBLE).search(ing.text)) or (CURRENT.get() == "ms" and re.search(MS.CALL_POSSIBLE, ing.text, re.I)) or (CURRENT.get() == "ta" and re.search(TA.CALL_POSSIBLE, ing.text, re.I)))
     return True
 
 
-CONSEQUENCE = Dual(r"\b(?:or|unless|otherwise|else|before)\b[^.!?]{0,70}\b(?:will|be|lose|cancel\w*|clos\w+|suspend\w*|block\w*|disconnect\w*|fine|penalt\w*|return\w*|delet\w+|arrest\w*|expire)\b", ZH.CONSEQUENCE, MS.CONSEQUENCE)
+CONSEQUENCE = Dual(r"\b(?:or|unless|otherwise|else|before)\b[^.!?]{0,70}\b(?:will|be|lose|cancel\w*|clos\w+|suspend\w*|block\w*|disconnect\w*|fine|penalt\w*|return\w*|delet\w+|arrest\w*|expire)\b", ZH.CONSEQUENCE, MS.CONSEQUENCE, TA.CONSEQUENCE)
 
 
 def _pressure_supported(kind: str, ing: Ingested) -> bool:

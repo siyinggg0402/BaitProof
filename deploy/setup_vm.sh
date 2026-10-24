@@ -6,7 +6,7 @@
 set -euo pipefail
 REPO="${1:?usage: setup_vm.sh <git-repo-url> [domain]}"
 DOMAIN="${2:-}"
-sudo apt-get update -y && sudo apt-get install -y python3-venv git caddy fonts-noto-cjk  # fonts-noto-cjk draws the Chinese text on the share-card image
+sudo apt-get update -y && sudo apt-get install -y python3-venv git caddy fonts-noto-cjk fonts-noto-core libfribidi0 libharfbuzz0b  # the fonts draw Chinese and Tamil on the share-card image (Tamil also needs Pillow's text shaping)
 sudo useradd --system --home /opt/baitproof baitproof 2>/dev/null || true
 sudo mkdir -p /opt/baitproof /var/lib/baitproof/logs
 sudo chown -R "$USER" /opt/baitproof

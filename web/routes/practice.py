@@ -12,6 +12,7 @@ from core.pipelines import challenge, train
 from core.storage import model
 from web import cardimg
 from web.deps import LANG_CODES, limit_expensive, request_lang
+from web.glance import glance
 from web.pages import page
 
 router = APIRouter()
@@ -21,7 +22,7 @@ SESSIONS: "OrderedDict[str, dict[str, Drill]]" = OrderedDict()  # in-memory; ans
 
 @router.get("/train", response_class=HTMLResponse)
 def train_page(request: Request):
-    return page(request, "train.html")
+    return page(request, "train.html", progress=glance(request))
 
 
 @router.post("/api/train/start", dependencies=[Depends(limit_expensive)])

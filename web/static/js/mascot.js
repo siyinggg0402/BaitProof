@@ -1,5 +1,5 @@
 // Finn, the Baitproof fish: a little scam-spotting friend. He swims in when you first arrive, floats about, watches your pointer, can be picked up and moved
-// anywhere (mouse, finger or keyboard), reacts to what you check or answer, and tells a tip when you tap him. A switch in the footer sends him away.
+// anywhere (mouse, finger or keyboard), reacts to what you check or answer, and tells a tip when you tap him.
 // He is decoration with a voice: nothing on the page depends on him, he never takes focus, and "reduce motion" keeps him still.
 (() => {
   if (document.body && document.body.dataset.game) return; // a game page (the 3D road) draws its own scene: no second WebGL canvas, no flying fish over the play area
@@ -8,12 +8,7 @@
   const read = () => { try { return JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { return {}; } };
   const save = (patch) => { try { localStorage.setItem(KEY, JSON.stringify({ ...read(), ...patch })); } catch (e) { /* private mode: he just forgets */ } };
   const prefs = read();
-  const toggle = document.getElementById("mascot-toggle");
-  if (toggle) {
-    toggle.hidden = false; toggle.setAttribute("aria-pressed", String(!prefs.hidden));
-    toggle.addEventListener("click", () => { save({ hidden: !prefs.hidden }); location.reload(); });
-  }
-  if (prefs.hidden || !document.body) return;
+  if (!document.body) return;
 
   // ---- the drawing (viewBox 170 x 124, facing right). Only plain attributes and classes: the stylesheet colours and animates it.
   const SVG = `<svg class="finn" viewBox="0 0 170 124" focusable="false" aria-hidden="true"><g class="f-all">

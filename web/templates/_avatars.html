@@ -1,3 +1,7 @@
-<fieldset class="avatars"><legend>{{ _("Pick an avatar") }}</legend>
-  {% for a in avatars %}<label class="av"><input type="radio" name="avatar" value="{{ a }}" aria-label="{{ _(a|capitalize) }}"{% if a == current or (not current and loop.first) %} checked{% endif %}>{{ avatar(a) }}</label>{% endfor %}
+{% set cur = current if current else random_look() %}
+{# a profile from before characters has an animal: it stays until they make a character (the hidden field is empty, which means "no change") #}
+<fieldset class="creator" data-creator data-look="{{ cur if cur.startswith('p.') else random_look() }}"><legend>{{ _("Your character") }}</legend>
+  <div class="cr-top"><span class="cr-preview">{{ avatar(cur) }}</span><button type="button" class="ghost cr-random" hidden>{{ icon('sparkles') }} {{ _("Surprise me") }}</button></div>
+  <input type="hidden" name="avatar" value="{{ cur if cur.startswith('p.') else '' }}">
+  <div class="cr-groups"></div>
 </fieldset>

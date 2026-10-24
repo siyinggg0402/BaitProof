@@ -30,14 +30,23 @@ _MS = frozenset(("yang dan anda untuk dengan di ini itu akan telah kami saya tid
                  "enggak ga kok sih deh kan saja banget aja bisa mau tak nak kat tu ni je la lah kau dia sampai pun pula hanya sangat sekali masih bila mana siapa kenapa "
                  "bagaimana macam perlu mesti harus ingin mahu hendak buat pergi datang balik pulang makan minum semalam tadi setiap antara hingga kerana sebab supaya agar "
                  "jika kalau apabila ketika sambil selepas sebelum selama belum pernah terima kasih selamat hadiah saudara tuan puan rekening bayar duit pinjam segera "
-                 "sekarang klik pautan tautan transfer kode anda").split())
+                 "sekarang klik pautan tautan transfer kode anda "
+                 "pelaburan investasi saham untung keuntungan dijamin jamin gabung bergabung sertai grup kumpulan lowongan pendaftaran daftar biaya yuran seragam pakaian langsung terus tanpa "
+                 "resmi rasmi tes ujian pemenang undian cabutan kuis kuiz pajak cukai bantuan penduduk warga donasi derma korban mangsa banjir pribadi peribadi bukti hantar kirim lewat melalui "
+                 "agar tilang saman kendaraan kenderaan cek semak tagihan bil jatuh tempo tamat denda dikenakan pengajuan pinjaman cair diluluskan disetujui syarat dulu tunai rumah sakit kritis "
+                 "kritikal operasi pembedahan ibu bapa bapak suami istri isteri anak kakak adik nenek kakek paket pakej bungkusan pesanan pesan akun laluan buka tutup dibuka ditutup pengumuman "
+                 "pemberitahuan notis mohon harap bisa dapat udah belum cuma lagi semua beberapa banyak sedikit besar kecil lama tahun minggu jam pukul menit minit pagi siang sore petang "
+                 "kemarin lusa kini luar atas bawah depan belakang kepada terhadap bagi mengenai tentang seperti karena kerana sehingga apabila sementara setelah ini kerja bakti lingkungan "
+                 "imunisasi gratis percuma pendaftaran dibuka portal akademik informasi maklumat lengkap situs laman wisuda kampus sekolah murid guru orang tua keluarga teman kawan rekan "
+                 "pesanan berhasil berjaya gagal dikirim dihantar diterima diantar mengantar kurir kurier jemput mengambil diambil dibayar dibayarkan pembayaran bayaran saldo baki "
+                 "tersedia tersisa sisa kuota paket harga murah diskon promosi hadiah menang memenangkan terpilih terpilih konfirmasi sahkan verifikasi aplikasi perisian muat unduh pasang").split())
 _OTHER_LATIN = {  # a few stopwords is enough to say "this is Latin script but not English or Malay"
     "es": frozenset("el la los las de que y en un una por con para su es se no lo como más pero sus".split()),
     "fr": frozenset("le la les de des et en un une du que qui pour dans est pas vous nous votre sur avec".split()),
     "de": frozenset("der die das und ist nicht ein eine zu den mit sie ich von für auf dem sich".split()),
     "pt": frozenset("o a os as de que e em um uma para com não é se do da por mais seu".split()),
 }
-RULES_LANGS = frozenset({"en", "zh", "zh-Hant", "ms"})  # languages our built-in rules understand (ms = Malay and Indonesian); everything else is judged by the model alone
+RULES_LANGS = frozenset({"en", "zh", "zh-Hant", "ms", "ta"})  # languages our built-in rules understand (ms = Malay and Indonesian); everything else is judged by the model alone
 CURRENT: contextvars.ContextVar[str] = contextvars.ContextVar("baitproof_lang", default="en")  # the language of the message being checked (set by ingest)
 
 
@@ -146,15 +155,16 @@ class _Hit:
 
 
 class Dual:
-    """An English pattern with a Chinese twin and a Malay/Indonesian twin. The Chinese one runs only on text that contains Chinese characters, the
-    Malay one only while the message being checked is detected as Malay/Indonesian, so English behaviour (and every English number we have
-    measured) is untouched. Offers the same search/finditer/sub/findall a compiled pattern does."""
-    __slots__ = ("en", "zh", "ms")
+    """An English pattern with a Chinese twin, a Malay/Indonesian twin and a Tamil twin. The Chinese one runs only on text that contains Chinese characters,
+    the Malay one only while the message being checked is detected as Malay/Indonesian and the Tamil one only while it is detected as Tamil, so English behaviour
+    (and every English number we have measured) is untouched. Offers the same search/finditer/sub/findall a compiled pattern does."""
+    __slots__ = ("en", "zh", "ms", "ta")
 
-    def __init__(self, en: str | re.Pattern | None, zh: str | None = None, ms: str | None = None, flags: int = re.I | re.S) -> None:
+    def __init__(self, en: str | re.Pattern | None, zh: str | None = None, ms: str | None = None, ta: str | None = None, flags: int = re.I | re.S) -> None:
         self.en = (re.compile(en, flags) if isinstance(en, str) else en)
         self.zh = Z(zh, flags) if zh else None
         self.ms = re.compile(ms, flags) if ms else None
+        self.ta = re.compile(ta, flags) if ta else None
 
     @property
     def pattern(self) -> str:
@@ -166,6 +176,8 @@ class Dual:
             out.append(self.zh)
         if self.ms is not None and CURRENT.get() == "ms":
             out.append(self.ms)
+        if self.ta is not None and CURRENT.get() == "ta":
+            out.append(self.ta)
         return out
 
     def search(self, text: str, pos: int = 0):

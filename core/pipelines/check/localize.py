@@ -16,13 +16,13 @@ def in_script(text: str, lang: str) -> bool:
     """Is this text already in the reader's language? English is what the model writes by default, so only Chinese and Malay need checking."""
     if not text.strip() or i18n.norm(lang) == "en":
         return True
-    if i18n.norm(lang) == "ms":
-        return detect(text) == "ms"
+    if i18n.norm(lang) in ("ms", "ta"):
+        return detect(text) == i18n.norm(lang)
     return bool(CJK.search(text))
 
 
 def _is_in(lang: str, text: str) -> bool:
-    return detect(text) == "ms" if i18n.norm(lang) == "ms" else bool(CJK.search(text))
+    return detect(text) == i18n.norm(lang) if i18n.norm(lang) in ("ms", "ta") else bool(CJK.search(text))
 
 
 def convert_script(text: str, lang: str) -> str:

@@ -120,6 +120,24 @@ def cjk_font(lang: str, size: int, text: str):
     return ImageFont.truetype(choice[0], size, index=choice[1]) if choice else None
 
 
+TAMIL_FONTS = ("/System/Library/Fonts/Supplemental/Tamil Sangam MN.ttc", "/Library/Fonts/Arial Unicode.ttf", "/usr/share/fonts/truetype/noto/NotoSansTamil-Regular.ttf",
+               "/usr/share/fonts/truetype/noto/NotoSansTamil-VF.ttf", "/usr/share/fonts/truetype/lohit-tamil/Lohit-Tamil.ttf", "/usr/share/fonts/opentype/noto/NotoSansTamil-Regular.ttf")
+
+
+def tamil_font(size: int):
+    """A Pillow font that can draw Tamil, or None. Tamil letters join and reorder, which Pillow only does with its raqm layout engine: without it the text would be wrong, so the card says it in English."""
+    from PIL import features
+
+    if not features.check("raqm"):
+        return None
+    for path in TAMIL_FONTS:
+        try:
+            return ImageFont.truetype(path, size, layout_engine=ImageFont.Layout.RAQM)
+        except Exception:
+            continue
+    return None
+
+
 def _fit(draw: ImageDraw.ImageDraw, text: str, make, size: int, width: int):
     """The font at the largest size (down from `size`) at which `text` fits in `width` pixels."""
     while size > 20:
@@ -137,7 +155,10 @@ def render(pct: int, right: int, total: int, lang: str = "en") -> bytes:
     if lang in ("zh", "zh-Hant") and cjk_font(lang, 48, line1 + line2) is None:
         lang = "en"  # no installed font can draw it: the English card is better than one full of boxes
         line1, line2 = tr("I spotted {right} of {total} scam messages.", lang, right=right, total=total), tr("Can you beat me?", lang)
-    make = _font if lang in ("en", "ms") else (lambda size: cjk_font(lang, size, line1 + line2))
+    if lang == "ta" and tamil_font(48) is None:
+        lang = "en"  # (no Tamil shaping or font on this machine: the English card, not a wrong one)
+        line1, line2 = tr("I spotted {right} of {total} scam messages.", lang, right=right, total=total), tr("Can you beat me?", lang)
+    make = _font if lang in ("en", "ms") else (tamil_font if lang == "ta" else (lambda size: cjk_font(lang, size, line1 + line2)))
     img = Image.new("RGB", (1200, 630), BG)
     d = ImageDraw.Draw(img)
     d.rectangle([0, 0, 1200, 14], fill=ACCENT)

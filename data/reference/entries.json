@@ -1,0 +1,197 @@
+{
+ "updated": "2026-10-24",
+ "note": "A short list of scam scripts that official bodies have named, checked against their own pages on the date shown. Add a line when a new wave is announced; re-check the dates before a release.",
+ "entries": [
+  {
+   "id": "sg-official-impersonation",
+   "region": "SG",
+   "publisher": "Singapore Police Force and PDPC",
+   "checked": "2026-10-24",
+   "source": "https://www.pdpc.gov.sg/news-and-events/press-room/2025/02/advisory-on-government-official-impersonation-scams-involving-impersonation-of-personal-data-protection-commission-officers",
+   "claim": "Singapore Police and PDPC (2025): real officials never ask you by phone or text to transfer money, share Singpass, bank or CPF details, click links or install apps.",
+   "tactic": "authority-spoofing",
+   "strength": "medium",
+   "needs": [
+    "pay",
+    "call",
+    "share_code",
+    "share_credentials",
+    "install",
+    "click",
+    "reply"
+   ],
+   "unless": "\\b(?:beware|be aware|scam alert|scam advisory|public advisory|crime advisory|fraud alert|reminder|awareness|never|will not|won'?t|do not|don'?t|doesn'?t|does not|stay vigilant)\\b|waspada|berhati-hati|jangan|请勿|切勿|谨防|警惕|不会|எச்சரிக்கை|வேண்டாம்|ஒருபோதும்|ஜாக்கிரதை|都是诈骗|都是骗局|就是诈骗|提醒|反诈中心|不法分子|mengingatkan|mengimbau|imbau|நினைவூட்டு",
+   "variants": [
+    {
+     "all": [
+      "(?:this is|i am|i'm|we are|calling from|from the|from)\\W+(?:\\w+\\W+){0,3}(?:police|spf|mas|monetary authority|ica|immigration|mom|ministry of manpower|csa|cyber ?security agency|mha|iras|cpf board|pdpc|high court|court|interpol)\\b",
+      "investigat|arrest|warrant|money laundering|laundering|illegal activit|suspicious|criminal|case (?:no|number)|summons|violation|singpass"
+     ]
+    },
+    {
+     "zh": true,
+     "all": [
+      "新加坡(?:警察|警方)|警察部队|移民局|人力部|金融管理局|法院",
+      "涉嫌|洗黑钱|洗钱|逮捕|拘捕|调查|传票|新加坡通行证|singpass"
+     ]
+    },
+    {
+     "all": [
+      "polis singapura|inspektor|pegawai (?:polis|mahkamah|imigresen)",
+      "siasat|tangkap|waran|pengubahan wang haram|singpass"
+     ]
+    },
+    {
+     "all": [
+      "சிங்கப்பூர் காவல்|காவல்துறை|இன்ஸ்பெக்டர்|போலீஸ்",
+      "வழக்கு|கைது|பணமோசடி|விசாரணை|Singpass"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "sg-safety-account",
+   "region": "SG",
+   "publisher": "Singapore Police Force and MAS",
+   "checked": "2026-10-24",
+   "source": "https://police.gov.sg/Media-Room/News/20240727_joint_advisory_on_uptick_in_government_official_impersonation_scam_variant",
+   "claim": "Singapore Police and MAS (2024): police never ask you to move money to a “safety account”, and banks do not pass your call to the police or MAS.",
+   "tactic": "authority-spoofing",
+   "strength": "medium",
+   "needs": [
+    "pay",
+    "call",
+    "share_code",
+    "share_credentials"
+   ],
+   "unless": "\\b(?:beware|be aware|scam alert|scam advisory|public advisory|crime advisory|fraud alert|reminder|awareness|never|will not|won'?t|do not|don'?t|doesn'?t|does not|stay vigilant)\\b|waspada|berhati-hati|jangan|请勿|切勿|谨防|警惕|不会|எச்சரிக்கை|வேண்டாம்|ஒருபோதும்|ஜாக்கிரதை|都是诈骗|都是骗局|就是诈骗|提醒|反诈中心|不法分子|mengingatkan|mengimbau|imbau|நினைவூட்டு",
+   "variants": [
+    {
+     "all": [
+      "safe(?:ty)? account|secure account|protected account|safeguard(?:ing)? account|custody account"
+     ]
+    },
+    {
+     "zh": true,
+     "all": [
+      "安全(?:户口|账户|帐户)|保管账户|监管账户"
+     ]
+    },
+    {
+     "all": [
+      "akaun selamat|akaun keselamatan|rekening aman|rekening penyelamatan"
+     ]
+    },
+    {
+     "all": [
+      "பாதுகாப்பு(?:க்)? ?கணக்கு"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "in-digital-arrest",
+   "region": "IN",
+   "publisher": "Indian Cyber Crime Coordination Centre (I4C)",
+   "checked": "2026-10-24",
+   "source": "https://www.deccanherald.com/india/amid-rise-in-digital-arrest-cases-indian-cyber-crime-coordination-centre-issues-advisory-for-citizens-3221509",
+   "claim": "India's cyber-crime centre (I4C, 2024): the CBI, police, customs, ED and judges do not arrest anyone over a video call. A “digital arrest” is a scam: call 1930.",
+   "tactic": "authority-spoofing",
+   "strength": "medium",
+   "needs": [
+    "pay",
+    "call",
+    "share_code",
+    "share_credentials",
+    "install",
+    "click",
+    "reply"
+   ],
+   "unless": "\\b(?:beware|be aware|scam alert|scam advisory|public advisory|crime advisory|fraud alert|reminder|awareness|never|will not|won'?t|do not|don'?t|doesn'?t|does not|stay vigilant)\\b|waspada|berhati-hati|jangan|请勿|切勿|谨防|警惕|不会|எச்சரிக்கை|வேண்டாம்|ஒருபோதும்|ஜாக்கிரதை|都是诈骗|都是骗局|就是诈骗|提醒|反诈中心|不法分子|mengingatkan|mengimbau|imbau|நினைவூட்டு",
+   "variants": [
+    {
+     "all": [
+      "digital[ -]arrest|டிஜிட்டல் கைது|डिजिटल अरेस्ट"
+     ]
+    },
+    {
+     "all": [
+      "video[ -]?call|skype|whatsapp video|வீடியோ ?கால்|वीडियो कॉल",
+      "\\b(?:cbi|ed|ncb|trai|customs|narcotics|enforcement directorate|cyber ?crime|police|judge|court)\\b|காவல்|சுங்க|पुलिस|सीबीआई",
+      "arrest|warrant|drugs|money laundering|parcel|கைது|வழக்கு|போதைப்பொருள்|गिरफ्तार"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "my-nsrc-impersonation",
+   "region": "MY",
+   "publisher": "National Scam Response Centre (NSRC), Malaysia",
+   "checked": "2026-10-24",
+   "source": "https://fintechnews.my/44219/security/malaysian-banks-beware-of-calls-from-fake-national-scam-response-centre-officers/",
+   "claim": "Malaysia's National Scam Response Centre (997) does not phone people, and the NSRC, police and banks never ask for your PIN, TAC or OTP.",
+   "tactic": "authority-spoofing",
+   "strength": "medium",
+   "needs": [
+    "pay",
+    "call",
+    "share_code",
+    "share_credentials",
+    "click"
+   ],
+   "unless": "\\b(?:beware|be aware|scam alert|scam advisory|public advisory|crime advisory|fraud alert|reminder|awareness|never|will not|won'?t|do not|don'?t|doesn'?t|does not|stay vigilant)\\b|waspada|berhati-hati|jangan|请勿|切勿|谨防|警惕|不会|எச்சரிக்கை|வேண்டாம்|ஒருபோதும்|ஜாக்கிரதை|都是诈骗|都是骗局|就是诈骗|提醒|反诈中心|不法分子|mengingatkan|mengimbau|imbau|நினைவூட்டு",
+   "variants": [
+    {
+     "all": [
+      "(?:this is|i am|i'm|we are|calling from|from|dari|saya dari|ini|kami dari)\\W+(?:\\w+\\W+){0,3}(?:nsrc|national scam response|pusat respons scam|pusat respons penipuan)"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "id-illegal-lender",
+   "region": "ID",
+   "publisher": "Otoritas Jasa Keuangan (OJK), Indonesia",
+   "checked": "2026-10-24",
+   "source": "https://m.antaranews.com/amp/berita/2291746/ojk-dki-bagi-tips-agar-umkm-terhindar-pinjaman-daring-ilegal",
+   "claim": "OJK (Indonesia, 2026): a lender with no licence is illegal, and illegal lenders often advertise by SMS or WhatsApp. Check one on 157 or WhatsApp 081-157-157-157.",
+   "tactic": "advance-fee",
+   "strength": "weak",
+   "needs": [
+    "pay",
+    "click",
+    "call"
+   ],
+   "unless": "\\b(?:beware|be aware|scam alert|scam advisory|public advisory|crime advisory|fraud alert|reminder|awareness|never|will not|won'?t|do not|don'?t|doesn'?t|does not|stay vigilant)\\b|waspada|berhati-hati|jangan|请勿|切勿|谨防|警惕|不会|எச்சரிக்கை|வேண்டாம்|ஒருபோதும்|ஜாக்கிரதை|都是诈骗|都是骗局|就是诈骗|提醒|反诈中心|不法分子|mengingatkan|mengimbau|imbau|நினைவூட்டு",
+   "variants": [
+    {
+     "all": [
+      "pinjaman|pinjol|dana cair|kredit cair",
+      "tanpa (?:agunan|jaminan|bi checking|slik|survei|survey)|cair (?:dalam )?\\d+ menit|langsung cair"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "sg-bank-link",
+   "region": "SG",
+   "publisher": "MAS and the Association of Banks in Singapore",
+   "checked": "2026-10-24",
+   "source": "https://www.mas.gov.sg/news/media-releases/2022/mas-and-abs-announce-measures-to-bolster-the-security-of-digital-banking",
+   "claim": "MAS and the Association of Banks in Singapore (2022): banks stopped putting clickable links in SMS and emails to customers, so a bank message with a link is a warning sign.",
+   "tactic": "impersonation-official",
+   "strength": "weak",
+   "needs": [
+    "link_unverified"
+   ],
+   "unless": "\\b(?:beware|be aware|scam alert|scam advisory|public advisory|crime advisory|fraud alert|reminder|awareness|never|will not|won'?t|do not|don'?t|doesn'?t|does not|stay vigilant)\\b|waspada|berhati-hati|jangan|请勿|切勿|谨防|警惕|不会|எச்சரிக்கை|வேண்டாம்|ஒருபோதும்|ஜாக்கிரதை|都是诈骗|都是骗局|就是诈骗|提醒|反诈中心|不法分子|mengingatkan|mengimbau|imbau|நினைவூட்டு",
+   "variants": [
+    {
+     "all": [
+      "\\b(?:dbs|posb|ocbc|uob|maybank|citibank|standard chartered|hsbc|cimb|trust bank|gxs)\\b"
+     ]
+    }
+   ]
+  }
+ ]
+}

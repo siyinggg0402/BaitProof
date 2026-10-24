@@ -6,16 +6,12 @@ import pytest
 
 from bot import handlers, telegram_bot
 from bot.handlers import Button, Reply
-from tests.bot.helpers import datas, play, right
+from tests.bot.helpers import datas, fake_render, play, right
 
 EXPIRED = "That quiz expired. Send /quiz to start a new one."
 
 
 REAL_RENDER = telegram_bot.render
-
-
-def fake_render(reply: Reply) -> dict:
-    return {"keyboard": [[b.data for b in row] for row in reply.buttons], "preview": reply.preview}
 
 
 @pytest.fixture(autouse=True)

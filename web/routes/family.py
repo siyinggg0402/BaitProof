@@ -33,7 +33,7 @@ def _view(request: Request, name: str = "family.html", status_code: int = 200, *
     ctx.setdefault("error", "")
     ctx.setdefault("game", "road")
     ctx.setdefault("scope", "week")
-    resp = page(request, name, group=group, invite=_invite(request, group["code"]) if group else "", account=accounts.get(me), avatars=accounts.AVATARS, **ctx)
+    resp = page(request, name, group=group, invite=_invite(request, group["code"]) if group else "", account=accounts.get(me), **ctx)
     resp.status_code = status_code
     resp.headers.update(NO_STORE)
     return resp

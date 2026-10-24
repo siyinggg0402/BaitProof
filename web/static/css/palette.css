@@ -1,0 +1,62 @@
+/* The colours. About 60% a calm warm neutral, 30% the brand purple and the part's own accent, 10% small touches of other colours (soft backgrounds, icons, rewards).
+   Each part of the site has an accent (set on <html data-accent> by base.html): Check purple, Train teal, Friends rose, Records blue, the House warm amber.
+   Every accent keeps white text on its fill at 4.5:1 or better (a test checks it), and the logo and Finn stay purple, so the site is still recognisably Baitproof.
+   --violet and --cyan are the two companion colours of the soft background light and the ripples: the accent plus two others, never three shades of one colour. */
+
+:root{
+  --bg:#FBFAF8;--surface:#fff;--ink:#1D1B26;--muted:#6A6676;--faint:#9A96A6;--line:#ECE8E2;--line-2:#DDD7CE;--info-soft:#F4F2EE;
+  --glass-line:color-mix(in srgb,#fff 62%,var(--line));
+  /* reward and state colours that every part shares */
+  --gold:#E0A526;--gold-soft:#FDF3D6;--sky:#3B82F6;--sky-soft:#E7F0FF;--rose:#E0568A;--rose-soft:#FCE9F1;--leaf:#2E9E66;--leaf-soft:#E5F6EC;
+}
+/* the accents (light) */
+:root,:root[data-accent=violet]{--brand:#7A5CD0;--brand-hover:#684BBE;--brand-ink:#fff;--brand-soft:#F0EAFC;--brand-deep:#5B3FB0;--violet:#F4A3C4;--cyan:#9ADFD6}
+:root[data-accent=teal]{--brand:#0D8078;--brand-hover:#0A6A63;--brand-ink:#fff;--brand-soft:#E0F4F1;--brand-deep:#086058;--violet:#C3B2F2;--cyan:#F7D98B}
+:root[data-accent=rose]{--brand:#C2417A;--brand-hover:#A8346A;--brand-ink:#fff;--brand-soft:#FCE8F1;--brand-deep:#8F2A58;--violet:#F8C77E;--cyan:#C3B2F2}
+:root[data-accent=blue]{--brand:#2F6DD8;--brand-hover:#2459B8;--brand-ink:#fff;--brand-soft:#E5EDFB;--brand-deep:#1D4699;--violet:#F7D98B;--cyan:#F4B2D2}
+:root[data-accent=sun]{--brand:#B35A06;--brand-hover:#964A04;--brand-ink:#fff;--brand-soft:#FCEEDB;--brand-deep:#7D3F03;--violet:#C3B2F2;--cyan:#A9DDB9}
+
+@media (prefers-color-scheme:dark){
+  :root{--bg:#100E16;--surface:#18161F;--ink:#F4F2F8;--muted:#AAA6B8;--faint:#7C7889;--line:#2B2833;--line-2:#3B3744;--info-soft:#1C1A24;--glass-line:rgba(255,255,255,.10);
+    --gold:#F2C14A;--gold-soft:#33290F;--sky:#7DB0FF;--sky-soft:#16233F;--rose:#FF8DB4;--rose-soft:#3A1826;--leaf:#4ADE9A;--leaf-soft:#10281C}
+  :root,:root[data-accent=violet]{--brand:#A78BFA;--brand-hover:#BBA5FC;--brand-ink:#140E26;--brand-soft:#231A3C;--brand-deep:#CDBDFB;--violet:#C0568C;--cyan:#2D9C93}
+  :root[data-accent=teal]{--brand:#3CC9BE;--brand-hover:#63DBD1;--brand-ink:#06201E;--brand-soft:#10302E;--brand-deep:#8CE9E1;--violet:#7C63C9;--cyan:#B58F2A}
+  :root[data-accent=rose]{--brand:#FF8DB8;--brand-hover:#FFA6C8;--brand-ink:#2D0A1B;--brand-soft:#3A1626;--brand-deep:#FFB8D3;--violet:#B8873A;--cyan:#7C63C9}
+  :root[data-accent=blue]{--brand:#6CA2FF;--brand-hover:#8BB6FF;--brand-ink:#07142E;--brand-soft:#16233F;--brand-deep:#AFCBFF;--violet:#B5902C;--cyan:#B8588A}
+  :root[data-accent=sun]{--brand:#F2A53A;--brand-hover:#F6B861;--brand-ink:#2B1802;--brand-soft:#35260F;--brand-deep:#F8CE8B;--violet:#7C63C9;--cyan:#4C9B6A}
+}
+
+/* the logo and Finn are always purple: they are who Baitproof is, whatever part of the site you are in */
+.brand svg rect{fill:#7A5CD0}
+@media (prefers-color-scheme:dark){.brand svg rect{fill:#8F73E6}}
+
+/* a block can wear another accent than its page (the colours it sets are the ones above) */
+.acc-violet{--brand:#7A5CD0;--brand-hover:#684BBE;--brand-ink:#fff;--brand-soft:#F0EAFC;--brand-deep:#5B3FB0}
+.acc-teal{--brand:#0D8078;--brand-hover:#0A6A63;--brand-ink:#fff;--brand-soft:#E0F4F1;--brand-deep:#086058}
+.acc-rose{--brand:#C2417A;--brand-hover:#A8346A;--brand-ink:#fff;--brand-soft:#FCE8F1;--brand-deep:#8F2A58}
+.acc-blue{--brand:#2F6DD8;--brand-hover:#2459B8;--brand-ink:#fff;--brand-soft:#E5EDFB;--brand-deep:#1D4699}
+.acc-sun{--brand:#B35A06;--brand-hover:#964A04;--brand-ink:#fff;--brand-soft:#FCEEDB;--brand-deep:#7D3F03}
+@media (prefers-color-scheme:dark){
+  .acc-violet{--brand:#A78BFA;--brand-hover:#BBA5FC;--brand-ink:#140E26;--brand-soft:#231A3C;--brand-deep:#CDBDFB}
+  .acc-teal{--brand:#3CC9BE;--brand-hover:#63DBD1;--brand-ink:#06201E;--brand-soft:#10302E;--brand-deep:#8CE9E1}
+  .acc-rose{--brand:#FF8DB8;--brand-hover:#FFA6C8;--brand-ink:#2D0A1B;--brand-soft:#3A1626;--brand-deep:#FFB8D3}
+  .acc-blue{--brand:#6CA2FF;--brand-hover:#8BB6FF;--brand-ink:#07142E;--brand-soft:#16233F;--brand-deep:#AFCBFF}
+  .acc-sun{--brand:#F2A53A;--brand-hover:#F6B861;--brand-ink:#2B1802;--brand-soft:#35260F;--brand-deep:#F8CE8B}
+}
+.acc-violet,.acc-teal,.acc-rose,.acc-blue,.acc-sun{--glow-brand:color-mix(in srgb,var(--brand) 38%,transparent);--grad:var(--brand);--grad-soft:color-mix(in srgb,var(--brand) 13%,transparent)}
+
+/* ---- where the other colours show up */
+/* the games on the Train page: one colour each, so the grid reads as a row of different things */
+.mode-ico{padding:9px;border-radius:14px;background:var(--brand-soft);color:var(--brand);align-self:flex-start;justify-self:start;width:fit-content}
+.mode-card .mode-ico .ic{width:1.7rem;height:1.7rem}
+.mode-card:hover{border-color:color-mix(in srgb,var(--brand) 40%,var(--glass-line))}
+/* the home page: the progress card is teal, the play promo rose; the check form stays purple */
+.home-card{border-top:4px solid var(--brand)}
+.play-promo{background:color-mix(in srgb,var(--brand-soft) 70%,var(--surface));border-color:color-mix(in srgb,var(--brand) 24%,var(--line))}
+.hc-stats li:nth-child(2){background:var(--gold-soft);color:#8A5A00}.hc-stats li:nth-child(2) .ic{color:var(--gold)}
+@media (prefers-color-scheme:dark){.hc-stats li:nth-child(2){color:var(--gold)}}
+/* XP and points are always gold, wherever they appear */
+.hh-points .ic,.hh-price .ic,.chip .ic[href$="star"]{color:var(--gold)}
+/* the house's stage takes the page's accent instead of a fixed lilac */
+.house{background:radial-gradient(120% 90% at 30% 10%,color-mix(in srgb,var(--brand-soft) 55%,#fff) 0%,var(--brand-soft) 55%,color-mix(in srgb,var(--brand) 16%,var(--brand-soft)) 100%)}
+@media (prefers-color-scheme:dark){.house{background:radial-gradient(120% 90% at 30% 10%,color-mix(in srgb,var(--brand) 14%,var(--surface)) 0%,var(--surface) 70%)}}

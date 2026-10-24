@@ -56,11 +56,10 @@ def test_the_service_worker_covers_the_whole_site_and_caches_nothing(client):
     assert "caches." not in r.text and "cache.put" not in r.text  # a scam checker must show the live answer
 
 
-def test_every_page_links_the_manifest_and_offers_the_install_button(client):
+def test_every_page_links_the_manifest_and_has_no_install_button(client):
     html = client.get("/").text
     assert '<link rel="manifest" href="/manifest.webmanifest">' in html and 'name="theme-color"' in html and "/static/js/pwa.js" in html
-    assert re.search(r'id="install-btn"[^>]*hidden>Install on your phone<', html)  # shown by the script only when the browser offers to install
-    assert "安装到手机" in TestClient(app, cookies={"lang": "zh"}).get("/").text
+    assert "install-btn" not in html  # the browser's own "install" menu is the way in; the page carries no button of its own
 
 
 # ---------------------------------------------------------------- sharing words

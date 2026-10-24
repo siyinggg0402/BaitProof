@@ -139,3 +139,34 @@ def test_chinese_personal_numbers_are_redacted_before_anything_is_stored_or_sent
     assert "13812345678" not in out and "11010519491231002X" not in out and "6217000012345678901" not in out and "wang@example.com" not in out
     clean, n = scrub_outgoing(text)
     assert n >= 3 and "13812345678" not in clean and "11010519491231002X" not in clean
+
+
+# ---------------------------------------------------------------- the fresh set, the warnings that name what they warn about, and a notice that is only a warning
+def test_the_fresh_chinese_set_is_caught_by_the_rules_alone_without_a_false_alarm():
+    from scripts import common
+    from tests.data.zh import fresh
+
+    def flagged(text):
+        with common.offline(net=True):
+            return check_message(text, store=False, log=False).verdict in FLAGGED
+
+    caught = [tag for tag, text in fresh.SCAMS if flagged(text)]
+    alarms = [tag for tag, text in fresh.LEGIT if flagged(text)]
+    assert len(caught) >= 19 and not alarms, (len(caught), alarms)                  # (measured 20 of 20 and none, read once after the rules were tuned)
+
+
+def test_a_warning_not_to_give_the_code_to_anyone_is_a_warning_and_a_bare_dont_tell_anyone_is_a_scammers_secrecy():
+    from core.domain import intents
+
+    assert intents.clearing_conditions_met("one-time-code", "您的驗證碼為 482913，10分鐘內有效，請勿提供給任何人。", set())
+    assert not intents.clearing_conditions_met("one-time-code", "您的验证码为 482913。请把验证码告诉我们的工作人员，请勿告知他人。", set())
+
+
+def test_a_notice_that_only_warns_asks_nothing_but_the_same_words_with_a_number_to_ring_do():
+    from core.pipelines.check import ingest, intent
+
+    tip = intent._heuristic(ingest.ingest("国家反诈中心提醒：凡是自称公检法要求转账到“安全账户”的都是诈骗，请立即挂断电话。"))
+    assert tip.advisory and not tip.asks and not tip.pressure_kinds
+    scam = intent._heuristic(ingest.ingest("您好，这里是公安局反诈中心，您的手机号被不法分子利用，请立即拨打 02988880000 核实身份，勿向他人透露。"))
+    assert not scam.advisory and "call" in scam.asks
+    assert "call" in intent._heuristic(ingest.ingest("您好，请立即拨打 02988880000 核实身份，您的手机号被不法分子利用。")).asks                  # (a notice's words are not skipped when looking for what a message asks)

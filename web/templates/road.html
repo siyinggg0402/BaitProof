@@ -5,7 +5,7 @@
 {% block content %}
 <h1 class="sr">{{ _("Scam Road") }}</h1>
 
-<section class="road rise d2{{ ' duel' if duel_code }}" id="road" aria-label="{{ _('Scam Road game') }}" data-best="{{ best }}" data-season='{{ (season or {})|tojson|forceescape }}'{% if duel_code %} data-duel="{{ duel_code }}" data-invite="{{ invite }}"{% endif %}>
+<section class="road rise d2{{ ' duel' if duel_code }}" id="road" aria-label="{{ _('Scam Road game') }}" data-best="{{ best }}" data-look="{{ look }}" data-season='{{ (season or {})|tojson|forceescape }}'{% if duel_code %} data-duel="{{ duel_code }}" data-invite="{{ invite }}"{% endif %}>
   <canvas id="scene" aria-hidden="true"></canvas>
 
   <div class="hud" id="hud" hidden>

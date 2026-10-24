@@ -153,11 +153,11 @@ _PROMPTS = {"zh": "以下是普通话的句子。", "zh-Hant": "以下是普通�
 
 
 def _hint(lang_hint: str) -> tuple[str | None, str]:
-    """(the language to tell the model, the script to return): only English, Chinese and Malay are hinted; anything else is left to detection."""
+    """(the language to tell the model, the script to return): only English, Chinese, Malay and Tamil are hinted; anything else is left to detection."""
     h = (lang_hint or "").strip().lower().replace("_", "-")
     if h.startswith("zh") or h in ("cn", "chinese"):
         return "zh", i18n.norm(h)
-    if h in ("en", "ms") or h.startswith("en-") or h.startswith("ms-"):
+    if h in ("en", "ms", "ta") or h.startswith(("en-", "ms-", "ta-")):
         return h[:2], ""
     return None, ""
 

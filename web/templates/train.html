@@ -1,26 +1,47 @@
 {% extends "base.html" %}
 {% block title %}{{ _("Train") }} · Baitproof{% endblock %}
+{% block meta %}<link rel="stylesheet" href="/static/css/hub.css">{% endblock %}
 {% block content %}
-<h1 class="rise t-h1">{{ _("Train") }}</h1>
-<p class="lead t-lead rise d1">{{ _("A minute of practice makes the next scam easier to spot.") }}</p>
+<h1 class="sr-only">{{ _("Train") }}</h1>
 
-<section class="tsec rise d2" id="practice" aria-labelledby="quick-h">
+{# the house comes first: it is what the games are for #}
+<section class="hub rise d1 acc-sun" aria-labelledby="hub-h">
+  <div class="hub-stage" id="house" data-mode="preview">
+    <div class="hub-poster" aria-hidden="true">{{ avatar(progress.look, 'huge') }}</div>
+    <canvas id="scene" aria-hidden="true"></canvas>
+    <p class="hub-hint" aria-hidden="true">{{ _("Tap the floor to make the character walk there.") }}</p>
+    <p class="hub-note" id="nogl" hidden>{{ _("This browser or device can't show 3D graphics. Inbox Rush plays the same scam-or-not game without them.") }}</p>
+    <p class="hub-note" id="lost" hidden>{{ _("The house didn't load") }} <button type="button" class="ghost" id="retry">{{ _("Try again") }}</button></p>
+  </div>
+  <div class="hub-side">
+    <div class="hub-who">{{ avatar(progress.look, 'big') }}<div><h2 id="hub-h">{{ _("Your house") }}</h2><p class="muted">{{ _("Level {n} · {title}", n=progress.level, title=progress.title) }}</p></div></div>
+    <p class="hub-lead">{{ _("Spend the XP you earn on plants, furniture and pets for your own little room.") }}</p>
+    <progress class="xpbar" max="{{ progress.need }}" value="{{ progress.into }}" aria-label="{{ _('Progress to the next level') }}"></progress>
+    <p class="muted hub-xp">{{ _("{a} / {b} XP to level {n}", a=progress.into, b=progress.need, n=progress.level + 1) }}</p>
+    <ul class="hc-stats"><li>{{ icon('flame') }} {{ _("{n}-day streak", n=progress.streak) }}</li><li>{{ icon('star') }} {{ _("{n} XP to spend", n=progress.balance) }}</li></ul>
+    <a class="btn big" href="/house">{{ icon('home') }} <span>{{ _("Decorate your house") }}</span></a>
+  </div>
+</section>
+
+<section class="tsec rise d2" id="games" aria-labelledby="games-h">
+  <div class="tsec-head"><h2 id="games-h">{{ _("Games") }}</h2><span class="muted">{{ _("Short rounds that earn XP, streaks and badges.") }}</span></div>
+  <div class="bento">
+    <a class="gm gm-feature mode-card acc-violet" href="/road"><span class="mode-ico">{{ icon('car', 'lg') }}</span><span class="mode-title">{{ _("Scam Road") }}</span><span class="mode-desc">{{ _("A 3D drive: steer into the scam, check-first or fine lane. See how far you get compared with your friends.") }}</span><span class="gm-lanes" aria-hidden="true"><i></i><i></i><i></i></span></a>
+    <a class="gm gm-tile mode-card acc-rose" href="/game#rush"><span class="mode-ico">{{ icon('inbox', 'lg') }}</span><span class="mode-title">{{ _("Inbox Rush") }}</span><span class="mode-desc">{{ _("8 messages. Scam, fine, or check first? Aimed at the tricks you find hardest.") }}</span></a>
+    <a class="gm gm-tile mode-card acc-blue" href="/game#daily"><span class="mode-ico">{{ icon('calendar', 'lg') }}</span><span class="mode-title">{{ _("Daily Challenge") }}</span><span class="mode-desc">{{ _("The same 6 messages for everyone today. +50 XP the first time.") }}</span>{% if progress.daily_done %}<span class="gm-done">{{ icon('check-circle') }} {{ _("Done today") }}</span>{% endif %}</a>
+  </div>
+  <ul class="gm-rows">
+    <li><a class="gm gm-row acc-teal" href="/link"><span class="mode-ico">{{ icon('link', 'lg') }}</span><span class="gm-text"><span class="mode-title">{{ _("Link Hunt") }}</span><span class="mode-desc">{{ _("Four links, one fake. Tap the fake address before it fools you.") }}</span></span>{{ icon('chevron') }}</a></li>
+    <li><a class="gm gm-row acc-violet" href="/game#tell"><span class="mode-ico">{{ icon('search', 'lg') }}</span><span class="gm-text"><span class="mode-title">{{ _("Spot the Tell") }}</span><span class="mode-desc">{{ _("Tap the exact words that give a scam away.") }}</span></span>{{ icon('chevron') }}</a></li>
+    <li><a class="gm gm-row acc-rose" href="/game"><span class="mode-ico">{{ icon('swords', 'lg') }}</span><span class="gm-text"><span class="mode-title">{{ _("Boss battles") }}</span><span class="mode-desc">{{ _("One boss per trick. Beat it to earn a badge.") }}</span></span>{{ icon('chevron') }}</a></li>
+  </ul>
+</section>
+
+<section class="tsec rise d3" id="practice" aria-labelledby="quick-h">
   <div class="tsec-head"><h2 id="quick-h">{{ _("Quick practice") }}</h2><span class="pill"><b>{{ _("1 MIN") }}</b> {{ _("Four short questions") }}</span></div>
   <div class="card quick" id="stage" aria-live="polite"><div><p>{{ _("Getting one wrong is how we learn. Every miss shows you the giveaway, so there are no wrong turns here.") }}</p><p class="sub">{{ _("Picked from the tricks you meet most and the ones you find hardest.") }}</p></div><button class="big" id="start">{{ _("Start practice") }}</button></div>
 </section>
 
-<section class="tsec rise d3" id="games" aria-labelledby="games-h">
-  <div class="tsec-head"><h2 id="games-h">{{ _("Games") }}</h2><span class="muted">{{ _("Short rounds that earn XP, streaks and badges.") }}</span></div>
-  <div class="mode-grid games">
-    <a class="mode-card hot" href="/road"><span class="mode-ico">{{ icon('car', 'lg') }}</span><span class="mode-title">{{ _("Scam Road") }}</span><span class="mode-desc">{{ _("A 3D drive: steer into the scam, check-first or fine lane. See how far you get compared with your friends.") }}</span></a>
-    <a class="mode-card" href="/link"><span class="mode-ico">{{ icon('link', 'lg') }}</span><span class="mode-title">{{ _("Link Hunt") }}</span><span class="mode-desc">{{ _("Four links, one fake. Tap the fake address before it fools you.") }}</span></a>
-    <a class="mode-card hot" href="/game#rush"><span class="mode-ico">{{ icon('inbox', 'lg') }}</span><span class="mode-title">{{ _("Inbox Rush") }}</span><span class="mode-desc">{{ _("8 messages. Scam, fine, or check first? Aimed at the tricks you find hardest.") }}</span><span class="mode-tag">{{ _("Quick play") }}</span></a>
-    <a class="mode-card" href="/game#daily"><span class="mode-ico">{{ icon('calendar', 'lg') }}</span><span class="mode-title">{{ _("Daily Challenge") }}</span><span class="mode-desc">{{ _("The same 6 messages for everyone today. +50 XP the first time.") }}</span></a>
-    <a class="mode-card" href="/game#tell"><span class="mode-ico">{{ icon('search', 'lg') }}</span><span class="mode-title">{{ _("Spot the Tell") }}</span><span class="mode-desc">{{ _("Tap the exact words that give a scam away.") }}</span></a>
-    <a class="mode-card" href="/game"><span class="mode-ico">{{ icon('swords', 'lg') }}</span><span class="mode-title">{{ _("Boss battles") }}</span><span class="mode-desc">{{ _("One boss per trick. Beat it to earn a badge.") }}</span></a>
-  </div>
-</section>
-
 {% include "_map.html" %}
 {% endblock %}
-{% block scripts %}<script src="/static/js/train.js"></script>{% endblock %}
+{% block scripts %}<script src="/static/js/train.js"></script><script src="/static/js/hub.js"></script>{% endblock %}

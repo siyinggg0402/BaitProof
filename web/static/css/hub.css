@@ -1,0 +1,63 @@
+/* The Train page. One thing to look at first (your house), then the games in a clear order: a big one, two medium ones, then plain rows for the rest, then practice and the map.
+   The house is a live 3D preview (house.js, loaded by hub.js when it scrolls into view); until it has drawn, and if 3D cannot run, the stage shows your character. */
+
+/* ---- the house */
+.hub{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(280px,1fr);margin:6px 0 0;border-radius:26px;overflow:hidden;border:1px solid var(--glass-line);background:var(--surface);box-shadow:var(--shadow-up);isolation:isolate}
+.hub-stage{position:relative;min-height:380px;overflow:hidden;user-select:none;-webkit-user-select:none;
+  background:radial-gradient(120% 90% at 30% 10%,color-mix(in srgb,var(--brand-soft) 55%,#fff) 0%,var(--brand-soft) 55%,color-mix(in srgb,var(--brand) 16%,var(--brand-soft)) 100%)}
+.hub-stage #scene{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:pan-y;opacity:0;transition:opacity .35s}
+.hub-stage.ready #scene{opacity:1}
+.hub-poster{position:absolute;inset:0;display:grid;place-items:center;transition:opacity .2s}
+.hub-poster .avt{font-size:5.5rem;background:var(--glass-strong);border:3px solid var(--glass-line);box-shadow:var(--shadow-up)}
+.hub-stage.ready .hub-poster{opacity:0;pointer-events:none}
+.hub-hint{position:absolute;left:12px;bottom:12px;margin:0;padding:7px 13px;border-radius:12px;background:var(--glass-strong);color:var(--muted);border:1px solid var(--glass-line);font:600 .82rem/1.3 var(--sans);opacity:0;transition:opacity .4s;pointer-events:none;
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.hub-stage.ready .hub-hint{opacity:1}
+.hub-note{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);width:max-content;max-width:calc(100% - 24px);margin:0;padding:9px 14px;border-radius:14px;background:var(--glass-strong);color:var(--ink);border:1px solid var(--glass-line);font:600 .88rem/1.4 var(--sans);text-align:center}
+.hub-note[hidden]{display:none}.hub-note .ghost{margin:0 0 0 6px}
+@media (prefers-color-scheme:dark){.hub-stage{background:radial-gradient(120% 90% at 30% 10%,color-mix(in srgb,var(--brand) 14%,var(--surface)) 0%,var(--surface) 70%)}}
+
+.hub-side{display:grid;gap:10px;align-content:center;padding:24px}
+.hub-who{display:flex;align-items:center;gap:14px}.hub-who h2{margin:0;font-size:1.3rem}.hub-who p{margin:0}.hub-who .avt{font-size:2.6rem}
+.hub-lead{margin:2px 0 0;color:var(--ink);font-size:.98rem;line-height:1.5}
+.hub-side .xpbar{margin-top:6px}.hub-xp{margin:0;font-size:.85rem}
+.hub-side .hc-stats{margin-top:2px}
+.hub-side .btn.big{margin-top:8px;width:100%;justify-content:center;gap:.5em}.hub-side .btn.big .ic{width:1.15em;height:1.15em}
+
+/* ---- the games: a big one, two medium ones */
+.bento{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:14px;margin:0}
+.gm{text-decoration:none}
+.bento .gm-feature{grid-row:1 / span 2;padding:24px;gap:8px;min-height:230px}
+.gm-feature .mode-title{font-size:1.5rem;letter-spacing:-.01em}.gm-feature .mode-desc{font-size:.98rem;max-width:34ch}
+.gm-feature .mode-ico{padding:12px}.gm-feature .mode-ico .ic{width:2.2rem;height:2.2rem}
+.gm-tile{padding:18px}
+.gm-lanes{display:flex;gap:10px;margin-top:auto;padding-top:18px;height:84px}
+.gm-lanes i{flex:1;border-radius:12px 12px 4px 4px;background:color-mix(in srgb,var(--brand) 12%,transparent);position:relative;overflow:hidden}
+.gm-lanes i::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:4px;margin-left:-2px;background:repeating-linear-gradient(to bottom,color-mix(in srgb,var(--brand) 55%,transparent) 0 12px,transparent 12px 26px);animation:gm-road 1.4s linear infinite}
+.gm-lanes i:nth-child(2){background:color-mix(in srgb,var(--brand) 20%,transparent)}
+@keyframes gm-road{to{background-position:0 26px}}
+.gm-done{position:absolute;top:14px;right:14px;display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;background:var(--leaf-soft);color:var(--leaf);font:700 .75rem var(--sans)}
+.gm-done .ic{width:1em;height:1em}
+
+/* ---- the rest of the games: plain rows */
+.gm-rows{margin:14px 0 0;padding:0;list-style:none;border-radius:var(--r);border:1px solid var(--glass-line);background:var(--glass);overflow:hidden;box-shadow:var(--shadow)}
+.gm-rows li + li{border-top:1px solid var(--line)}
+.gm-row{display:flex;align-items:center;gap:14px;padding:14px 18px;color:var(--ink);transition:background .15s}
+.gm-row:hover{background:var(--brand-soft)}.gm-row:focus-visible{outline:3px solid var(--brand);outline-offset:-3px}
+.gm-row .mode-ico{padding:8px;border-radius:12px}.gm-row .mode-ico .ic{width:1.4rem;height:1.4rem}
+.gm-text{display:grid;gap:2px;min-width:0;flex:1}.gm-text .mode-title{font:700 1.02rem var(--sans)}.gm-text .mode-desc{color:var(--muted);font-size:.88rem}
+.gm-row > .ic{width:1.2rem;height:1.2rem;color:var(--faint);flex:none}.gm-row:hover > .ic{color:var(--brand)}
+
+/* ---- narrower screens */
+@media (max-width:859px){
+  .hub{grid-template-columns:1fr}
+  .hub-stage{min-height:0;aspect-ratio:4 / 3}
+  .hub-side{padding:18px 18px 20px}
+}
+@media (max-width:640px){
+  .bento{grid-template-columns:1fr}
+  .bento .gm-feature{grid-row:auto;min-height:0}
+  .gm-lanes{height:56px}
+  .hub-poster .avt{font-size:4.2rem}
+}
+@media (prefers-reduced-motion:reduce){.gm-lanes i::after{animation:none}.hub-stage #scene,.hub-poster,.hub-hint{transition:none}}

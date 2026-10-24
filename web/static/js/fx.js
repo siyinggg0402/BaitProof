@@ -67,8 +67,8 @@ if (bubble) {
     const r = el.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
     el.style.setProperty("--mx", x + "px"); el.style.setProperty("--my", y + "px");
     if (!reduce && el.matches(TILT) && r.width < 760) { // big panels stay still; small cards lean toward the pointer
-      el.style.setProperty("--ry", ((x / r.width - 0.5) * 9).toFixed(2) + "deg");
-      el.style.setProperty("--rx", ((0.5 - y / r.height) * 9).toFixed(2) + "deg");
+      el.style.setProperty("--ry", ((x / r.width - 0.5) * 5).toFixed(2) + "deg");
+      el.style.setProperty("--rx", ((0.5 - y / r.height) * 5).toFixed(2) + "deg");
     }
   }
   document.addEventListener("pointermove", (e) => { if (e.pointerType !== "mouse") return; ev = e; if (!queued) queued = requestAnimationFrame(apply); }, { passive: true });
@@ -91,7 +91,7 @@ if (bubble) {
       if (!card || card.dataset.splashed) return;
       card.dataset.splashed = "1";
       const b = card.getBoundingClientRect();
-      if (window.bpSplash) window.bpSplash(b.left + b.width / 2, Math.min(Math.max(b.top + 70, 90), innerHeight - 90), 1.25);
+      if (window.bpSplash) window.bpSplash(b.left + b.width / 2, Math.min(Math.max(b.top + 70, 90), innerHeight - 90), 0.8);
     }).observe(slot, { childList: true, subtree: true });
   }
 })();

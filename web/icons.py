@@ -6,6 +6,8 @@ from __future__ import annotations
 
 from markupsafe import Markup, escape
 
+from web import portrait as pt
+
 
 def circle(cx: float, cy: float, r: float) -> str:
     return f"M{cx - r:g} {cy:g}a{r:g} {r:g} 0 1 0 {2 * r:g} 0a{r:g} {r:g} 0 1 0 {-2 * r:g} 0"
@@ -47,6 +49,7 @@ ICONS: dict[str, tuple[str, ...]] = {
     "sparkles": ("M10 3l1.8 5.2L17 10l-5.2 1.8L10 17l-1.8-5.2L3 10l5.2-1.8z", "M19 15v5", "M16.5 17.5h5", "M19 3.5v3", "M17.5 5h3"),
     "confetti": ("M4 21 9 8l7 7z", "M14 4h.01", "M19 8h.01", "M19 14h.01", "M12.5 8.5l2-2", "M16.5 12.5l2-1"),
     "arrow-up": ("M12 19V5", "m5 12 7-7 7 7"),
+    "chevron": ("m9 6 6 6-6 6",),
     # inputs and evidence
     "camera": ("M4 7h3l1.5-2h7L17 7h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z", circle(12, 13, 3.5)),
     "mic": ("M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z", "M5 11a7 7 0 0 0 14 0", "M12 18v3"),
@@ -84,6 +87,12 @@ ICONS: dict[str, tuple[str, ...]] = {
     "heart-fill": ("~" + HEART,),
     "crown": ("M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z",),
     "ban": (circle(12, 12, 9), "m5.6 5.6 12.8 12.8"),
+    "home": ("m3 11 9-8 9 8", "M5 10v10h14V10", "M10 20v-6h4v6"),
+    "user": (circle(12, 8, 4), "M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"),
+    "rotate": ("M21 12a9 9 0 1 1-3-6.7", "M21 4v5h-5"),
+    "plus": ("M12 5v14", "M5 12h14"),
+    "paw": ("M12 12.5c-2.7 0-4.8 2.2-4.8 4.3 0 1.9 1.8 2.4 4.8 2.4s4.8-.5 4.8-2.4c0-2.1-2.1-4.3-4.8-4.3z", circle(6.2, 10, 1.7), circle(9.6, 6.2, 1.7), circle(14.4, 6.2, 1.7), circle(17.8, 10, 1.7)),
+    "eye": ("M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z", circle(12, 12, 3)),
     # cosmetics for the car's driver
     "cap": ("M5 15a7 7 0 0 1 14 0", "M5 15h14", "M19 15h3", dot(12, 7.8)),
     "shades": ("M3 10h18", "M5 10v3a3 3 0 0 0 6 0v-3", "M13 10v3a3 3 0 0 0 6 0v-3"),
@@ -128,7 +137,7 @@ def sprite() -> Markup:
     for name, paths in ICONS.items():
         body = "".join(f'<path fill="currentColor" d="{p[1:]}"/>' if p.startswith("~") else f'<path d="{p}"/>' for p in paths)
         symbols.append(f'<symbol id="i-{name}" viewBox="0 0 24 24">{body}</symbol>')
-    return Markup('<svg class="sprite" aria-hidden="true" focusable="false" width="0" height="0">' + "".join(symbols) + "</svg>")
+    return Markup('<svg class="sprite" aria-hidden="true" focusable="false" width="0" height="0">' + "".join(symbols) + pt.symbols() + "</svg>")
 
 
 def icon(name: str, cls: str = "") -> Markup:
@@ -138,10 +147,10 @@ def icon(name: str, cls: str = "") -> Markup:
 
 
 def avatar(name: str, cls: str = "") -> Markup:
-    """A profile picture: the animal's face in a soft circle. An unknown name (an old emoji avatar that was never converted) becomes the fish."""
+    """A profile picture in a soft circle: a character's portrait (a look code), or the animal a profile made before there were characters had. An unknown
+    name (an old emoji avatar that was never converted) becomes the fish."""
+    extra = f" {escape(cls)}" if cls else ""
+    if pt.ch.valid(name):
+        return Markup(f'<span class="avt{extra}" data-av="{escape(name)}">{pt.portrait(name)}</span>')
     name = name if name in AVATAR_IDS else "fish"
-    return Markup(f'<span class="avt{" " + escape(cls) if cls else ""}" data-av="{name}">{icon("av-" + name)}</span>')
-
-
-def avatar_name(name: str) -> str:
-    return name if name in AVATAR_IDS else "fish"
+    return Markup(f'<span class="avt{extra}" data-av="{name}">{icon("av-" + name)}</span>')

@@ -107,7 +107,7 @@ def test_the_help_lines_are_in_malay():
 def test_the_steps_of_a_check_read_as_finished_work():
     for key in ("Read the message", "Checked links and numbers", "Weighed the evidence"):
         assert tr(key, "ms").startswith("Telah ")
-    assert i18n.LANGS[-1] == "ms" and i18n.NAMES["ms"] == "Bahasa Melayu"
+    assert "ms" in i18n.LANGS and i18n.NAMES["ms"] == "Bahasa Melayu"
 
 
 def test_malay_seed_bank_is_well_formed():
@@ -219,3 +219,63 @@ def test_a_typical_malay_scam_is_hard_evidence_when_it_asks_for_a_code_and_claim
 def test_an_indonesian_verification_code_notice_is_recognised_as_a_normal_login_code():
     r = check_message("Kode verifikasi Shopee Anda: 3921. Jangan beri kode ini ke siapa pun, termasuk pihak Shopee.", store=False, log=False)
     assert any(e.source == "purpose:one-time-code" and e.supports == "safe" for e in r.evidence)  # "verifikasi" here is the noun, not a request to verify
+
+
+# ---------------------------------------------------------------- Indonesian: the pack, its language detection and the sets written to test it
+from scripts import common  # noqa: E402
+from tests.data.id import dev as id_dev, fresh as id_fresh, holdout as id_holdout  # noqa: E402
+
+
+def _rules_only(text):
+    with common.offline(net=True):
+        v = check_message(text, store=False, log=False).verdict
+    return "scam" if v in (V.SCAM, V.LIKELY_SCAM) else v.value
+
+
+@pytest.mark.parametrize("ds,minimum", [(id_dev, 23), (id_holdout, 22), (id_fresh, 18)], ids=["dev", "holdout", "fresh"])
+def test_the_rules_alone_catch_most_indonesian_scams_and_never_flag_an_ordinary_message(ds, minimum):
+    caught = [tag for tag, text in ds.SCAMS if _rules_only(text) == "scam"]
+    alarms = [tag for tag, text in ds.LEGIT if _rules_only(text) == "scam"]
+    assert len(caught) >= minimum and not alarms, (len(caught), alarms)         # (measured 23/25, 24/25 and 19/20; the dev set was used to write the rules, the holdout was read once and then used, the fresh set once)
+
+
+def test_every_indonesian_message_is_recognised_as_indonesian_and_no_english_one_is():
+    from tests.data.en import hard_3, sg
+
+    for ds in (id_dev, id_holdout, id_fresh):
+        assert all(detect(t) == "ms" for _, t in ds.SCAMS + ds.LEGIT), [tag for tag, t in ds.SCAMS + ds.LEGIT if detect(t) != "ms"]
+    assert not [tag for tag, t in hard_3.SCAMS + hard_3.LEGIT + sg.SCAMS + sg.LEGIT if detect(t) == "ms"]
+
+
+def test_a_dont_share_warning_is_not_a_request_in_malay_and_indonesian():
+    from core.pipelines.check import ingest, intent
+
+    for text in ("Kod TAC anda untuk log masuk ialah 774412. Jangan dedahkan kepada sesiapa, termasuk pegawai bank.",
+                 "Kode verifikasi Shopee Anda: 3921. Jangan beri kode ini ke siapa pun, termasuk pihak Shopee.",
+                 "Kod OTP anda ialah 593021. Jangan kongsi dengan sesiapa. Sah selama 5 minit.",
+                 "BCA: Waspada penipuan! BCA tidak pernah meminta PIN, password, atau kode OTP Anda melalui telepon, SMS, atau media sosial."):
+        asks = intent._heuristic(ingest.ingest(text)).asks
+        assert not asks & {"share_code", "share_credentials"}, text
+    assert "share_code" in intent._heuristic(ingest.ingest("Mohon sebutkan kode OTP yang baru Anda terima kepada petugas kami.")).asks
+
+
+def test_opening_hours_are_not_a_premium_rate_phone_number():
+    from core.domain import privacy
+
+    assert privacy.phones_in("Jadwal vaksin Rabu, 09.00-11.00. Mohon membawa buku KIA.") == [] and privacy.phones_in("Buka 8.30-17.30 setiap hari") == []
+    assert privacy.phones_in("Hubungi 0812-3456-7890 sekarang") == ["081234567890"]
+
+
+def test_a_courier_update_or_a_new_card_is_not_an_impersonation_and_an_apk_invitation_is():
+    assert _rules_only("J&T Express: Paket Anda sedang diantar kurir hari ini. Mohon siapkan nomor HP untuk konfirmasi penerimaan. Resi JP1234567890.") != "scam"
+    assert _rules_only("BNI: Kartu debit baru Anda telah dikirim ke alamat terdaftar. Aktivasi dilakukan di ATM BNI terdekat atau lewat aplikasi BNI Mobile.") != "scam"
+    assert _rules_only("Assalamualaikum, kami mengundang Bapak/Ibu di acara pernikahan kami. Silakan lihat undangan digital di file Undangan_Pernikahan.apk") == "scam"
+    assert _rules_only("Download the file Invoice_Update.apk to see your invoice and confirm the payment now.") != "safe"
+
+
+def test_a_premium_sms_subscription_is_caught_in_indonesian_too():
+    from core.pipelines.check.knowledge import PREMIUM_RE
+
+    CURRENT.set("ms")
+    assert PREMIUM_RE.search("Ketik REG HOKI kirim ke 9876 untuk hadiah") and PREMIUM_RE.search("Txt LOVE ADAM EVE 07123456789 ke 87077 150p")
+    assert not PREMIUM_RE.search("Pembayaran Rp 100.000 berhasil")

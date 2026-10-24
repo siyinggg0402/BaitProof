@@ -19,9 +19,9 @@ host_of, redact = privacy.host_of, privacy.redact
 def seed_examples(lang: str = "en") -> list[dict]:
     """The curated bank for a language. English by default (so every existing caller is unchanged); "zh" is the Simplified Chinese bank and
     "zh-Hant" the same bank converted to Traditional (a phrase that no longer matches after conversion is dropped rather than shown wrong);
-    "ms" is the Malay bank, written around Malaysian and Singaporean scams."""
+    "ms" is the Malay bank and "ta" the Tamil one, written around Malaysian and Singaporean scams."""
     lang = i18n.norm(lang)
-    items = json.loads((SEEDS / {"zh": "zh.json", "zh-Hant": "zh.json", "ms": "ms.json"}.get(lang, "en.json")).read_text(encoding="utf-8"))
+    items = json.loads((SEEDS / {"zh": "zh.json", "zh-Hant": "zh.json", "ms": "ms.json", "ta": "ta.json"}.get(lang, "en.json")).read_text(encoding="utf-8"))
     for it in items:
         it["source"] = "seed"
         if lang == "zh-Hant":

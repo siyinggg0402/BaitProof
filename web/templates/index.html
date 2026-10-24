@@ -17,7 +17,7 @@
         <div class="in-buttons">
           {% if caps.image %}<button type="button" class="inbtn" id="shot-btn"><span class="ico">{{ icon('camera') }}</span><span>{{ _("Screenshot") }}</span></button>{% endif %}
           <button type="button" class="inbtn" id="speak-btn" hidden><span class="ico">{{ icon('mic') }}</span><span class="lbl">{{ _("Speak") }}</span></button>
-          {% if lang == 'en' %}<select id="speak-lang" aria-label="{{ _('Language you will speak') }}" hidden><option value="en-US">English</option><option value="ms-MY">Bahasa Melayu</option></select>{% endif %}
+          {% if lang == 'en' %}<select id="speak-lang" aria-label="{{ _('Language you will speak') }}" hidden><option value="en-US">English</option><option value="ms-MY">Bahasa Melayu</option><option value="ta-IN">தமிழ்</option><option value="zh-CN">中文</option></select>{% endif %}
         </div>
         <div class="in-privacy">
           {% if caps.image %}<p>{{ icon('camera') }} {{ _("The AI reads your screenshot to get the text. We don't keep the picture.") }}</p>{% endif %}
@@ -37,16 +37,27 @@
     <p class="trust-note rise d2"><b>{{ _("FREE") }}</b>{{ _("Private by design. We keep tricks, not messages.") }}</p>
     <ul class="trust rise d3"><li>{{ _("Plain language") }}</li><li>{{ _("Read aloud") }}</li><li>{{ _("Learns which tricks fool you") }}</li></ul>
   </div>
-  <div class="home-demo rise d2" aria-hidden="true">
-    <div class="mock">
-      <div class="mock-top"><i></i><i></i><i></i><span>{{ _("New message") }}</span></div>
-      <div class="mock-body">
-        <div class="bubble" id="demo-bubble">{{ _("DHL: Your parcel is on hold. Pay the $1.99 fee within 24 hours. Pay now: dhl-fee-pay.xyz") }}</div>
-        <div class="mock-tags" id="demo-tags"><span>{{ labels['urgency-pressure'] }}</span><span>{{ labels['lookalike-link'] }}</span></div>
-        <div class="mock-verdict show" id="demo-verdict">{{ _("Scam. Don't pay, don't tap the link.") }}</div>
+  <div class="home-side">
+    <div class="home-demo rise d2" aria-hidden="true">
+      <div class="mock">
+        <div class="mock-top"><i></i><i></i><i></i><span>{{ _("New message") }}</span></div>
+        <div class="mock-body">
+          <div class="bubble" id="demo-bubble">{{ _("DHL: Your parcel is on hold. Pay the $1.99 fee within 24 hours. Pay now: dhl-fee-pay.xyz") }}</div>
+          <div class="mock-tags" id="demo-tags"><span>{{ labels['urgency-pressure'] }}</span><span>{{ labels['lookalike-link'] }}</span></div>
+          <div class="mock-verdict show" id="demo-verdict">{{ _("Scam. Don't pay, don't tap the link.") }}</div>
+        </div>
       </div>
+      <p class="mock-cap">{{ _("Example only") }}</p>
     </div>
-    <p class="mock-cap">{{ _("Example only") }}</p>
+    {% if progress %}
+    <aside class="home-card card acc-teal rise d3" aria-labelledby="hc-h">
+      <div class="hc-top">{{ avatar(progress.look, 'big') }}<div><h2 id="hc-h">{{ _("Your progress") }}</h2><p class="muted">{{ _("Level {n} · {title}", n=progress.level, title=progress.title) }}</p></div></div>
+      <progress class="xpbar" max="{{ progress.need }}" value="{{ progress.into }}" aria-label="{{ _('Progress to the next level') }}"></progress>
+      <p class="muted hc-xp">{{ _("{a} / {b} XP to level {n}", a=progress.into, b=progress.need, n=progress.level + 1) }}</p>
+      <ul class="hc-stats"><li>{{ icon('flame') }} {{ _("{n}-day streak", n=progress.streak) }}</li><li>{{ icon('star') }} {{ _("{n} XP to spend", n=progress.balance) }}</li></ul>
+      <a class="home-more" href="/house">{{ _("Your house") }}{{ icon('chevron') }}</a>
+    </aside>
+    {% endif %}
   </div>
 </section>
 
@@ -55,10 +66,10 @@
 
 {% if season %}<p class="season-strip reveal">{{ icon(season.icon) }} <b>{{ season.greeting }}</b> {{ _("Festive times are busy for scammers: fake delivery notices, red-packet links and prize texts. Paste anything odd before you tap it.") }}</p>{% endif %}
 
-<section class="play-promo reveal" aria-labelledby="play-h">
+<section class="play-promo acc-rose reveal" aria-labelledby="play-h">
   <div><h2 id="play-h">{{ _("Spot scams, then race your friends") }}</h2>
   <p>{{ _("Drive a 3D car down Scam Road, steer into the right lane, and see how far you get compared with your friends.") }}</p></div>
-  <div class="actions"><a class="btn big" href="/road">{{ _("Drive Scam Road") }}</a><a class="btn sec" href="/friends">{{ _("Friends") }}</a></div>
+  <div class="actions"><a class="btn big" href="/road">{{ _("Drive Scam Road") }}</a><a class="more" href="/friends">{{ _("Friends") }}{{ icon('chevron') }}</a></div>
 </section>
 {% endblock %}
 {% block scripts %}<script src="/static/js/check.js"></script><script src="/static/js/inputs.js"></script>{% endblock %}

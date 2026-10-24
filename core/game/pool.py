@@ -47,13 +47,13 @@ def build_pool(lang: str = "en") -> list[Item]:
 
     for e in library.user_examples():
         tell, action = e["tell"], e["action"]
-        if lang == "ms" and e["tactics"] and (CJK.search(tell) or CJK.search(action)):  # a Chinese message from their own circle: our Malay wording for the trick
+        if lang in ("ms", "ta") and e["tactics"] and (CJK.search(tell) or CJK.search(action)):  # a Chinese message from their own circle: our wording in their language for the trick
             tell = i18n.tactic_text(e["tactics"][0], "tell", lang, TACTICS) if CJK.search(tell) else tell
             action = i18n.tactic_text(e["tactics"][0], "action", lang, TACTICS) if CJK.search(action) else action
         add(Item(_id(e["text"]), e["text"], "scam", list(e["tactics"]), tell, e["tell_phrase"], action, "yours"))
     for e in groups.scams_for(links.current_profile()):  # scams the family chose to share (already redacted)
         tell, action = e["tell"], e["action"]
-        if lang == "ms" and e["tactics"] and (CJK.search(tell) or CJK.search(action)):
+        if lang in ("ms", "ta") and e["tactics"] and (CJK.search(tell) or CJK.search(action)):
             tell = i18n.tactic_text(e["tactics"][0], "tell", lang, TACTICS) if CJK.search(tell) else tell
             action = i18n.tactic_text(e["tactics"][0], "action", lang, TACTICS) if CJK.search(action) else action
         add(Item(_id(e["text"]), e["text"], "scam", list(e["tactics"]), tell, e["tell_phrase"], action, "family"))

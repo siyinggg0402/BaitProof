@@ -1,6 +1,7 @@
 """Accounts, friends and the friends' leaderboard: no emails or passwords, a key kept only as a hash, mutual friends by code, rows seen only by friends."""
 import pytest
 
+from core.domain import characters
 from core.storage import accounts, db, runs
 from core.storage.accounts import AccountError
 
@@ -39,7 +40,7 @@ def test_nicknames_in_any_script_are_fine(ok):
 
 
 def test_a_bad_avatar_is_replaced_with_a_real_one():
-    assert make(ME, "Mei", "<script>")[0]["avatar"] in accounts.AVATARS
+    assert characters.valid(make(ME, "Mei", "<script>")[0]["avatar"])
 
 
 def test_signing_in_needs_the_key_and_tolerates_how_it_is_typed():

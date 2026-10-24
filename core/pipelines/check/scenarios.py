@@ -6,6 +6,7 @@ import re
 from dataclasses import dataclass
 
 from core.lang import ms as MS
+from core.lang import ta as TA
 from core.lang import zh as ZH
 from core.lang.text import Dual
 
@@ -22,14 +23,15 @@ class Scenario:
 
 
 def _s(id: str, label: str, signals: list[str], min: int = 3, must: tuple = ()) -> Scenario:
-    zh, ms = ZH.SCENARIO_SIGNS.get(id), MS.SCENARIO_SIGNS.get(id)
+    zh, ms, ta = ZH.SCENARIO_SIGNS.get(id), MS.SCENARIO_SIGNS.get(id), TA.SCENARIO_SIGNS.get(id)
     assert zh is None or len(zh) == len(signals), id  # the Chinese and Malay signs line up one-to-one with the English ones (so `must` means the same)
     assert ms is None or len(ms) == len(signals), id
-    return Scenario(id, label, tuple(Dual(p, zh[i] if zh else None, ms[i] if ms else None) for i, p in enumerate(signals)), min, must)
+    assert ta is None or len(ta) == len(signals), id
+    return Scenario(id, label, tuple(Dual(p, zh[i] if zh else None, ms[i] if ms else None, ta[i] if ta else None) for i, p in enumerate(signals)), min, must)
 
 
 # Sentences that deny the risky thing ("we will never ask for your PIN") must not count as signs of it.
-NEGATED = Dual(r"[^.!?\n]*\b(?:never|do not share|don'?t share|not share|will not ask|won'?t ask)\b[^.!?\n]*[.!?]?", ZH.WARNING_SENTENCE, MS.WARNING_SENTENCE)
+NEGATED = Dual(r"[^.!?\n]*\b(?:never|do not share|don'?t share|not share|will not ask|won'?t ask)\b[^.!?\n]*[.!?]?", ZH.WARNING_SENTENCE, MS.WARNING_SENTENCE, TA.WARNING_SENTENCE)
 
 SCENARIOS: dict[str, Scenario] = {s.id: s for s in [
     _s("parcel-fee", "Parcel fee", [r"\b(?:parcel|package|delivery|courier|redeliver\w*|customs|colis)\b", r"\b(?:fee|pay|charge|settle|r[ée]glez)\b|[$€£]\s?\d", r"\b(?:on hold|held|could ?n[o']t be delivered|failed delivery|incomplete address|unpaid|en attente|clear (?:the )?customs|western union)\b", r"\b(?:confirm|update) your address\b|https?://|\b\S+\.(?:xyz|top|click|info|com|net)\b"]),

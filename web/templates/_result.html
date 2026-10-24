@@ -18,7 +18,7 @@
     <details class="evidence" open><summary>{{ _("The evidence ({n})", n=result.evidence|length) }}</summary>
       <ul class="ev">{% for e in result.evidence %}
         <li class="ev-{{ e.supports }}"><span class="ev-tag">{{ _({'scam': 'Red flag', 'safe': 'Reassuring', 'neutral': 'Note'}[e.supports]) }}</span>
-          <span class="ev-body">{{ e.claim }}<small>{{ _({'rule': 'Known pattern', 'intent': 'What it asks', 'tool': 'Checked', 'model': 'AI reviewer'}[e.kind]) }} · {{ _(e.strength) }}{% if e.kind == 'model' %} · {{ _("counts for less") }}{% endif %}</small></span></li>
+          <span class="ev-body">{{ e.claim }}<small>{{ _({'rule': 'Known pattern', 'intent': 'What it asks', 'tool': 'Checked', 'reference': 'Official warning', 'model': 'AI reviewer'}[e.kind]) }} · {{ _(e.strength) }}{% if e.kind == 'model' %} · {{ _("counts for less") }}{% endif %}</small></span></li>
       {% endfor %}</ul></details>
     {% endif %}
     {% if result.links %}

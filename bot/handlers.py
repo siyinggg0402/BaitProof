@@ -29,7 +29,7 @@ from core.domain.tactics import TACTICS
 from core.pipelines import challenge
 from core.pipelines.check import check_message
 from core.pipelines.check.origin import make as make_origin
-from core.storage import db, family, history, links, model
+from core.storage import accounts, db, family, history, links, model
 
 log = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ WELCOME = ("Hi! I'm Finn 🐟, Baitproof's scam-spotting fish. I never take the 
            "/history shows your latest checks, /score your Baitproof score, /unlink disconnects.\n"
            "/report shows who to call, and where to report a scam, if you have already paid or shared something.\n"
            "/family lets someone you trust get a short note when you meet a scam (they never see your messages). /safeword explains a simple trick against fake \"it's me\" messages.\n"
-           "/lang chooses the language: /lang en, /lang ms (Bahasa Melayu), /lang zh (简体中文) or /lang zh-Hant (繁體中文).\n"
+           "/lang chooses the language: /lang en, /lang ms (Bahasa Melayu), /lang ta (தமிழ்), /lang zh (简体中文) or /lang zh-Hant (繁體中文).\n"
            "I keep the tricks I see, not your messages.")
 ICON = {Verdict.SCAM: "🚨", Verdict.LIKELY_SCAM: "⚠️", Verdict.SAFE: "✅", Verdict.UNSURE: "❓", Verdict.VICTIM: "💛"}
 
@@ -184,24 +184,32 @@ def on_text(chat_id: int, text: str, lang_hint: str | None = None) -> str:
 def on_start(chat_id: int, payload: str = "", lang_hint: str | None = None) -> str:
     """/start, optionally with a link code (the web page offers a one-tap t.me link that carries it)."""
     if payload.strip():
-        return on_link(chat_id, payload, lang_hint)
+        return on_link(chat_id, payload, lang_hint, tapped=True)
     bind_chat(chat_id)
     return tr(WELCOME, chat_lang(lang_hint) or "en")
 
 
-def on_link(chat_id: int, code: str, lang_hint: str | None = None) -> str:
+def on_link(chat_id: int, code: str, lang_hint: str | None = None, tapped: bool = False) -> str:
+    """/link CODE, or /start CODE from a tapped link. A tapped link never moves a chat that already belongs to another profile (someone could send you
+    their link): you have to /unlink first, which is a choice you make yourself."""
     bind_chat(chat_id)
     L = chat_lang(lang_hint) or "en"
     if not code.strip():
         return tr("Send /link followed by the 6-character code from the Records page on Baitproof, for example /link K7M2QX.", L)
     if _too_many_attempts(chat_id):
         return tr("Too many tries. Please wait a few minutes and get a fresh code from the website.", L)
+    if tapped:
+        target, current = links.peek(code), links.profile_for_chat(chat_id)
+        if target and current and current != target:
+            return tr("This chat is already connected to a different Baitproof profile. Send /unlink first, then tap the link again.", L)
     profile = links.redeem(code, chat_id)
     if profile is None:
         return tr("That code didn't work. It may have expired (they last 10 minutes) or been used already. Get a fresh one from the Records page.", L)
     bind_chat(chat_id)
     L = chat_lang(lang_hint) or "en"  # a linked chat now uses the web profile, which may hold its own language choice
+    who = accounts.get(profile)
     return (tr("✅ Linked! Everything you check here now shows up in your Baitproof records, and the tricks you meet go into your practice.", L)
+            + ("\n\n" + tr("Connected to {name}. Not you? Send /unlink.", L, name=who["nickname"]) if who else "")
             + ("\n\n" + tr("See them: {url}", L, url=web_url("/records")) if web_url() else ""))
 
 
@@ -212,14 +220,14 @@ def on_unlink(chat_id: int, lang_hint: str | None = None) -> str:
 
 
 def on_lang(chat_id: int, arg: str, lang_hint: str | None = None) -> str:
-    """/lang en | ms | zh | zh-Hant: remembered for this chat (in its profile settings)."""
+    """/lang en | ms | ta | zh | zh-Hant: remembered for this chat (in its profile settings)."""
     bind_chat(chat_id)
     a = arg.strip()
-    if a.lower() not in ("en", "ms", "bm", "malay", "zh", "zh-hans", "zh-cn", "zh-hant", "zh-tw", "zh-hk", "cn", "tw"):
-        return tr("Send /lang en, /lang ms, /lang zh or /lang zh-Hant.", chat_lang(lang_hint) or "en")
+    if a.lower() not in ("en", "ms", "bm", "malay", "ta", "tamil", "zh", "zh-hans", "zh-cn", "zh-hant", "zh-tw", "zh-hk", "cn", "tw"):
+        return tr("Send /lang en, /lang ms, /lang ta, /lang zh or /lang zh-Hant.", chat_lang(lang_hint) or "en")
     chosen = i18n.norm("zh-Hant" if a.lower() in ("tw", "zh-tw", "zh-hk", "zh-hant") else a)
     history.set_setting("tg_lang", chosen)
-    return {"en": "Language set to English.", "zh": "已切换为简体中文。", "zh-Hant": "已切換為繁體中文。", "ms": "Bahasa ditetapkan kepada Bahasa Melayu."}[chosen]
+    return {"en": "Language set to English.", "zh": "已切换为简体中文。", "zh-Hant": "已切換為繁體中文。", "ms": "Bahasa ditetapkan kepada Bahasa Melayu.", "ta": "மொழி தமிழாக மாற்றப்பட்டது."}[chosen]
 
 
 def on_report(chat_id: int, lang_hint: str | None = None) -> str:
@@ -461,7 +469,7 @@ def _summary(s: dict, L: str) -> Reply:
              tr("Not one slip. Your family is lucky to have you.", L) if s["perfect"] else tr("Nice work. Each round makes the next scam easier to spot.", L), "",
              f"✅ {s['correct']}/{s['total']} " + tr("right", L),
              "⭐ " + tr("+{n} XP", L, n=s["xp_gained"]),
-             "🏆 " + tr("Level {n} · {title}", L, n=st["level"], title=st["title"]) + (" (" if i18n.norm(L) in ("en", "ms") else "（") + tr("{a} / {b} XP", L, a=st["xp_into_level"], b=st["xp_for_level"]) + (")" if i18n.norm(L) == "en" else "）")]
+             "🏆 " + tr("Level {n} · {title}", L, n=st["level"], title=st["title"]) + (" (" if i18n.norm(L) in ("en", "ms", "ta") else "（") + tr("{a} / {b} XP", L, a=st["xp_into_level"], b=st["xp_for_level"]) + (")" if i18n.norm(L) == "en" else "）")]
     if s["level_up"]:
         lines.append("⬆️ " + tr("Level up! You're now level {n}: {title}", L, n=st["level"], title=st["title"]))
     if st["streak"]:

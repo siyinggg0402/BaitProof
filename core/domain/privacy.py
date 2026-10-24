@@ -11,6 +11,7 @@ PHONE_RE = re.compile(r"\+?\d[\d\s().-]{6,}\d")
 LONG_DIGITS_RE = re.compile(r"\d{9,}")  # account / card style numbers
 ID_RE = re.compile(r"(?<!\d)\d{17}[\dXx](?![\dA-Za-z])")  # a mainland-China resident ID number (18 characters, the last may be X)
 DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
+TIME_RANGE_RE = re.compile(r"\d{1,2}[.:]\d{2}\s?[-–]\s?\d{1,2}[.:]\d{2}")  # "09.00-11.00": how Indonesian and Malay write opening hours and slots, not a phone number
 
 
 def host_of(url: str) -> str:
@@ -32,7 +33,7 @@ def phone_matches(text: str) -> dict[str, str]:
     out: dict[str, str] = {}
     for m in PHONE_RE.finditer(text):
         raw = m.group(0).strip()
-        if DATE_RE.fullmatch(raw):
+        if DATE_RE.fullmatch(raw) or TIME_RANGE_RE.fullmatch(raw):
             continue
         digits = re.sub(r"\D", "", raw)
         if 7 <= len(digits) <= 15:

@@ -101,5 +101,11 @@ def test_a_broken_bank_never_breaks_a_check(monkeypatch):
     from core.domain.schemas import Verdict
     from core.pipelines.check import check_message
 
-    monkeypatch.setattr(fewshot, "load_library", lambda: (_ for _ in ()).throw(RuntimeError("db down")) if False else [])
+    from core.storage import library
+
+    def down():
+        raise RuntimeError("db down")
+
+    monkeypatch.setattr(library, "user_examples", down)
+    assert fewshot.load_library() == []
     assert check_message("Lunch on Sunday?", store=False, log=False).verdict in Verdict

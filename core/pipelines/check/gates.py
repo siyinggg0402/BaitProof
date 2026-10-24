@@ -61,10 +61,10 @@ def arbitrate(ledger: Ledger, intent: Intent, f: Findings, model_verdict: Verdic
 
     if strong:  # hard evidence from independent sources: the model can't talk us out of it
         d = Decision(Verdict.SCAM, "medium" if m_safe else "high", [T("hard evidence: {facts}", facts="; ".join(e.claim for e in strong[:2]))], model_dependent=m_safe)
-    elif not ind_flag and not ledger.has_script_match() and (m_scam or model_only) and (h > 0 or not intent.asks):
+    elif not ind_flag and not ledger.has_script_match() and (m_scam or model_only) and (h > 0 or not intent.asks or intent.advisory):
         # Every red flag is the model's alone, and either independent checks found reassuring facts or the message asks for nothing
         # (nothing to steal): that is a doubt, not a verdict.
-        why = T("independent checks look reassuring") if h > 0 else T("the message asks for nothing")
+        why = T("independent checks look reassuring") if h > 0 else T("the message asks for nothing")  # (an advisory only warns: it asks for nothing)
         d = Decision(Verdict.UNSURE, "low", [T("only the AI is suspicious, and {why}", why=why)], model_dependent=True)
     elif flags >= 2 or w >= 4:  # two kinds of red flag, or enough smaller facts piling up
         conf = "low" if m_safe else ("high" if h < w / 2 else "medium")

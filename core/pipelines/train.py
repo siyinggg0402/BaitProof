@@ -74,7 +74,7 @@ def localized(text: str, tactic: str, field: str, lang: str, safe: bool = False)
     lang = norm(lang)
     if not text or lang == "en":
         return text or ""
-    if lang == "ms":  # Malay: kept as written unless it is Chinese (a Chinese message from this person's own circle), then the trick's own Malay wording
+    if lang in ("ms", "ta"):  # Malay and Tamil: kept as written unless it is Chinese (a Chinese message from this person's own circle), then the trick's own wording in that language
         if CJK.search(text):
             return tactic_text(tactic, field, lang, TACTICS) if tactic in TACTICS and not safe else ""
         return text

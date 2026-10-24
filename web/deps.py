@@ -16,6 +16,11 @@ LANG_COOKIE = "lang"
 LANG_CODES = {c.lower(): c for c in i18n.LANGS}  # 'zh-hant' -> 'zh-Hant'
 
 
+def bot_username() -> str:
+    """The Telegram bot's @name (from .env), which the pages need to build a t.me link; empty when no bot is set up."""
+    return os.getenv("TELEGRAM_BOT_USERNAME", "").lstrip("@")
+
+
 def request_lang(request: Request) -> str:
     """The visitor's language: the `lang` cookie (en | zh | zh-Hant), else their browser's Accept-Language, else English."""
     cached = getattr(request.state, "lang", None)

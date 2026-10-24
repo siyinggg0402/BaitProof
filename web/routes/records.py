@@ -1,7 +1,6 @@
 """Records (everything checked on the website and in Telegram), the Telegram link, and the privacy settings."""
 from __future__ import annotations
 
-import os
 import re
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -9,14 +8,10 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
 from core.storage import db, history, links
-from web.deps import limit_expensive
+from web.deps import bot_username, limit_expensive
 from web.pages import page
 
 router = APIRouter()
-
-
-def bot_username() -> str:
-    return os.getenv("TELEGRAM_BOT_USERNAME", "").lstrip("@")
 
 
 @router.get("/records", response_class=HTMLResponse)

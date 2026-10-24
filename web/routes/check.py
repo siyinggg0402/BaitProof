@@ -22,6 +22,7 @@ from core.pipelines.check.origin import make as make_origin
 from core.storage import history
 from web import results
 from web.deps import limit_expensive, request_lang
+from web.glance import glance
 from web.pages import page, templates
 from web.routes import pwa
 from web.routes.inputs import capabilities_now
@@ -85,7 +86,7 @@ async def index(request: Request, share: str = "", shared: str = ""):
         ctx["notice"] = SHARE_NOTES[shared]
     elif share and (item := pwa.take(share)):
         ctx.update(await shared_item(request, item))
-    return page(request, "index.html", **ctx)
+    return page(request, "index.html", progress=glance(request), **ctx)
 
 
 @router.post("/check", response_class=HTMLResponse, dependencies=[Depends(limit_expensive)])
@@ -95,7 +96,7 @@ def do_check(request: Request, message: str = Form(...), source: str = Form("tex
         raise HTTPException(400, "Paste a message to check.")
     result = run_check(message, request_lang(request), source, origin=make_origin(origin_channel, origin_app, origin_sender) if source == "screenshot" else None)
     history.add(result, "web", message)
-    return page(request, "index.html", result=result, text=message[:4000], source=source, caps=capabilities_now())
+    return page(request, "index.html", result=result, text=message[:4000], source=source, caps=capabilities_now(), progress=glance(request))
 
 
 class StreamIn(BaseModel):

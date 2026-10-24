@@ -7,7 +7,9 @@ import re
 from core.ai import fewshot, llm
 from core.ai.prompts import CHECK_SYSTEM, CRITIC_SYSTEM
 from core.domain import intents
+from core.domain import reference
 from core.lang import ms as MS
+from core.lang import ta as TA
 from core.lang import zh as ZH
 from core.lang.i18n import PROMPT_NAMES, tactic_text, tr, why as why_text
 from core.lang.text import Dual
@@ -24,8 +26,8 @@ from .knowledge import FREE_MAIL, PREMIUM_RE, RULES
 from .tools import Findings, registered_domain as tools_registered
 
 
-STRONG_URGENCY = Dual(r"\bwithin \d+ ?(?:hours?|hrs?|minutes?|mins?)|\bimmediately\b|\bact now\b|\bfinal (?:notice|demand|warning)\b|\blast (?:chance|warning)\b|\btoday (?:at|by)\b|\bby tonight\b|\bbefore midnight\b|\bright now\b", ZH.STRONG_DEADLINE, MS.STRONG_DEADLINE)
-_WARNING = Dual(None, ZH.WARNING_SENTENCE, MS.WARNING_SENTENCE)  # warnings and public notices are not the scam they quote
+STRONG_URGENCY = Dual(r"\bwithin \d+ ?(?:hours?|hrs?|minutes?|mins?)|\bimmediately\b|\bact now\b|\bfinal (?:notice|demand|warning)\b|\blast (?:chance|warning)\b|\btoday (?:at|by)\b|\bby tonight\b|\bbefore midnight\b|\bright now\b", ZH.STRONG_DEADLINE, MS.STRONG_DEADLINE, TA.STRONG_DEADLINE)
+_WARNING = Dual(None, ZH.WARNING_SENTENCE, MS.WARNING_SENTENCE, TA.WARNING_SENTENCE)  # warnings and public notices are not the scam they quote
 STRONG_RULE_TACTICS = {"remote-access-request"}  # a pattern hit that is near-conclusive on its own
 
 
@@ -137,6 +139,8 @@ def rule_evidence(ing: Ingested, intent: Intent, f: Findings, ledger: Ledger) ->
                    intent.evidence.get("pressure", ""), None)
     if m := PREMIUM_RE.search(ing.text):
         ledger.add("rule", "premium-rate", "scam", "medium", T("It advertises a premium-rate service (a short code, or a price per message or minute)"), m.group(0)[:60], None)
+    for entry, quote in reference.matches(ing.text, intent.asks, bool(f.hosts) and not f.all_links_official()):  # a scam script an official body has named (data/reference/entries.json)
+        ledger.add("reference", f"reference:{entry.id}", "scam", entry.strength, T(entry.claim), quote, entry.tactic)
     if intent.scenario:
         sc = scenarios.SCENARIOS[intent.scenario]
         ledger.add("intent", f"scenario:{sc.id}", "scam", "medium",

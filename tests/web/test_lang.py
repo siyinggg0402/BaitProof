@@ -43,7 +43,8 @@ def lang_client(code):
 def visible(html: str) -> str:
     """The page without its <script> blocks (the translation dictionary is full of English keys on purpose) and without the language names."""
     html = re.sub(r"<script.*?</script>", "", html, flags=re.S)
-    return re.sub(r'<details class="lang".*?</details>', "", html, flags=re.S)
+    html = re.sub(r'<details class="lang".*?</details>', "", html, flags=re.S)
+    return re.sub(r'<select id="speak-lang".*?</select>', "", html, flags=re.S)   # (the spoken-language list names each language in its own script too)
 
 
 def html_lang(html: str) -> str:
@@ -132,7 +133,7 @@ def test_english_pages_have_no_chinese_chrome(client):
 def test_simplified_pages_are_in_chinese():
     c = lang_client("zh")
     cid = new_challenge(c)
-    want = {"/": ["把消息贴在这里", "帮我检查", "更难被骗", "挑战家人", "查一查"], "/train": ["练习", "快速练习", "开始练习", "游戏", "收件箱快答", "你的防骗能力"], "/game": ["正在载入你的游戏"],
+    want = {"/": ["把消息贴在这里", "帮我检查", "更难被骗", "查一查"], "/train": ["练习", "快速练习", "开始练习", "游戏", "收件箱快答", "你的防骗能力"], "/game": ["正在载入你的游戏"],
             "/records": ["我的记录", "删除我的全部记录", "连接 Telegram"], f"/challenge/{cid}": ["你能识破骗局吗？", "开始挑战"], f"/card/{cid}?s=3": ["接受挑战", "更多分享方式"]}
     for url, phrases in want.items():
         html = c.get(url).text

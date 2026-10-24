@@ -47,6 +47,7 @@
   <ul class="plain friends">
     {% for f in friends %}
     <li><span class="who">{{ avatar(f.avatar) }} {{ f.nickname }}</span>
+      <a class="ghost" href="/house/visit/{{ f.pub }}">{{ icon('eye') }} {{ _("Visit house") }}</a>
       <form method="post" action="/friends/remove"><input type="hidden" name="pub" value="{{ f.pub }}"><button class="ghost" type="submit" aria-label="{{ _('Remove {name}', name=f.nickname) }}">{{ _("Remove") }}</button></form></li>
     {% endfor %}
   </ul>

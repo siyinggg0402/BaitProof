@@ -27,3 +27,4 @@ def isolated(tmp_path, monkeypatch):
     monkeypatch.delenv("TAVILY_API_KEY", raising=False)
     monkeypatch.delenv("VAPID_PRIVATE_KEY", raising=False)  # a developer's own push keys (in .env) must not change what a test sees
     monkeypatch.delenv("VAPID_PUBLIC_KEY", raising=False)
+    monkeypatch.delenv("TELEGRAM_BOT_USERNAME", raising=False)  # (likewise the bot name in .env: a test that wants the one-tap link sets it)

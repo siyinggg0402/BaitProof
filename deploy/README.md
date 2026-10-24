@@ -3,6 +3,9 @@
 About 20 minutes. You need: a Nebius account with a VM, your Token Factory API key, and (optional) a domain and a Telegram bot token.
 Inference stays on Nebius Token Factory; the VM only runs the web app (and the bot).
 
+## 0. Put the code where the VM can fetch it
+The VM clones your repository, so it has to be reachable: a **public** GitHub repo, or a private one with a deploy key. On your own machine, check `git status` shows no `.env` (it is git-ignored), commit what you want to ship, then push it yourself: `git push -u origin main`. Never commit `.env` or a key.
+
 ## 1. Create the VM
 - Ubuntu 22.04 or 24.04, 2 vCPU / 4 GB RAM is plenty (the model runs on Token Factory, not on the VM). A public IP.
 - Security group: allow **22** (SSH), **80** and **443** (web).
@@ -16,7 +19,7 @@ ssh ubuntu@<vm-ip>
 git clone <your-public-repo-url> baitproof && cd baitproof
 bash deploy/setup_vm.sh <your-public-repo-url> [your.domain.com]
 ```
-The script installs Python, Caddy and `fonts-noto-cjk` (so the share card can draw Chinese), puts the app in `/opt/baitproof`, creates a locked-down `baitproof` user, installs two systemd services (`baitproof`, and `baitproof-bot` once a Telegram token exists) and starts Caddy. It is safe to re-run.
+The script installs Python, Caddy, `fonts-noto-cjk` and `fonts-noto-core` (so the share card can draw Chinese and Tamil), puts the app in `/opt/baitproof`, creates a locked-down `baitproof` user, installs two systemd services (`baitproof`, and `baitproof-bot` once a Telegram token exists) and starts Caddy. It is safe to re-run.
 
 ## 4. Configure
 ```bash
@@ -56,11 +59,11 @@ history - Your latest checks
 score - Your Baitproof score
 link - Connect this chat to your Baitproof website profile
 unlink - Disconnect
-lang - Language: en, zh or zh-Hant
+lang - Language: en, ms, ta, zh or zh-Hant
 help - Help
 ```
 The bot speaks as Finn, the website's mascot. Give it his face too: `/setuserpic` in @BotFather, then send `web/static/img/finn-avatar.png` (or set the name, description and picture through the Bot API's `setMyName`, `setMyDescription` and `setMyProfilePhoto`).
-Test: send the bot a suspicious message, then `/quiz`. Link it to the website: **Records** > *Connect Telegram* shows a one-time code to send as `/link CODE`.
+Test: send the bot a suspicious message, then `/quiz`. Link it to the website: on **Records** or **My profile**, tap *Open Telegram to connect* and press Start in Telegram (needs `TELEGRAM_BOT_USERNAME` in `.env`); the one-time code is under *Show a code instead* and can be sent as `/link CODE`.
 
 ## 7. Update
 ```bash
@@ -77,8 +80,8 @@ cd /opt/baitproof && sudo -u baitproof git pull && sudo systemctl restart baitpr
 |---|---|
 | Site not reachable | security group ports 80/443; `sudo systemctl status caddy`; DNS has propagated |
 | Checks say "offline mode" | `NEBIUS_API_KEY` empty or wrong: `cd /opt/baitproof && sudo -u baitproof .venv/bin/python -m scripts.ops.verify_setup` (never prints the key) |
-| No Install button, or Baitproof is missing from the Android Share sheet | The site is on plain HTTP. Use a domain so Caddy serves HTTPS; then open the site once in Chrome and install it ("Install" in the footer or the browser menu) |
-| Share card shows English only | `fc-list :lang=zh` shows no font: `sudo apt-get install fonts-noto-cjk` |
+| The browser offers no "Install app", or Baitproof is missing from the Android Share sheet | The site is on plain HTTP. Use a domain so Caddy serves HTTPS; then open the site once in Chrome and install it from the browser menu ("Install app" or "Add to Home Screen") |
+| Share card shows English only | Chinese: `fc-list :lang=zh` shows no font: `sudo apt-get install fonts-noto-cjk`. Tamil: needs `fonts-noto-core` and a Pillow with text shaping (raqm: `python -c "from PIL import features; print(features.check('raqm'))"` should say True); without them the card is drawn in English, never with broken letters |
 | `/admin` is empty | check `BAITPROOF_ADMIN_TOKEN`; logs exist under `/var/lib/baitproof/logs` |
 | Bot silent | `sudo journalctl -u baitproof-bot -n 50`; token and username in `.env`; only one bot process may poll a token |
 

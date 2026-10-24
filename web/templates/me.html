@@ -20,8 +20,10 @@
   <h2>{{ _("Your friend code") }}</h2>
   <p>{{ _("Send this to a friend. When they enter it, or open your invite link, you become friends and see each other's scores.") }}</p>
   {% include "_invite.html" %}
-  <div class="actions"><a class="btn" href="/friends">{{ _("See my friends") }}</a><a class="btn sec" href="/road">{{ _("Drive Scam Road") }}</a></div>
+  <div class="actions"><a class="btn" href="/friends">{{ _("See my friends") }}</a><a class="btn sec" href="/road">{{ _("Drive Scam Road") }}</a><a class="btn sec" href="/house">{{ _("My house") }}</a></div>
 </section>
+
+{% include "_telegram.html" %}
 
 <section class="card rise d4">
   <h2>{{ _("Change name or avatar") }}</h2>
@@ -74,4 +76,4 @@
 </section>
 {% endif %}
 {% endblock %}
-{% block scripts %}<script src="/static/js/social.js"></script>{% endblock %}
+{% block scripts %}<script src="/static/js/social.js"></script><script src="/static/js/telegram.js"></script>{% endblock %}

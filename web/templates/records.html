@@ -1,32 +1,12 @@
 {% extends "base.html" %}
 {% block title %}{{ _("My records") }} · Baitproof{% endblock %}
 {% block content %}
-{% set botname %}<b id="tg-botname"></b>{% endset %}
-{% set timer %}<span id="tg-timer">10:00</span>{% endset %}
-{% set hist %}<code>/history</code>{% endset %}{% set score %}<code>/score</code>{% endset %}
 {% set check_link %}<a href="/">{{ _("Check a message") }}</a>{% endset %}
 <span class="pill rise"><b>{{ _("YOUR HISTORY") }}</b> {{ _("The website and Telegram, in one place") }}</span>
 <h1 class="rise d1">{{ _("My records") }}</h1>
 <p class="lead rise d2">{{ _("Every message you check, here or in Telegram, is saved to your profile with the verdict and the giveaway, and the tricks go straight into your practice and game.") }}</p>
 
-<section class="card tg reveal" id="tg" data-bot="{{ bot }}" data-linked="{{ linked }}">
-  <div class="tg-head"><h2>Telegram</h2><span class="badge {{ 'ok' if linked else '' }}" id="tg-badge">{{ _('Connected') if linked else _('Not connected') }}</span></div>
-  <div id="tg-idle" {% if linked %}hidden{% endif %}>
-    <p>{{ _("Forward suspicious messages to the Baitproof bot and they show up here automatically. Connect once with a short code.") }}</p>
-    <button class="big" id="tg-connect" type="button">{{ _("Connect Telegram") }}</button>
-  </div>
-  <div id="tg-code" hidden>
-    <p>{{ _h("Open Telegram and send this code to the bot {name}:", name=botname) }}</p>
-    <p class="code" id="tg-codetext" aria-live="polite"></p>
-    <p><a class="btn big" id="tg-open" href="#" target="_blank" rel="noopener" hidden>{{ _("Open Telegram") }}</a></p>
-    <p class="muted" id="tg-howto"></p>
-    <p class="muted">{{ _h("The code works once and expires in {timer}.", timer=timer) }}</p>
-  </div>
-  <div id="tg-done" {% if not linked %}hidden{% endif %}>
-    <p>{{ icon('check-circle') }} {{ _h("Checks you run in Telegram now appear below. In Telegram you can also send {history} and {score}.", history=hist, score=score) }}</p>
-    <button class="ghost" id="tg-unlink" type="button">{{ _("Disconnect Telegram") }}</button>
-  </div>
-</section>
+{% include "_telegram.html" %}
 
 <div class="kpis reveal">
   <div class="kpi"><b>{{ stats.total }}</b><span>{{ _("messages checked") }}</span></div>
@@ -64,4 +44,4 @@
   <p><button class="ghost" id="clear" type="button" {% if not rows %}disabled{% endif %}>{{ _("Delete all my records") }}</button></p>
 </section>
 {% endblock %}
-{% block scripts %}<script src="/static/js/records.js"></script>{% endblock %}
+{% block scripts %}<script src="/static/js/records.js"></script><script src="/static/js/telegram.js"></script>{% endblock %}

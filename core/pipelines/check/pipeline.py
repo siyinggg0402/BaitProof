@@ -9,6 +9,7 @@ from core.ai import llm
 from core.lang import i18n
 from core.lang.i18n import tactic_text, tr
 from core.lang.text import detect
+from core.domain import intents
 from core.domain.schemas import CheckResult, Origin, Verdict
 from core.domain.tactics import TACTICS
 from core.obs.logger import fingerprint
@@ -36,7 +37,7 @@ def reply_language(text: str, lang: str | None) -> str:
     if lang:
         return i18n.norm(lang)
     d = detect(text) if text.strip() else "en"
-    return d if d in ("zh", "zh-Hant", "ms") else "en"
+    return d if d in ("zh", "zh-Hant", "ms", "ta") else "en"
 
 
 def check_message(text: str, store: bool = True, on_event=None, log: bool = True, lang: str | None = None, *, source: str = "text", read_text: str = "", origin: Origin | None = None) -> CheckResult:
@@ -110,7 +111,8 @@ def _check(text: str, store: bool, tr_: Trace, run: obs.Run, reply: str = "en", 
     action = str(out.get("action", ""))[:400] if out else ""
     abstract, phrase = (str(out.get("abstract_example", "")), str(out.get("tell_phrase", ""))) if out else ("", "")
 
-    if d.verdict == Verdict.SAFE and case.votes:
+    plain_code = it.purpose == "one-time-code" and intents.clearing_conditions_met("one-time-code", ing.text, it.asks)  # the rules recognised a plain login-code delivery that asks for nothing: a second reviewer only ever misreads its "do not share this code" as secrecy
+    if d.verdict == Verdict.SAFE and case.votes and not plain_code:
         concern = analysis.critic(ing, it, f)
         if concern and not localize.in_script(concern, reply):
             concern = (localize.translate([concern], reply) or [T("a second reviewer was worried")])[0]
@@ -126,8 +128,9 @@ def _check(text: str, store: bool, tr_: Trace, run: obs.Run, reply: str = "en", 
     tactics = ledger.tactic_hits()
     verdict, first = d.verdict, (tactics[0].id if tactics else None)
     if not tell and first:
-        tell = (f"“{tactics[0].quote}”{': ' if reply in ('en', 'ms') else '：'}" if tactics[0].quote else "") + tactic_text(first, "tell", reply, TACTICS)
-    if not action:
+        tell = (f"“{tactics[0].quote}”{': ' if reply in ('en', 'ms', 'ta') else '：'}" if tactics[0].quote else "") + tactic_text(first, "tell", reply, TACTICS)
+    if not action or (reply == "ta" and first and verdict != Verdict.SAFE):
+        # what to do is the part that must be right: in Tamil it is always our own written line for the trick (the model's Tamil has not been checked by a Tamil speaker)
         action = tactic_text(first, "action", reply, TACTICS) if first and verdict != Verdict.SAFE else T(CAVEAT)
     if verdict == Verdict.SAFE and not tell:
         tell = T("Nothing here asks for money, codes, passwords or a rush, and I found no red flags.")

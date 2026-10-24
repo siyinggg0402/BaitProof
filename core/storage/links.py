@@ -1,4 +1,4 @@
-"""Link a Telegram chat to a web profile, with no accounts: the web page shows a short one-time code, the person sends it to the bot, and
+"""Link a Telegram chat to a web profile, with no accounts: the web page shows a short one-time code (or a t.me link that carries it, so the person only taps Start), the bot gets it, and
 from then on that chat's checks land in the same profile (same records, same practice, same score). Lives in the SHARED database, because
 the web app and the bot are separate processes."""
 from __future__ import annotations
@@ -42,6 +42,16 @@ def redeem(code: str, chat_id: int | str) -> str | None:
         c.execute("INSERT INTO telegram_links(chat_id,profile,linked_at) VALUES(?,?,?) ON CONFLICT(chat_id) DO UPDATE SET profile=excluded.profile, linked_at=excluded.linked_at",
                   (str(chat_id), row["profile"], db.iso(db.now())))
     return row["profile"]
+
+
+def peek(code: str) -> str | None:
+    """The profile a code belongs to, if it is still good, without spending it (the bot looks before it links)."""
+    code = (code or "").strip().upper().replace(" ", "")
+    if len(code) != CODE_LEN or any(ch not in ALPHABET for ch in code):
+        return None
+    with db.connect(shared=True) as c:
+        row = c.execute("SELECT * FROM link_codes WHERE code=? AND used=0", (code,)).fetchone()
+    return row["profile"] if row and time.time() - row["created"] <= TTL else None
 
 
 def profile_for_chat(chat_id: int | str) -> str | None:

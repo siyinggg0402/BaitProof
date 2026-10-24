@@ -61,7 +61,6 @@
 .finn-bubble.below::after{bottom:auto;top:-8px;border-width:1px 0 0 1px}
 .finn-bubble b{color:var(--brand-deep,var(--brand))}
 
-/* the footer switch reuses .fxtoggle from polish.css */
 @media (max-width:560px){.finn-bubble{font-size:.9rem;padding:10px 14px}}
 @media (prefers-reduced-motion:reduce){
   .finn .f-all,.finn .f-tail,.finn .f-pec,.finn .f-bubs circle,.finn .f-mark{animation:none}.finn .f-bubs{display:none}

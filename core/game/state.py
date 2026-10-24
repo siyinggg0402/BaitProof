@@ -11,7 +11,7 @@ from core.storage import db
 
 DEFAULT = {"xp": 0, "rounds": 0, "correct_total": 0, "best_combo": 0, "streak": 0, "best_streak": 0, "last_play": "", "daily_done": "",
            "badges": [], "boss_won": [], "yours_correct": 0, "tells_found": 0, "seen": [], "garage": {"car": "plum", "hat": "none"}, "road_daily_count": 0, "road_daily_last": "",
-           "duel_wins": 0, "duels_played": 0}
+           "duel_wins": 0, "duels_played": 0, "house": {}, "look": ""}
 TITLES = ["Rookie", "Spotter", "Sleuth", "Detective", "Guardian", "Sentinel", "Scam Slayer"]
 
 BADGES: dict[str, tuple[str, str]] = {

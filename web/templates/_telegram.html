@@ -1,0 +1,30 @@
+{# The Telegram card, on Records and on My profile (web/static/js/telegram.js). With a bot set up, one tap opens the bot with a one-time code in the link and Start connects the chat: nothing to type.
+   The code is still there under "Show a code instead", and it is the only way without a bot name. Needs: bot (the @name or ""), linked (how many chats). #}
+{% set botname %}<b id="tg-botname"></b>{% endset %}
+{% set timer %}<span id="tg-timer">10:00</span>{% endset %}
+{% set hist %}<code>/history</code>{% endset %}{% set score %}<code>/score</code>{% endset %}
+{% set code_box %}
+    <p>{{ _h("Open Telegram and send this code to the bot {name}:", name=botname) }}</p>
+    <p class="code" id="tg-codetext" aria-live="polite"></p>
+    <p class="muted" id="tg-howto"></p>
+    <p class="muted">{{ _h("The code works once and expires in {timer}.", timer=timer) }}</p>
+{% endset %}
+<section class="card tg reveal" id="tg" data-bot="{{ bot }}" data-linked="{{ linked }}">
+  <div class="tg-head"><h2>Telegram</h2><span class="badge {{ 'ok' if linked else '' }}" id="tg-badge">{{ _('Connected') if linked else _('Not connected') }}</span></div>
+  <div id="tg-idle" {% if linked %}hidden{% endif %}>
+    <p>{{ _("Forward suspicious messages to the Baitproof bot and they show up here automatically.") }}</p>
+    {% if bot %}
+    <a class="btn big wait" id="tg-open" href="https://t.me/{{ bot }}" target="_blank" rel="noopener">{{ icon('send') }} <span>{{ _("Open Telegram to connect") }}</span></a>
+    <p class="muted tg-tap">{{ _("Tap Start in Telegram and you are connected. There is no code to type.") }}</p>
+    <details class="tg-alt"><summary>{{ _("Show a code instead") }}</summary><div id="tg-code">{{ code_box }}</div></details>
+    {% else %}
+    <p class="muted">{{ _("Connect once with a short code.") }}</p>
+    <button class="big" id="tg-connect" type="button">{{ _("Connect Telegram") }}</button>
+    {% endif %}
+  </div>
+  {% if not bot %}<div id="tg-code" hidden>{{ code_box }}</div>{% endif %}
+  <div id="tg-done" {% if not linked %}hidden{% endif %}>
+    <p>{{ icon('check-circle') }} {{ _h("Checks you run in Telegram now appear on the Records page. In Telegram you can also send {history} and {score}.", history=hist, score=score) }}</p>
+    <button class="ghost" id="tg-unlink" type="button">{{ _("Disconnect Telegram") }}</button>
+  </div>
+</section>

@@ -9,7 +9,7 @@ BOT_ZH: dict[str, str] = {
     "/history shows your latest checks, /score your Baitproof score, /unlink disconnects.\n"
     "/report shows who to call, and where to report a scam, if you have already paid or shared something.\n"
     "/family lets someone you trust get a short note when you meet a scam (they never see your messages). /safeword explains a simple trick against fake \"it's me\" messages.\n"
-    "/lang chooses the language: /lang en, /lang ms (Bahasa Melayu), /lang zh (简体中文) or /lang zh-Hant (繁體中文).\n"
+    "/lang chooses the language: /lang en, /lang ms (Bahasa Melayu), /lang ta (தமிழ்), /lang zh (简体中文) or /lang zh-Hant (繁體中文).\n"
     "I keep the tricks I see, not your messages.":
         "你好！我是 Finn 🐟，Baitproof 的识骗小鱼。我才不会上钩呢！\n\n把你拿不准的消息转发或粘贴给我，我会告诉你是不是骗局，指出最关键的一个破绽，并把这种套路加入你的练习。\n"
         "你也可以直接发截图或语音消息给我。\n\n"
@@ -19,7 +19,7 @@ BOT_ZH: dict[str, str] = {
         "/history 查看最近的检查，/score 查看你的 Baitproof 分数，/unlink 断开连接。\n"
         "/report 告诉你如果已经付钱或透露了资料，该打给谁、到哪里举报。\n"
         "/family 让你信任的人在你遇到骗局时收到一条简短提醒（他们看不到你的消息）。/safeword 介绍对付“是我啦”假消息的小窍门。\n"
-        "/lang 选择语言：/lang en、/lang ms（马来文）、/lang zh（简体中文）或 /lang zh-Hant（繁體中文）。\n"
+        "/lang 选择语言：/lang en、/lang ms（马来文）、/lang ta（泰米尔文）、/lang zh（简体中文）或 /lang zh-Hant（繁體中文）。\n"
         "我只记住套路，不记住你的消息。",
     "Send me the message you want checked. 🐟": "请把你想检查的消息发给我。🐟",
     "The giveaway: {tell}": "破绽：{tell}",
@@ -43,7 +43,7 @@ BOT_ZH: dict[str, str] = {
     "Practise here: {url}": "在这里练习：{url}",
     "🐟 Psst! {n} scam trick(s) are due for a one-minute refresher.": "🐟 嘘！有 {n} 种骗局套路该花一分钟复习了。",
     "Language set to English.": "已切换为简体中文。",
-    "Send /lang en, /lang ms, /lang zh or /lang zh-Hant.": "请发送 /lang en、/lang ms、/lang zh 或 /lang zh-Hant。",
+    "Send /lang en, /lang ms, /lang ta, /lang zh or /lang zh-Hant.": "请发送 /lang en、/lang ms、/lang ta、/lang zh 或 /lang zh-Hant。",
     "telegram": "Telegram", "web": "网站",
     # ---- quiz and family challenge (the rest of the game's wording is reused from i18n_ui.py)
     "Quick quiz": "快速测验",

@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
-from core.game import garage, road
+from core.game import garage, looks, road
 from core.storage import accounts, links, runs
 from web.deps import limit_expensive, request_lang
 from web.pages import page
@@ -42,7 +42,7 @@ def _run(run_id: str) -> road.Run:
 @router.get("/road", response_class=HTMLResponse)
 def road_page(request: Request):
     me = links.current_profile()
-    return page(request, "road.html", best=runs.best(me), friends_n=len(accounts.friends(me)))
+    return page(request, "road.html", best=runs.best(me), friends_n=len(accounts.friends(me)), look=looks.character(me))
 
 
 @router.post("/api/road/start", dependencies=[Depends(limit_expensive)])

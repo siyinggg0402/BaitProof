@@ -5,19 +5,10 @@
 (() => {
   if (document.body && document.body.dataset.game) return; // a game page (the 3D road) draws its own scene: no second WebGL canvas, no flying fish over the play area
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  // a small, modest device (or one asked to save data) gets the plain page; so does anyone who switched it off
+  // a small, modest device (or one asked to save data) gets the plain page
   const nav = navigator, conn = nav.connection || {};
   if (conn.saveData || (nav.deviceMemory && nav.deviceMemory <= 2) || (nav.hardwareConcurrency && nav.hardwareConcurrency <= 2)) return;
-  const store = { get() { try { return localStorage.getItem("bpfx"); } catch (e) { return null; } }, set(v) { try { localStorage.setItem("bpfx", v); } catch (e) { /* private mode: fine */ } } };
-  if (/[?&]fx=0\b/.test(location.search)) store.set("0"); else if (/[?&]fx=1\b/.test(location.search)) store.set("1");
-  const wanted = store.get() !== "0";
-  const toggle = document.getElementById("fxtoggle");
-  if (toggle) {
-    toggle.hidden = false; toggle.setAttribute("aria-pressed", String(wanted));
-    toggle.addEventListener("click", () => { store.set(wanted ? "0" : "1"); location.reload(); });
-  }
-  if (!wanted) return;
-  const MAX = 12, LIFE = 4.0, AWAKE = 28000; // ripples alive at once, how long one lasts (seconds), and how long the water stays lively after the last touch (ms)
+  const MAX = 8, LIFE = 3.0, AWAKE = 20000, CALM = 0.5; // ripples alive at once, how long one lasts (seconds), how long the water stays lively after the last touch (ms), and how strong a ripple is (1 = the first version)
 
   const canvas = document.createElement("canvas");
   canvas.className = "fx";
@@ -50,7 +41,7 @@
     const i = next; next = (next + 1) % MAX;
     R[i * 4] = (clientX / innerWidth) * (W / H);
     R[i * 4 + 1] = 1 - clientY / innerHeight;
-    R[i * 4 + 3] = amp;
+    R[i * 4 + 3] = amp * CALM;
     born[i] = performance.now();
     R[i * 4 + 2] = 0;
     wake();
@@ -82,20 +73,20 @@ void main(){
       g += (d / dist) * ((-48.0 * w * env * o - 34.0 * env * sin(ph)) * fade);
     }
   }
-  vec2 q = p + g * 0.0055;                               // the colours bend through the water
+  vec2 q = p + g * 0.0038;                               // the colours bend through the water
   float t = uTime * 0.045;
   vec3 col = uBase;
-  float k = uDark > 0.5 ? 0.42 : 0.30;
+  float k = uDark > 0.5 ? 0.38 : 0.34;
   col = mix(col, uC0, smoothstep(0.70, 0.0, distance(q, vec2(uAsp * (0.16 + 0.10 * sin(t * 1.7)), 0.82 + 0.08 * cos(t * 1.3)))) * k);
   col = mix(col, uC1, smoothstep(0.62, 0.0, distance(q, vec2(uAsp * (0.56 + 0.12 * cos(t * 1.1)), 1.00 + 0.06 * sin(t * 1.9)))) * k * 0.8);
   col = mix(col, uC2, smoothstep(0.66, 0.0, distance(q, vec2(uAsp * (0.92 + 0.06 * sin(t * 1.5)), 0.74 + 0.10 * cos(t * 0.9)))) * k * 0.8);
   col = mix(col, uC1, smoothstep(0.60, 0.0, distance(q, vec2(uAsp * (0.30 + 0.20 * sin(t)), 0.10 + 0.10 * cos(t * 1.4)))) * k * 0.45);
-  float a = clamp(abs(h) * 1.7, 0.0, 1.0);
+  float a = clamp(abs(h) * 1.2, 0.0, 1.0);
   vec3 tint = mix(uC0, uC2, 0.5 + 0.5 * sin(h * 5.0 + uTime * 0.4));
   vec3 n = normalize(vec3(-g * 0.011, 1.0));
   float spec = pow(max(dot(reflect(-normalize(vec3(-0.45, 0.55, 0.75)), n), vec3(0.0, 0.0, 1.0)), 0.0), 16.0);
-  if (uDark > 0.5) col += tint * a * 0.40 + spec * 0.16;
-  else { col = mix(col, tint, a * 0.52); col -= h * 0.075; col += spec * 0.10; }
+  if (uDark > 0.5) col += tint * a * 0.30 + spec * 0.08;
+  else { col = mix(col, tint, a * 0.40); col -= h * 0.05; col += spec * 0.05; }
   float m = smoothstep(0.40, 0.0, distance(p, uM.xy)) * uM.z;   // a soft light that follows the pointer
   col = mix(col, uC1, m * (uDark > 0.5 ? 0.20 : 0.12));
   col += (fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) - 0.5) / 255.0;
@@ -106,7 +97,7 @@ void main(){
     gl = canvas.getContext("webgl", { antialias: false, alpha: false, depth: false, stencil: false, powerPreference: "low-power", preserveDrawingBuffer: false });
     if (gl) {
       const dbg = gl.getExtension("WEBGL_debug_renderer_info"), renderer = dbg ? String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)) : "";
-      if (/swiftshader|llvmpipe|softpipe|software|basic render|mesa offscreen/i.test(renderer)) { canvas.remove(); if (toggle) toggle.hidden = true; return; } // drawing in software would be slow: leave the page plain, and show no switch for something that cannot run
+      if (/swiftshader|llvmpipe|softpipe|software|basic render|mesa offscreen/i.test(renderer)) { canvas.remove(); return; } // drawing in software would be slow: leave the page plain, and show no switch for something that cannot run
       const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error("shader"); return s; };
       prog = gl.createProgram();
       gl.attachShader(prog, sh(gl.VERTEX_SHADER, VERT)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FRAG));
@@ -195,9 +186,9 @@ void main(){
     touched(); pt.x = x / innerWidth; pt.y = y / innerHeight; pt.seen = now; pt.on = true;
     if (!pt.s) pt.sx = pt.x, pt.sy = pt.y;
     const d = Math.hypot(x - lx, y - ly), dt = now - lt;
-    if (d > 88 && dt > 110) { drop(x, y, Math.min(0.7, 0.24 + (d / Math.max(dt, 1)) * 0.2)); lx = x; ly = y; lt = now; } else wake();
+    if (d > 150 && dt > 240) { drop(x, y, Math.min(0.6, 0.2 + (d / Math.max(dt, 1)) * 0.15)); lx = x; ly = y; lt = now; } else wake();   // (a ripple as you move, but not for every flick of the mouse)
   }, { passive: true });
-  addEventListener("pointerdown", (e) => { touched(); drop(e.clientX, e.clientY, 0.95); setTimeout(() => drop(e.clientX, e.clientY, 0.45), 150); lx = e.clientX; ly = e.clientY; lt = performance.now(); pt.seen = lt; }, { passive: true });
+  addEventListener("pointerdown", (e) => { touched(); drop(e.clientX, e.clientY, 0.9); lx = e.clientX; ly = e.clientY; lt = performance.now(); pt.seen = lt; }, { passive: true });
   document.addEventListener("pointerout", (e) => { if (!e.relatedTarget) pt.on = false; }, { passive: true }); // the pointer left the window
   addEventListener("resize", () => { resize(); wake(); }, { passive: true });
   document.addEventListener("visibilitychange", () => { if (document.hidden) stop(); else { last = 0; touched(); wake(); } });
@@ -206,8 +197,8 @@ void main(){
 
   // a drop now and then, so it feels alive even with no pointer (a phone, or a hand off the mouse)
   const ambient = () => {
-    if (!dead && !document.hidden && performance.now() - pt.seen > 2600 && performance.now() - woke < AWAKE) drop(innerWidth * (0.1 + Math.random() * 0.8), innerHeight * (0.1 + Math.random() * 0.8), 0.4);
-    setTimeout(ambient, 3200 + Math.random() * 2600);
+    if (!dead && !document.hidden && performance.now() - pt.seen > 2600 && performance.now() - woke < AWAKE) drop(innerWidth * (0.1 + Math.random() * 0.8), innerHeight * (0.1 + Math.random() * 0.8), 0.3);
+    setTimeout(ambient, 7000 + Math.random() * 5000);
   };
   setTimeout(ambient, 1200);
 

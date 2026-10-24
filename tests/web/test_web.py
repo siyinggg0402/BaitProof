@@ -112,7 +112,7 @@ def test_the_menu_and_the_phone_tabs_are_check_train_friends_records():
         head, tabs = nav(c.get(url).text)
         assert [(h, t) for h, t, _ in head] == [("/", "Check"), ("/train", "Train"), ("/friends", "Friends"), ("/records", "Records")], url
         assert [(h, t) for h, t, _ in tabs] == [("/", "Check"), ("/train", "Train"), ("/friends", "Friends"), ("/records", "Records")], url
-        assert "Challenge family" in c.get(url).text and 'id="textsize"' in c.get(url).text and 'id="lang"' in c.get(url).text  # the CTA, "Aa" and the language menu stay
+        assert "Challenge family" not in c.get(url).text and 'action="/challenge/new"' not in c.get(url).text and 'id="textsize"' in c.get(url).text and 'id="lang"' in c.get(url).text  # the CTA, "Aa" and the language menu stay
 
 
 def test_the_current_tab_follows_the_page_and_the_game_belongs_to_train():
@@ -127,16 +127,18 @@ def test_the_current_tab_follows_the_page_and_the_game_belongs_to_train():
     assert current(c.get("/records").text) == (["/records"], ["/records"])
 
 
-def test_the_train_hub_holds_quick_practice_and_the_games_and_the_map():
+def test_the_train_hub_puts_the_house_first_then_the_games_then_practice_and_the_map():
     from web.main import app
 
     c = TestClient(app)
     html = c.get("/train").text
-    assert html.index('id="practice"') < html.index('id="games"') < html.index('id="map-h"')  # quick practice, then games, then the map
+    assert html.index('id="house"') < html.index('id="games"') < html.index('id="practice"') < html.index('id="map-h"')  # the house, the games, quick practice, the map
+    assert 'data-mode="preview"' in html and 'href="/house"' in html and "Decorate your house" in html and "/static/js/hub.js" in html and "/static/css/hub.css" in html
     assert 'id="stage"' in html and 'id="start"' in html and "/static/js/train.js" in html and "Quick practice" in html and "Start practice" in html
-    games = html[html.index('id="games"'):html.index('id="map-h"')]
-    hrefs = re.findall(r'class="mode-card[^"]*" href="([^"]+)"', games)
-    assert len(hrefs) == 6 and hrefs[:2] == ["/road", "/link"] and all(h.split("#")[0] == "/game" for h in hrefs[2:]) and {"/game#rush", "/game#daily", "/game#tell"} <= set(hrefs)
+    games = html[html.index('id="games"'):html.index('id="practice"')]
+    hrefs = re.findall(r'<a class="gm [^"]*" href="([^"]+)"', games)
+    assert hrefs == ["/road", "/game#rush", "/game#daily", "/link", "/game#tell", "/game"]  # one big tile, two medium ones, then plain rows
+    assert games.index("gm-feature") < games.index("gm-tile") < games.index("gm-rows") < games.index('class="gm gm-row')
     assert "Scam Road" in games and "Link Hunt" in games and "Inbox Rush" in games and "Daily Challenge" in games and "Spot the Tell" in games and "Boss battles" in games
     game = c.get("/game")  # the game itself is where it always was
     assert game.status_code == 200 and 'id="game"' in game.text
@@ -166,14 +168,14 @@ def page(lang="en"):
     return c.get("/").text
 
 
-def test_every_page_loads_him_and_the_switch_that_sends_him_away():
+def test_every_page_loads_him():
     html = page()
     assert '/static/css/mascot.css' in html and '/static/js/mascot.js' in html
-    assert re.search(r'id="mascot-toggle"[^>]*aria-pressed="true"[^>]*hidden>Finn the fish<', html)  # hidden until the script knows he can run
+    assert 'id="mascot-toggle"' not in html and 'id="fxtoggle"' not in html  # no switches: the page looks the same for everyone
     assert html.index("/static/js/app.js") < html.index("/static/js/mascot.js")  # he uses the page's translator, so it loads first
 
 
-def test_the_switch_and_his_aria_label_are_translated():
+def test_his_aria_label_is_translated():
     assert "小鱼 Finn" in page("zh") and "小魚 Finn" in page("zh-Hant")  # Traditional is derived from the Simplified text
     assert tr("Finn the fish, your scam-spotting helper. Press Enter for a tip, and use the arrow keys to move him.", "zh").startswith("小鱼 Finn")
 

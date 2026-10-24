@@ -10,6 +10,7 @@ import re
 import secrets
 import time
 
+from core.domain import characters
 from core.storage import db
 
 ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"  # no 0/O/1/I: easy to read out or retype
@@ -28,8 +29,9 @@ class AccountError(ValueError):
 
 
 def _avatar(raw: str, fallback: str | None = None) -> str:
+    """A look code, or one of the animals profiles had before there were characters; anything else becomes the fallback (a random character for a new profile)."""
     raw = LEGACY_AVATARS.get(raw, raw)  # (a page open from before the pictures were drawn still sends an emoji)
-    return raw if raw in AVATARS else (fallback or secrets.choice(AVATARS))
+    return raw if characters.valid(raw) or raw in AVATARS else (fallback or characters.random_look())
 
 
 def clean_name(raw: str) -> str:
@@ -193,6 +195,18 @@ def remove_friend(me: str, pub: str) -> bool:
             return False
         n = c.execute("DELETE FROM friendships WHERE (a=? AND b=?) OR (a=? AND b=?)", (me, other["profile"], other["profile"], me)).rowcount
     return n > 0
+
+
+def visit_target(me: str, pub: str) -> tuple[str, dict] | None:
+    """Whose house you may look at: your own, or a friend's, named by their public id. Returns (their profile id, their card): the profile id is for the server's own
+    use (reading their house) and must never be sent to a page. None if they are neither you nor your friend."""
+    with db.connect(shared=True) as c:
+        row = c.execute("SELECT * FROM accounts WHERE pub=?", (pub,)).fetchone()
+        if row is None:
+            return None
+        if row["profile"] != me and not c.execute("SELECT 1 FROM friendships WHERE a=? AND b=?", (me, row["profile"])).fetchone():
+            return None
+        return row["profile"], _card(row)
 
 
 def friends(me: str) -> list[dict]:

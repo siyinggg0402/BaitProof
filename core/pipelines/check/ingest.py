@@ -8,7 +8,9 @@ from core.lang import text as L
 from core.domain import privacy
 from core.domain.schemas import Origin
 from core.lang import ms as MS
+from core.lang import ta as TA
 from core.lang import zh as ZH
+from core.domain.intents import WARNING_FOREIGN
 from core.lang.text import Dual
 from core.storage import library
 
@@ -16,7 +18,7 @@ from . import links as LK
 from .knowledge import AMBIGUOUS_BRANDS, BRANDS, INJECTION_RE, RAILS, VICTIM_RE, ZH_BRAND_NAMES
 
 MAX_LEN = 4000
-AMOUNT_RE = Dual(r"[$€£₹]\s?\d[\d,.]*|\bRs\.? ?\d[\d,.]*|\bINR\.? ?\d[\d,.]*|\b\d[\d,.]*\s?(?:dollars|usd|eur|rupees)\b|\bRM\s?\d[\d,.]*|\bS\$\s?\d[\d,.]*", ZH.AMOUNT, MS.AMOUNT)
+AMOUNT_RE = Dual(r"[$€£₹]\s?\d[\d,.]*|\bRs\.? ?\d[\d,.]*|\bINR\.? ?\d[\d,.]*|\b\d[\d,.]*\s?(?:dollars|usd|eur|rupees)\b|\bRM\s?\d[\d,.]*|\bS\$\s?\d[\d,.]*", ZH.AMOUNT, MS.AMOUNT, TA.AMOUNT)
 
 
 @dataclass
@@ -67,7 +69,7 @@ def ingest(raw: str) -> Ingested:
         urls=urls,
         emails=[library.EMAIL_RE.search(text[a:b]).group(0).lower() for a, b in email_spans],
         amounts=AMOUNT_RE.findall(text),
-        rails={k: m.group(0) for k, p in RAILS.items() if (m := p.search(text))},
+        rails={k: m.group(0) for k, p in RAILS.items() if (m := p.search(WARNING_FOREIGN.sub(" ", text)))},
         brands=list(dict.fromkeys([b for b in BRANDS if b not in AMBIGUOUS_BRANDS and re.search(rf"\b{b}\b", low)]
                                   + [key for name, key in ZH_BRAND_NAMES.items() if name in simp])),
         phones=privacy.phones_in(text),

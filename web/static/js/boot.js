@@ -19,8 +19,9 @@ function icon(name, cls) {
   use.setAttribute("href", "#i-" + name); svg.append(use);
   return svg;
 }
-// A profile picture: the animal's face in a soft circle (a name the sprite does not know becomes the fish).
+// A profile picture in a soft circle: a character's portrait (a look code, drawn by look.js) or the animal an older profile has (a name the sprite does not know becomes the fish).
 function avatarEl(name, cls) {
+  if (typeof parseLook === "function" && parseLook(name)) return portraitEl(name, cls);
   const w = document.createElement("span");
   w.className = "avt" + (cls ? " " + cls : "");
   w.append(icon("av-" + (document.getElementById("i-av-" + name) ? name : "fish")));
@@ -47,7 +48,7 @@ function iconPaths(name) {
 // The voice for read-aloud: Chinese text is read by a Chinese voice (Traditional on a Traditional page), a Malay page by a Malay voice, everything else by an English one.
 function speechLang(text) {
   if (/[㐀-鿿]/.test(text)) return I18N.speech.startsWith("zh") ? I18N.speech : "zh-CN";
-  return I18N.lang === "ms" ? I18N.speech : "en";
+  return I18N.lang === "ms" || I18N.lang === "ta" ? I18N.speech : "en";
 }
 function say(text) {
   if (!("speechSynthesis" in window)) return;

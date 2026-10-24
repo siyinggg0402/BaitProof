@@ -74,8 +74,6 @@ UI_ZH: dict[str, str] = {
     "Every message you check, here or in Telegram, is saved to your profile with the verdict and the giveaway, and the tricks go straight into your practice and game.":
         "你在这里或在 Telegram 里检查的每条消息，都会连同结论和破绽一起存进你的个人档案，其中的套路会直接加入你的练习和游戏。",
     "Connected": "已连接", "Not connected": "未连接",
-    "Forward suspicious messages to the Baitproof bot and they show up here automatically. Connect once with a short code.":
-        "把可疑的消息转发给 Baitproof 机器人，它们会自动出现在这里。只需用一个短代码连接一次。",
     "Connect Telegram": "连接 Telegram", "Open Telegram": "打开 Telegram", "Disconnect Telegram": "断开 Telegram",
     "Open Telegram and send this code to the bot {name}:": "打开 Telegram，把这个代码发给 {name}：",
     "The code works once and expires in {timer}.": "这个代码只能用一次，{timer} 后失效。",
@@ -229,11 +227,9 @@ UI_ZH: dict[str, str] = {
     "Shown as plain text on purpose, so a bad link can't be tapped by mistake.": "这里特意只显示文字、不能点，免得你不小心点到坏链接。",
     "Official site": "官方网站", "Known phishing site": "已知钓鱼网站", "Fake lookalike": "假冒网址", "Short link": "短链接", "Suspicious": "可疑", "Not verified": "无法核实", "Long-established site": "老牌网站",
     "Really goes to {host}": "实际指向 {host}",
-    "Background effects": "背景动效",
     "Nothing came through from the Share menu. Please paste the message instead.": "分享菜单没有传来内容。请直接粘贴消息。",
     "Baitproof is busy right now. Please try sharing again in a minute.": "Baitproof 现在有点忙。请一分钟后再分享一次。",
     "Shared from another app. Checking it now…": "已从其他应用分享过来，正在检查…",
-    "Install on your phone": "安装到手机",
     "On Android, install Baitproof, then use Share in WhatsApp to send me a message to check.": "在安卓手机上安装 Baitproof 后，可以在 WhatsApp 里点“分享”，直接把消息发给我检查。",
     "Agree a family safe word. If someone asks for money in a hurry, ask for it. No word, no money.": "和家人约定一个暗号。有人急着要钱，就请他说出暗号。没有暗号，就不汇款。",
     "Need help, or want to report it?": "需要帮助，或想举报？",
@@ -250,7 +246,6 @@ UI_ZH: dict[str, str] = {
     "Official lines checked against government pages in {when}.": "官方热线已于{when}对照政府网页核实。",
     "October 2026": "2026年10月",
     "🆘 Already paid or shared something? Singapore: call your bank, then 1799. Malaysia: call 997 now. More: /report": "🆘 已经付钱或透露资料了？新加坡：先打电话给银行，再拨 1799。马来西亚：马上拨 997。更多：/report",
-    "Finn the fish": "小鱼 Finn",
     "Finn the fish, your scam-spotting helper. Press Enter for a tip, and use the arrow keys to move him.": "小鱼 Finn，帮你识破骗局的小帮手。按回车键听小提示，用方向键可以移动他。",
     "Real banks never ask for your PIN or a code by message.": "真正的银行绝不会用消息向你要密码或验证码。",
     "Gift cards are for gifts. If someone asks you to pay with them, it's a scam.": "礼品卡是用来送礼的。要是有人叫你用它付款，那就是骗局。",

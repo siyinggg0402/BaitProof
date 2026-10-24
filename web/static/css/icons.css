@@ -4,7 +4,7 @@
 .ic.lg{width:1.6em;height:1.6em}.ic.xl{width:2.2em;height:2.2em}
 /* a profile picture: the animal's face in a soft circle */
 .avt{display:inline-grid;place-items:center;flex:none;width:1.9em;height:1.9em;border-radius:50%;background:var(--brand-soft);color:var(--brand-deep,var(--brand));vertical-align:middle}
-.avt .ic{width:70%;height:70%;vertical-align:0}
+.avt{overflow:hidden}.avt .ic{width:70%;height:70%;vertical-align:0}.avt .pt{display:block;width:100%;height:100%}
 /* medals on the leaderboards */
 .m-gold{color:#D9A21B}.m-silver{color:#8996A8}.m-bronze{color:#B8743A}
 

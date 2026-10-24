@@ -11,7 +11,6 @@ ROAD = "road"      # the endless drive
 DAILY = "daily"    # the Daily Road: the same messages for everyone today
 LINK = "link"      # Link Hunt
 DUEL = "duel"      # a live race (its distance, for the record; its winners are in duel_pairs)
-GAMES = (ROAD, DAILY, LINK, DUEL)
 
 
 def day_start() -> str:

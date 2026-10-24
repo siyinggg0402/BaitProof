@@ -12,7 +12,7 @@ from web.main import app
 
 CJK = re.compile(r"[一-鿿]")
 PRIZE = "Tahniah! Anda telah memenangi hadiah RM50,000. Sila klik pautan ini untuk menuntut dalam 24 jam http://hadiah-maybank.top/tuntut"
-SAME_IN_MALAY = {"WhatsApp", "+{n} XP", "+50 XP", "{a} / {b} XP", "Telegram", "OK", "{n} m", "Scam Road"}  # brands, numbers and loan words written the same
+SAME_IN_MALAY = {"WhatsApp", "+{n} XP", "+50 XP", "{a} / {b} XP", "Telegram", "OK", "{n} m", "Scam Road", "Bob", "Tudung", "Hoodie", "Baju kurung", "Songkok", "Kurta"}  # brands, numbers and loan words written the same
 # English wording of the interface that must never show on a Malay page
 LEFTOVER = ["Check it", "Check a message", "Practice", "Practise", "Train", "Games", "My records", "Delete", "Read aloud", "The giveaway", "What to do", "The evidence",
             "Red flag", "Reassuring", "Tricks found", "Challenge family", "Start practice", "Paste the message", "Your scam resilience", "Needs work", "Getting there",

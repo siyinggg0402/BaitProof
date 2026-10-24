@@ -2,14 +2,16 @@
 language switcher, the strings its scripts need) and the `page()` helper."""
 from __future__ import annotations
 
+import json
 import time
 from pathlib import Path
 
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
+from markupsafe import Markup
 
 from core.ai import llm
-from core.domain import helplines, seasons
+from core.domain import characters, helplines, seasons
 from core.lang import i18n
 from core.storage import accounts, db, groups, links, model
 from web import icons, ui
@@ -42,6 +44,8 @@ templates = Jinja2Templates(directory=BASE / "templates", context_processors=[ui
 templates.env.globals.update({"_": ui.translate, "_h": ui.translate_html, "tr_in": ui.translate_in, "STAGES": ui.STAGES, "help_lines": helplines.lines, "help_verified": helplines.VERIFIED})
 templates.env.globals["zip_cells"] = zip
 templates.env.globals.update({"icon": icons.icon, "avatar": icons.avatar, "sprite": icons.sprite})
+templates.env.globals.update({"random_look": characters.random_look, "look_names": {"hair": characters.HAIR_NAMES, "outfit": characters.OUTFIT_NAMES, "accessory": characters.ACCESSORY_NAMES}})
+templates.env.globals["look_tables"] = lambda: Markup(json.dumps(characters.tables()).replace("<", "\\u003c"))   # (the page reads the character tables from here)
 templates.env.filters.update({
     "timestamp": lambda t: time.strftime("%H:%M:%S", time.localtime(t)),
     "ago": ui.ago_filter, "script": ui.script_filter, "trick_names": ui.trick_names, "plain": ui.plain,

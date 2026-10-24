@@ -11,11 +11,12 @@ from bot import handlers, telegram_bot
 from core.inputs import audio, image
 from core.lang.i18n import to_traditional
 from core.obs import logger
+from tests.bot.helpers import fake_render
 
 
 @pytest.fixture(autouse=True)
 def plain_render(monkeypatch):
-    monkeypatch.setattr(telegram_bot, "render", lambda r: {"keyboard": [[b.data for b in row] for row in r.buttons], "preview": r.preview})
+    monkeypatch.setattr(telegram_bot, "render", fake_render)
 
 
 class FakeFile:

@@ -79,7 +79,7 @@ html.big body{font-size:22px}html.big .lead{font-size:1.2rem}
 .home h1,.t-h1{font-size:clamp(1.9rem,4.4vw,3rem);margin:.05em 0 .3em}
 .home .lead,.t-lead{font-size:1.05rem;margin-bottom:1.1em}
 .home #check-form{margin:0}.home #check-form button.big{margin-top:12px}.home .examples{margin-top:8px}.home textarea{padding-block:12px}
-.home-demo{padding-top:12px}
+.home-side{padding-top:12px;display:grid;gap:22px;align-content:start}.home-demo{padding-top:0}
 .trust-note{margin:18px 0 0;color:var(--muted);font-size:.85rem}.trust-note b{background:var(--brand-soft);color:var(--brand);border-radius:999px;padding:2px 9px;font-size:.68rem;letter-spacing:.06em;margin-right:6px}
 .trust{display:flex;flex-wrap:wrap;gap:6px 18px;margin:14px 0 0;padding:0;list-style:none;color:var(--muted);font-size:.82rem}
 .trust li::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--ok);margin-right:8px;vertical-align:middle}
@@ -265,7 +265,6 @@ blockquote{margin:14px 0;padding:16px 18px;background:var(--bg);border:1px solid
 .feedback.correct{background:var(--ok-soft)}.feedback.partial{background:var(--warn-soft)}
 .progress{display:flex;gap:6px;margin-bottom:16px}.progress i{flex:1;height:5px;border-radius:99px;background:var(--line);overflow:hidden;position:relative}
 .progress i.done{background:var(--brand)}.progress i.now{background:linear-gradient(90deg,var(--brand) 50%,var(--line) 50%)}
-.done-ring{display:flex;justify-content:center;margin:8px 0}
 
 .family{text-align:left;margin:18px 0}.family input{margin-bottom:6px}.famrow{display:flex;flex-wrap:wrap;gap:8px}.famrow .btn{margin-top:6px;min-height:44px}
 /* share */
@@ -318,7 +317,7 @@ footer.wrap{color:var(--faint);font-size:.8rem;padding-block:0 40px}
 html.js .reveal{opacity:0;transform:translateY(18px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
 html.js .reveal.in{opacity:1;transform:none}
 
-@media(max-width:820px){.home{grid-template-columns:1fr}.home-demo{display:none}.grid2{grid-template-columns:1fr}.mock-body{min-height:0}}
+@media(max-width:820px){.home{grid-template-columns:1fr}.home-side{display:none}.grid2{grid-template-columns:1fr}.mock-body{min-height:0}}
 @media(max-width:560px){.in-thumb{width:44px;height:44px}.in-notice,.in-busy,.in-rec{padding:10px 12px}.home #check-form{display:flex;flex-direction:column}.home #check-form button.big{align-self:flex-start}.home #check-form .examples{order:1;margin-top:14px}.in-buttons{gap:8px}.in-privacy p{display:inline;margin:0 .9em 0 0}main{padding-top:26px}.home h1{margin-bottom:.25em}.home .lead{margin-bottom:.9em}.home .card{padding:16px}.home textarea{padding:12px 14px}nav .cta .full{display:none}nav .cta .short{display:inline}nav{gap:0}#textsize{margin-right:2px;padding:0 10px}.bar{padding-left:12px}.card.result{padding:0}nav a,nav button{white-space:nowrap;font-size:.82rem}body{font-size:17px}.map li{grid-template-columns:1fr auto}.lvl{grid-column:1/-1}.ring{width:100px;height:100px}nav a{padding:0 10px}.brand span{display:none}.card{padding:18px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}html.js .reveal{opacity:1;transform:none}}
 

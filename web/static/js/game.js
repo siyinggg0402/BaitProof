@@ -56,15 +56,15 @@
         toggle(t("Sound effects"), sound, (v) => { sound = v; store.set("bp-sound", v ? "1" : "0"); if (v) sfx.ok(); }, "volume"),
         toggle(t("Beat the clock (+5 XP for quick answers)"), timed, (v) => { timed = v; store.set("bp-timed", v ? "1" : "0"); }, "timer")));
 
-    const mode = (ico, title, desc, onclick, opts = {}) => el("button", { className: "mode-card" + (opts.hot ? " hot" : ""), disabled: !!opts.disabled, onclick },
+    const mode = (ico, title, desc, onclick, opts = {}) => el("button", { className: "mode-card" + (opts.hot ? " hot" : "") + (opts.acc ? " acc-" + opts.acc : ""), disabled: !!opts.disabled, onclick },
       el("span", { className: "mode-ico" }, icon(ico, "lg")), el("span", { className: "mode-title", textContent: title }),
       el("span", { className: "mode-desc", textContent: desc }), opts.tag ? el("span", { className: "mode-tag", textContent: opts.tag }) : "");
     const modes = el("section", { className: "mode-grid rise d1", ariaLabel: t("Game modes") },
-      mode("inbox", t("Inbox Rush"), t("8 messages. Scam, fine, or check first? Aimed at the tricks you find hardest."), () => play("rush"), { hot: true, tag: t("Quick play") }),
-      mode("calendar", t("Daily Challenge"), S.daily_done ? t("Done today. You can replay it for fun.") : t("The same 6 messages for everyone today. +50 XP the first time."), () => play("daily"), { tag: S.daily_done ? t("Completed") : t("+50 XP") }),
-      mode("search", t("Spot the Tell"), t("Tap the exact words that give a scam away."), () => play("tell")),
+      mode("inbox", t("Inbox Rush"), t("8 messages. Scam, fine, or check first? Aimed at the tricks you find hardest."), () => play("rush"), { hot: true, acc: "rose", tag: t("Quick play") }),
+      mode("calendar", t("Daily Challenge"), S.daily_done ? t("Done today. You can replay it for fun.") : t("The same 6 messages for everyone today. +50 XP the first time."), () => play("daily"), { acc: "blue", tag: S.daily_done ? t("Completed") : t("+50 XP") }),
+      mode("search", t("Spot the Tell"), t("Tap the exact words that give a scam away."), () => play("tell"), { acc: "violet" }),
       mode("users", t("Your circle"), S.yours_available ? (S.yours_available > 1 ? t("{n} scams that reached your own family.", { n: S.yours_available }) : t("{n} scam that reached your own family.", { n: S.yours_available })) : t("Scams you check or forward will appear here to practise on."),
-        () => play("yours"), { disabled: !S.yours_available }));
+        () => play("yours"), { acc: "teal", disabled: !S.yours_available }));
 
     const bossGrid = el("div", { className: "boss-grid" }, ...S.tricks.map((k) => el("button", { className: "tile" + (k.won ? " won" : ""), onclick: () => play("boss", k.id), title: k.blurb },
       el("span", { className: "tile-top" }, el("span", { className: "tile-name", textContent: k.label }), el("span", { className: "tile-trophy", ariaHidden: "true" }, icon(k.won ? "trophy" : "swords"))),

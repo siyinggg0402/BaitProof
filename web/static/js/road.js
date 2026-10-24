@@ -1,8 +1,10 @@
-// Scam Road: a little car with Finn in the back window drives a three-lane road. A message is on the sign ahead; the lane you drive through is your answer.
+// Scam Road: a little car with your character in the back window drives a three-lane road. A message is on the sign ahead; the lane you drive through is your answer.
 // The server deals the messages and grades every lane (so the answer is never in the page), and adds up the distance. This file draws and drives.
 // three.js is vendored (no CDN: the page's security policy only allows our own scripts). Text on screen is real HTML on top of the canvas.
 // Everything you hear is made on the spot with the Web Audio API (no sound files), and every effect has an off switch.
 import * as THREE from "../vendor/three.module.min.js";
+let buildDriver = () => new THREE.Group();
+try { ({ buildDriver } = await import("./character3d.js")); } catch (_) { /* no driver model: the car still drives */ }
 
 const $ = (id) => document.getElementById(id);
 const LANE_X = [-3, 0, 3];
@@ -63,6 +65,10 @@ function drawIcon(g, name, cx, cy, size, color = "#fff") {
   g.restore();
 }
 const avatarIcon = (name) => "av-" + (document.getElementById("i-av-" + name) ? name : "fish");
+// a profile picture on a canvas: a character's portrait, or the animal an older profile has
+function drawAvatar(g, avatar, cx, cy, size) {
+  if (parseLook(avatar)) drawPortrait(g, avatar, cx, cy, size); else drawIcon(g, avatarIcon(avatar), cx, cy, size);
+}
 const TEXT_FONT = "system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Noto Sans CJK SC', sans-serif";
 
 const skyCanvas = document.createElement("canvas"); skyCanvas.width = 4; skyCanvas.height = 256;
@@ -186,46 +192,16 @@ const player = buildCar(0x7a5cd0, false);
 const car = player.car, carMats = player.mats, wheels = player.wheels;
 scene.add(car);
 
-// Finn: the picture, with a hat drawn on it when one is chosen
-const FINN_W = 640, FINN_H = 520, OY = 106;
-const finnCanvas = document.createElement("canvas"); finnCanvas.width = FINN_W; finnCanvas.height = FINN_H;
-const finnTex = new THREE.CanvasTexture(finnCanvas); finnTex.colorSpace = THREE.SRGBColorSpace;
-const finnImg = new Image();
-let finnReady = false;
-function drawFinn(hat) {
-  if (!finnReady) return;
-  const g = finnCanvas.getContext("2d"), Y = (y) => y + OY;
-  g.clearRect(0, 0, FINN_W, FINN_H); g.drawImage(finnImg, 0, OY);
-  g.lineJoin = "round"; g.lineCap = "round";
-  if (hat === "crown") {
-    g.fillStyle = "#F5C542"; g.strokeStyle = "#B8860B"; g.lineWidth = 6;
-    g.beginPath(); g.moveTo(300, Y(88)); g.lineTo(296, Y(18)); g.lineTo(344, Y(52)); g.lineTo(386, Y(2)); g.lineTo(428, Y(52)); g.lineTo(476, Y(18)); g.lineTo(472, Y(88)); g.closePath(); g.fill(); g.stroke();
-    g.fillStyle = "#E5546B"; for (const x of [344, 386, 428]) { g.beginPath(); g.arc(x, Y(70), 9, 0, 6.3); g.fill(); }
-  } else if (hat === "party") {
-    g.fillStyle = "#6C8CF5"; g.strokeStyle = "#2D3E9E"; g.lineWidth = 6;
-    g.beginPath(); g.moveTo(318, Y(96)); g.lineTo(452, Y(96)); g.lineTo(386, Y(-52)); g.closePath(); g.fill(); g.stroke();
-    g.strokeStyle = "#FFE08A"; g.lineWidth = 9; g.beginPath(); g.moveTo(340, Y(58)); g.lineTo(430, Y(58)); g.moveTo(358, Y(16)); g.lineTo(414, Y(16)); g.stroke();
-    g.fillStyle = "#F5C542"; g.beginPath(); g.arc(386, Y(-54), 16, 0, 6.3); g.fill();
-  } else if (hat === "cap") {
-    g.fillStyle = "#E5546B"; g.strokeStyle = "#8E2236"; g.lineWidth = 6;
-    g.beginPath(); g.ellipse(380, Y(96), 98, 74, 0, Math.PI, 0); g.closePath(); g.fill(); g.stroke();
-    g.fillStyle = "#C93A52"; g.beginPath(); g.ellipse(486, Y(98), 84, 15, 0, 0, 6.3); g.fill(); g.stroke();
-    g.fillStyle = "#fff"; g.beginPath(); g.arc(380, Y(26), 11, 0, 6.3); g.fill();
-  } else if (hat === "shades") {
-    g.fillStyle = "#1E1633"; g.strokeStyle = "#0E0A1E"; g.lineWidth = 6;
-    pill(g, 342, Y(146), 112, 62, 24); g.fill(); g.stroke(); pill(g, 456, Y(146), 112, 62, 24); g.fill(); g.stroke();
-    g.strokeStyle = "rgba(255,255,255,.55)"; g.lineWidth = 7; g.beginPath(); g.moveTo(362, Y(160)); g.lineTo(392, Y(160)); g.moveTo(476, Y(160)); g.lineTo(506, Y(160)); g.stroke();
-  } else if (hat === "scarf") {
-    g.strokeStyle = "#E5546B"; g.lineWidth = 48; g.beginPath(); g.moveTo(262, Y(168)); g.quadraticCurveTo(214, Y(238), 262, Y(318)); g.stroke();
-    g.strokeStyle = "#FFE08A"; g.lineWidth = 10; g.beginPath(); g.moveTo(246, Y(196)); g.quadraticCurveTo(214, Y(238), 250, Y(296)); g.stroke();
-    g.fillStyle = "#E5546B"; g.strokeStyle = "#8E2236"; g.lineWidth = 4; g.fillRect(236, Y(306), 40, 84); g.strokeRect(236, Y(306), 40, 84);
-  }
-  finnTex.needsUpdate = true;
+// the driver: the player's own character (or the animal an older profile has) in the back window, facing the camera, in the hat chosen in the garage
+const MY_LOOK = $("road").dataset.look || "";
+let driver = null;
+function drawFinn(hat) {   // (the name the garage and the browser test already use)
+  if (driver) car.remove(driver);
+  driver = buildDriver(MY_LOOK, hat);
+  driver.scale.setScalar(1.45); driver.position.set(0, 1.72, 0.95);
+  car.add(driver);
 }
-finnImg.onload = () => { finnReady = true; drawFinn(G.skin.hat); };
-finnImg.src = "/static/img/finn.png";
-const finn = new THREE.Sprite(new THREE.SpriteMaterial({ map: finnTex, transparent: true }));
-finn.scale.set(2.3, 2.3 * FINN_H / FINN_W, 1); finn.position.set(0, 2.6, 0.9); car.add(finn);
+drawFinn(G.skin.hat);
 
 // the signs over the road: three lanes, three colours
 function signTexture(emoji, label, color) {
@@ -388,7 +364,7 @@ function flagTexture(g2) {
   return canvasTex(256, 112, (g, w, h) => {
     g.fillStyle = "rgba(60,36,130,.9)"; pill(g, 3, 3, w - 6, h - 6, 22); g.fill();
     g.strokeStyle = "#fff"; g.lineWidth = 4; g.stroke();
-    g.textBaseline = "middle"; g.textAlign = "left"; drawIcon(g, avatarIcon(g2.avatar), 40, h / 2, 46); g.fillStyle = "#fff";
+    g.textBaseline = "middle"; g.textAlign = "left"; drawAvatar(g, g2.avatar, 40, h / 2, 50); g.fillStyle = "#fff";
     g.font = `800 28px ${TEXT_FONT}`; g.fillText(g2.nickname, 78, 38, w - 90);
     g.font = "700 24px ui-monospace, Menlo, monospace"; g.fillStyle = "#FFE3A3"; g.fillText(t("{n} m", { n: g2.best }), 78, 78, w - 90);
   });
@@ -411,7 +387,7 @@ const ghosts = [];
 function ghostLabel(avatar, name) {
   return canvasTex(256, 90, (g, w, h) => {
     g.fillStyle = "rgba(60,36,130,.88)"; pill(g, 3, 3, w - 6, h - 6, 24); g.fill(); g.strokeStyle = "#fff"; g.lineWidth = 4; g.stroke();
-    g.textBaseline = "middle"; g.textAlign = "left"; drawIcon(g, avatarIcon(avatar), 37, h / 2, 42); g.fillStyle = "#fff";
+    g.textBaseline = "middle"; g.textAlign = "left"; drawAvatar(g, avatar, 37, h / 2, 46); g.fillStyle = "#fff";
     g.font = `800 30px ${TEXT_FONT}`; g.fillText(name, 72, h / 2 + 1, w - 84);
   });
 }
@@ -899,7 +875,7 @@ function update(dt) {
   car.position.set(G.laneX, bob, 0);
   car.rotation.y = spin; car.rotation.z = -vx * 0.09 + (G.state === "crash" ? Math.sin(G.crashT * 22) * 0.06 : 0);
   for (const w of wheels) w.rotation.x -= dz * 2.2;
-  finn.position.y = 2.6 + Math.sin(performance.now() / 260) * 0.05;
+  if (driver) { driver.position.y = 1.72 + Math.sin(performance.now() / 260) * 0.04; if (!reduceMotion) driver.userData.tick?.(performance.now() / 1000, dt); }
   if (G.skin.color === "rainbow") { hue = (hue + dt * 0.35) % 1; carMats.body.color.setHSL(hue, 0.7, 0.62); }
 
   // the camera follows from behind and a little above

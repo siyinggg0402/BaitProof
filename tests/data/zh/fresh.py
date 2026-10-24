@@ -1,0 +1,50 @@
+"""Chinese FRESH set: written by hand after the Chinese rules were tuned on tests/data/zh/dev.py and read through tests/data/zh/holdout.py, to check that the tuning
+generalises. Mostly Simplified, with Singapore and Malaysia scams (DBS, Touch 'n Go, the police and a "safe account", Shopee and Line) and four Traditional ones, and the
+ordinary messages Chinese speakers get (bank and OTP texts with their own warning, lockers, school, a boss, a clinic, an anti-fraud notice, SP bills, Grab, Shopee, SMRT,
+and two from Taiwan). Authored, not captured: a development signal, not a benchmark. Read it as little as possible."""
+
+SCAMS = [
+    ("china-post", "【中国邮政】您的包裹因地址不详被退回，请在24小时内登录 http://chinapost-redeliver.top 补充地址，逾期将被销毁。"),
+    ("police-qq", "您好，我是公安局民警王警官，您涉嫌一起洗钱案，请立即添加QQ 3345678 配合调查，切勿告知家人。"),
+    ("cmb-login", "【招商银行】您的账户存在异常登录，请点击 http://cmb-secure.cc/verify 验证身份，否则账户将被冻结。"),
+    ("brush-orders", "兼职刷单，日赚500，无需押金，轻松在家做。加微信 wxid_88ykf 领取任务，首单垫付后立即返还。"),
+    ("prize-tax", "恭喜您中奖！您的手机号被抽中本期超级大奖88万元，请联系客服微信 jackpot_cs01 并缴纳10%个人所得税领奖。"),
+    ("mom-new-number", "妈，我手机掉了，这是新号码。我急需交学费，帮我转8000到这个账户，别告诉爸爸，晚点跟你说。"),
+    ("taobao-refund", "亲，您在淘宝购买的商品有质量问题，需要退款。请下载“钉钉”并加入会议，客服将指导您操作退款，验证码请告知客服。"),
+    ("boss-giftcards", "我是你的老板，现在开会不方便接电话。帮我买5张苹果礼品卡，把卡号发给我，今天要用，先别告诉别人。"),
+    ("licai-group", "高收益理财：本金安全，月收益15%，导师带你实盘操作，进群 t.me/licai_vip88 了解详情，首次入金500起。"),
+    ("antifraud-apk", "【国家反诈中心】检测到您的手机号涉嫌诈骗，请立即下载“反诈卫士”(http://fanzha-app.top/download.apk) 自查，否则将冻结银行卡。"),
+    ("yibao-frozen", "您的医保卡已被冻结，请点击 http://yibao-unlock.vip 激活，需验证银行卡号和短信验证码。"),
+    ("job-uniform", "你好，看到你的简历很合适，我们是正规公司，待遇好，请先缴纳300元培训服装费，到岗后全额返还。"),
+    ("tax-refund", "【税务局】您有一笔个税退税 2560 元待领取，请在 http://etax-refund.cc 填写银行卡信息，今日24点前有效。"),
+    ("tutor-deposit", "老师好，我是新生家长，孩子想报名补课，先转定金800元到这个微信号，我稍后带孩子过去。"),
+    ("brother-loan", "哥，借我1万应急，我现在在派出所，不方便打电话，转到这个卡上，千万别告诉嫂子。"),
+    ("sg-dbs", "【DBS】您的账户因异常活动已被锁定，请在24小时内登录 dbs-secure-login.top 验证，否则账户将被关闭。"),
+    ("my-tng", "TNG eWallet：您的账户已被限制，请点击 tng-verify.xyz 验证身份并更新 NRIC 资料。"),
+    ("sg-spf", "新加坡警察部队：您涉嫌一宗洗黑钱案件，请立刻联系 Inspector Tan 6589 4421，并把存款转入安全户口。"),
+    ("tw-shopee", "【蝦皮購物】您的訂單異常，系統已自動退款，請加客服 Line @shopee_cs99 並提供銀行帳號及驗證碼。"),
+    ("tw-mom", "媽，我換了新手機號碼，現在急需借錢交房租，轉兩萬到這個戶口，先別跟爸說。"),
+]
+
+LEGIT = [
+    ("boc-spend", "【中国银行】您尾号1234的账户于10月12日14:32支出人民币200.00元，余额3580.50元。如非本人操作请致电95566。"),
+    ("otp-warning", "您的验证码是 482913，5分钟内有效。请勿将验证码告知他人，工作人员不会向您索取。"),
+    ("locker", "菜鸟驿站：您的包裹已到达3号楼快递柜，取件码 6-2-1048，请于明晚前取走。"),
+    ("pta", "家长们好，周五下午3点家长会在学校礼堂举行，请准时参加，谢谢。"),
+    ("mom-overtime", "妈，我今晚加班，不回家吃饭了。你们先吃，不用等我。"),
+    ("meituan", "【美团】您的外卖正在派送中，骑手预计12:35送达，请保持电话畅通。"),
+    ("hospital", "【某某医院】温馨提示：您预约的明天上午9点心内科门诊已确认，请携带身份证和医保卡。"),
+    ("hr-notice", "公司通知：下周一起实行新的考勤制度，具体细则已发送至您的邮箱，请查收。"),
+    ("antifraud-tip", "国家反诈中心提醒：凡是自称公检法要求转账到“安全账户”的都是诈骗，请立即挂断电话。"),
+    ("sp-bill", "SP Services：您10月份的电费账单为 $86.40，请在11月12日前通过 SP 应用程序缴费。"),
+    ("dinner", "晚上聚餐改到7点半，地点还是上次那家火锅店，大家别迟到哦。"),
+    ("grab", "【Grab】您的司机已到达上车地点，车牌 SGX1234A，请尽快上车。"),
+    ("talk", "星期六的华语文化讲座在社区中心举行，下午2点开始，免费入场，欢迎参加。"),
+    ("zto", "【中通快递】您的快件正在派送中，派件员李师傅电话 13800001234，请注意查收。"),
+    ("cake", "您好，您在我们店订购的蛋糕已制作完成，可于今天下午5点前到店自取。"),
+    ("shopee-ship", "【Shopee】您的订单已发货，预计3到5个工作日送达，可在Shopee应用中查看物流。"),
+    ("slides", "老板，周三的会议资料我已经发到您邮箱了，麻烦您抽空看一下。"),
+    ("smrt", "【SMRT】东西线因信号故障延误约10分钟，各站有免费接驳巴士。"),
+    ("tw-telecom", "【中華電信】您本月帳單金額為 NT$688，繳費期限為 11 月 10 日，可至門市或 App 繳費。"),
+    ("tw-school", "親愛的家長，明天的校外教學請同學準時於早上8點在校門口集合，並攜帶水壺和午餐。"),
+]

@@ -12,9 +12,9 @@ import json
 import re
 from pathlib import Path
 
-LANGS = ("en", "zh", "zh-Hant", "ms")
-NAMES = {"en": "English", "zh": "简体中文", "zh-Hant": "繁體中文", "ms": "Bahasa Melayu"}
-PROMPT_NAMES = {"en": "English", "zh": "Simplified Chinese (简体中文)", "zh-Hant": "Traditional Chinese (繁體中文)", "ms": "Malay (Bahasa Melayu)"}
+LANGS = ("en", "zh", "zh-Hant", "ms", "ta")
+NAMES = {"en": "English", "zh": "简体中文", "zh-Hant": "繁體中文", "ms": "Bahasa Melayu", "ta": "தமிழ்"}
+PROMPT_NAMES = {"en": "English", "zh": "Simplified Chinese (简体中文)", "zh-Hant": "Traditional Chinese (繁體中文)", "ms": "Malay (Bahasa Melayu)", "ta": "Tamil (தமிழ்)"}
 
 
 def norm(lang: str | None) -> str:
@@ -26,6 +26,8 @@ def norm(lang: str | None) -> str:
         return "zh"
     if s == "ms" or s.startswith("ms-") or s in ("bm", "may", "malay", "bahasa", "bahasa-melayu"):
         return "ms"
+    if s == "ta" or s.startswith("ta-") or s in ("tam", "tamil"):
+        return "ta"
     return "en"
 
 
@@ -202,6 +204,7 @@ from core.lang.i18n_inputs import INPUTS_ZH  # noqa: E402
 from core.lang.i18n_ms import MS, TACTICS_MS  # noqa: E402  (Malay: Latin script, so no Simplified/Traditional step)
 from core.lang.i18n_ui import UI_ZH  # noqa: E402
 from core.lang.i18n_social import SOCIAL_MS, SOCIAL_ZH  # noqa: E402
+from core.lang.i18n_ta import TA, TACTICS_TA  # noqa: E402  (Tamil: its own script, so no Simplified/Traditional step)
 
 ZH.update(UI_ZH)
 ZH.update(BOT_ZH)
@@ -246,6 +249,8 @@ def tr(text: str, lang: str = "en", **kw) -> str:
     out = text
     if lang == "ms":
         out = MS.get(text, text)
+    elif lang == "ta":
+        out = TA.get(text, text)
     elif lang != "en":
         z = ZH.get(text)
         if z is not None:
@@ -260,6 +265,8 @@ def tactic_text(tid: str, field: str, lang: str, english: dict) -> str:
         return english[tid][field]
     if lang == "ms":
         return TACTICS_MS.get(tid, {}).get(field) or english[tid][field]
+    if lang == "ta":
+        return TACTICS_TA.get(tid, {}).get(field) or english[tid][field]
     z = TACTICS_ZH.get(tid, {}).get(field)
     if z is None:
         return english[tid][field]

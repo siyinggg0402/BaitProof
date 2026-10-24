@@ -17,10 +17,10 @@ from core.lang.text import to_simplified
 from core.domain.tactics import TACTICS
 
 JS_DIR = Path(__file__).parent / "static" / "js"
-HTML_LANG = {"en": "en", "zh": "zh-Hans", "zh-Hant": "zh-Hant", "ms": "ms"}  # the value of <html lang>
-SPEECH_LANG = {"en": "en", "zh": "zh-CN", "zh-Hant": "zh-TW", "ms": "ms-MY"}
-SHORT = {"en": "EN", "zh": "简体", "zh-Hant": "繁體", "ms": "BM"}  # what the switcher shows for the current language
-LIST_SEP = {"en": ", ", "zh": "、", "zh-Hant": "、", "ms": ", "}
+HTML_LANG = {"en": "en", "zh": "zh-Hans", "zh-Hant": "zh-Hant", "ms": "ms", "ta": "ta"}  # the value of <html lang>
+SPEECH_LANG = {"en": "en", "zh": "zh-CN", "zh-Hant": "zh-TW", "ms": "ms-MY", "ta": "ta-IN"}
+SHORT = {"en": "EN", "zh": "简体", "zh-Hant": "繁體", "ms": "BM", "ta": "தமிழ்"}  # what the switcher shows for the current language
+LIST_SEP = {"en": ", ", "zh": "、", "zh-Hant": "、", "ms": ", ", "ta": ", "}
 STAGES = {  # plain-language names for the pipeline's stages (the "How I decided" list)
     "ingest": "Read the message", "triage": "Checked how you're doing", "intent": "Worked out what it asks of you", "tools": "Checked links and numbers",
     "analysis": "AI review", "grounding": "Verified claims against the message", "arbiter": "Weighed the evidence", "loop": "Investigated further",

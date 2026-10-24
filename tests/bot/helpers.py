@@ -8,6 +8,11 @@ from core.storage import links
 CODE = {"scam": "s", "safe": "f", "unsure": "u"}
 
 
+def fake_render(reply) -> dict:
+    """Stands in for the Telegram message builder (which needs the `telegram` package): the buttons' data and the preview flag."""
+    return {"keyboard": [[b.data for b in row] for row in reply.buttons], "preview": reply.preview}
+
+
 def datas(reply) -> list[str]:
     return [b.data for row in reply.buttons for b in row]
 

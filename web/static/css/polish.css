@@ -72,8 +72,8 @@ h1{font-weight:800;letter-spacing:-.045em}
 .btn.sec:hover,a.sec:hover{background:var(--glass-strong);filter:none;border-color:color-mix(in srgb,var(--brand) 45%,var(--glass-line))}
 .ghost,.speak,.inbtn,.choice{position:relative;overflow:hidden;background:var(--glass-strong);border-color:var(--glass-line);transition:transform .25s var(--ease),border-color .25s,background .25s,box-shadow .25s}
 .ghost:hover,.speak:hover,.inbtn:hover{background:var(--grad-soft);border-color:color-mix(in srgb,var(--brand) 50%,transparent);box-shadow:0 8px 20px -10px var(--glow-brand)}
-.rip{position:absolute;border-radius:50%;pointer-events:none;transform:scale(0);background:rgba(255,255,255,.5);animation:rip .65s ease-out forwards}
-.ghost .rip,.speak .rip,.inbtn .rip,.choice .rip,.btn.sec .rip{background:color-mix(in srgb,var(--brand) 28%,transparent)}
+.rip{position:absolute;border-radius:50%;pointer-events:none;transform:scale(0);background:rgba(255,255,255,.26);animation:rip .5s ease-out forwards}
+.ghost .rip,.speak .rip,.inbtn .rip,.choice .rip,.btn.sec .rip{background:color-mix(in srgb,var(--brand) 16%,transparent)}
 @keyframes rip{to{transform:scale(1);opacity:0}}
 
 /* ---- the text box: lights up when you click into it */
@@ -137,10 +137,6 @@ textarea:focus,input:focus{background:var(--glass-strong);border-color:var(--bra
 footer.wrap{color:var(--muted)}
 
 /* ---- the switch for the moving background (shown by ripple.js only where the effect can run) */
-.fxtoggle{display:inline-flex;align-items:center;gap:8px;margin-left:10px;min-height:32px;padding:0 12px;border:1px solid var(--glass-line);border-radius:999px;background:var(--glass);color:var(--muted);font:600 .76rem var(--sans);cursor:pointer;vertical-align:middle}
-.fxtoggle::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--faint)}
-.fxtoggle[aria-pressed=true]::before{background:var(--ok);box-shadow:0 0 8px var(--ok)}
-.fxtoggle:hover{color:var(--ink);border-color:color-mix(in srgb,var(--brand) 40%,var(--glass-line))}
 
 /* ---- calm: no floating, shine or tilt for people who asked for less motion */
 @media (prefers-reduced-motion:reduce){
@@ -167,8 +163,52 @@ progress.xpbar::-webkit-progress-value{background:var(--brand)}progress.xpbar::-
 /* ---- a quiet invitation to the games, below the check */
 .play-promo{display:flex;flex-wrap:wrap;gap:16px 24px;align-items:center;justify-content:space-between;margin:34px 0 10px;padding:22px 26px;border-radius:24px;background:var(--glass);border:1px solid var(--glass-line);box-shadow:var(--shadow)}
 .play-promo h2{margin:0 0 4px}.play-promo p{margin:0;color:var(--muted);max-width:34em}
-.play-promo .actions{display:flex;flex-wrap:wrap;gap:10px}.play-promo .btn{margin-top:0}
+.play-promo .actions{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px}.play-promo .btn{margin-top:0}
 
 /* ---- a festival is on: one quiet line */
 .season-strip{margin:26px 0 0;padding:14px 20px;border-radius:18px;background:var(--glass);border:1px solid var(--glass-line);box-shadow:var(--shadow);color:var(--muted);text-wrap:pretty}
 .season-strip b{color:var(--ink)}
+
+/* the home page's second card, under the example: where you are in the game */
+.home-card{padding:20px 22px;display:grid;gap:10px}
+.home-card h2{margin:0;font-size:1.15rem}.home-card p{margin:0}
+.hc-top{display:flex;align-items:center;gap:14px}.hc-top .avt{font-size:2.5rem}
+.home-card .xpbar{width:100%}.hc-xp{font-size:.85rem}
+.hc-stats{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;list-style:none}
+.hc-stats li{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;background:var(--brand-soft);color:var(--brand-deep,var(--brand));font:650 .82rem var(--sans)}
+.home-more,.play-promo .more{display:inline-flex;align-items:center;gap:4px;min-height:44px;font:650 .95rem var(--sans);color:var(--brand-deep,var(--brand));text-decoration:none}
+.home-more .ic,.play-promo .more .ic{width:1.1em;height:1.1em;transition:transform .15s}.home-more:hover .ic,.play-promo .more:hover .ic{transform:translateX(3px)}
+.home-more:hover,.play-promo .more:hover{text-decoration:underline}
+
+/* Tamil: its letters are wider and taller than Latin ones, so the bar and the small labels get a little more room */
+:lang(ta) .chips li,:lang(ta) .chip,:lang(ta) .badge-chip,:lang(ta) .filters button,:lang(ta) .mock-tags span,:lang(ta) .hh-tab,:lang(ta) .hh-buy,:lang(ta) .hc-stats li{font-size:.84rem}
+:lang(ta) .navlink,:lang(ta) .cta{font-size:.92rem}
+@media (max-width:560px){:lang(ta) .me.login{padding:0 9px;font-size:.72rem}:lang(ta) .lang summary{padding:0 9px}:lang(ta) .cta{padding:0 12px;font-size:.78rem}:lang(ta) .tabs a{font-size:.7rem}}
+
+
+/* ---- a question in a round (Inbox Rush, the Daily Challenge, bosses): one calm column with the same room between each part */
+.card.play{padding:24px 26px}
+.card.play progress.round-prog{height:8px;margin-bottom:20px}
+.card.play .phone{background:var(--surface);box-shadow:var(--shadow);margin-bottom:22px}
+.card.play .phone-top{padding:11px 20px}
+.card.play .msg{padding:20px 22px;font-size:1.12rem;line-height:1.6}
+.card.play h2{margin:0 0 14px;font-size:1.2rem}
+.card.play .choices{gap:14px;margin-top:0}
+.card.play .choice{min-height:118px;justify-content:center;gap:8px;padding:18px 10px;background:var(--surface);border:2px solid var(--line-2);box-shadow:var(--shadow)}
+.card.play .choice kbd{margin-top:2px}
+.card.play .hint{margin:18px 0 0;font-size:.84rem;line-height:1.5}
+.card.play progress.clock{margin-top:18px}
+.card.play .words{margin:0 0 18px}
+@media (max-width:560px){
+  .card.play{padding:18px 16px}.card.play .phone{margin-bottom:18px}.card.play .msg{padding:16px 16px;font-size:1.05rem}
+  .card.play .choices{gap:10px}.card.play .choice{min-height:60px;padding:12px 14px;font-size:1rem}
+}
+
+/* ---- the Telegram card: one big link, the code folded away */
+.tg .btn.big{display:inline-flex;align-items:center;gap:.5em}.tg .btn.big .ic{width:1.2em;height:1.2em}
+.tg .btn.big.wait{opacity:.6;pointer-events:none}
+.tg-tap{margin:10px 0 0}
+.tg-alt{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+.tg-alt summary{cursor:pointer;color:var(--muted);font:600 .9rem var(--sans);min-height:32px;display:flex;align-items:center}
+.tg-alt summary:hover{color:var(--ink)}.tg-alt summary:focus-visible{outline:3px solid var(--brand);outline-offset:2px;border-radius:6px}
+.tg-alt[open] summary{color:var(--ink)}

@@ -76,9 +76,6 @@ TACTICS: dict[str, dict[str, str]] = {
     },
 }
 
-HIGH_RISK = {"irreversible-payment", "otp-credential-phish", "remote-access-request", "lookalike-link"}
-
-
 def valid(tid: str) -> bool:
     return tid in TACTICS
 

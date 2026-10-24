@@ -11,7 +11,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 
 from core.storage import accounts, db, links, push, runs
 from core.storage.accounts import AccountError
-from web.deps import limit_login, set_profile_cookie
+from web.deps import bot_username, limit_login, set_profile_cookie
 from web.pages import page
 from web.ui import tr
 from web.deps import request_lang
@@ -31,7 +31,7 @@ def _invite_url(request: Request, code: str) -> str:
 
 def _view(request: Request, name: str, status_code: int = 200, **ctx):
     acct = accounts.get(_me())
-    resp = page(request, name, avatars=accounts.AVATARS, invite=_invite_url(request, acct["friend_code"]) if acct else "", **ctx)
+    resp = page(request, name, invite=_invite_url(request, acct["friend_code"]) if acct else "", bot=bot_username(), linked=links.chats_for(_me()) if acct else 0, **ctx)
     resp.status_code = status_code
     resp.headers.update(NO_STORE)
     return resp

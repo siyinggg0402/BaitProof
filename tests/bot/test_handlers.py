@@ -61,6 +61,32 @@ def test_start_with_a_code_links_and_start_alone_welcomes():
     assert handlers.on_start(1, code).startswith("✅ Linked") and links.profile_for_chat(1) == "local"
 
 
+def test_a_tapped_link_connects_but_never_moves_a_chat_that_belongs_to_someone_else(monkeypatch):
+    monkeypatch.setenv("BAITPROOF_MULTIUSER", "1")
+    from core.storage import accounts
+
+    accounts.create("pa", "Aiman")
+    accounts.create("pb", "Mei")
+    first = handlers.on_start(77, links.new_code("pa"))
+    assert first.startswith("✅ Linked") and "Connected to Aiman. Not you? Send /unlink." in first and links.profile_for_chat(77) == "pa"
+    # someone sends this person their own link: a tap must not quietly move the chat
+    stranger = links.new_code("pb")
+    assert "already connected to a different Baitproof profile" in handlers.on_start(77, stranger) and links.profile_for_chat(77) == "pa"
+    assert links.peek(stranger) == "pb"  # and the code was not spent, so it can still be used after /unlink
+    assert handlers.on_unlink(77).startswith("Disconnected")
+    assert handlers.on_start(77, stranger).startswith("✅ Linked") and links.profile_for_chat(77) == "pb"
+    # the same profile tapping its own link again is fine; typing /link yourself is a deliberate choice and still moves the chat
+    assert handlers.on_start(77, links.new_code("pb")).startswith("✅ Linked")
+    assert handlers.on_link(77, links.new_code("pa")).startswith("✅ Linked") and links.profile_for_chat(77) == "pa"
+
+
+def test_peek_looks_at_a_code_without_spending_it():
+    code = links.new_code("local")
+    assert links.peek(code) == "local" and links.peek(code.lower()) == "local" and links.peek(code) == "local"
+    assert links.peek("ABCDEF") is None and links.peek("") is None
+    assert links.redeem(code, 5) == "local" and links.peek(code) is None
+
+
 def test_link_command_messages_are_helpful():
     assert "6-character code" in handlers.on_link(2, "")
     assert "didn't work" in handlers.on_link(2, "ABCDEF")

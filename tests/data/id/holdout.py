@@ -1,0 +1,63 @@
+"""Indonesian HOLDOUT: written by hand in one sitting, apart from tests/data/id/dev.py and before any Indonesian-specific rules were added to the shared Malay and
+Indonesian pack. Different scams from the development set (new-device login warnings, "mama minta pulsa", PayLater limits, admin jobs with a uniform fee, courier
+asking for a KTP photo, daily-profit gold, PDAM, a summons as an .apk, KYC, prize motorbikes, loans with a verification fee, hospital pleas, Instagram appeals,
+cheap flights and rentals with a deposit, CVV asked by "the bank", extra shipping fee, TikTok tasks, tax refunds, "I sent you my WhatsApp code by mistake", insurance
+bonuses, airdrops, the boss on a meeting, credit-limit OTPs, a UN soldier, a landlord abroad) and ordinary messages (OTPs, receipts, deliveries, clinic, campus, family,
+bills, tickets, official bank and OJK warnings). Authored, not captured: a development signal, not a benchmark. Measure it once after tuning; reading it more than
+once turns it into a development set. The Indonesian texts are ours and have not been reviewed by a native speaker."""
+
+SCAMS = [
+    ("bni-login", "BNI Mobile Banking: Terdeteksi login dari perangkat baru. Jika bukan Anda, segera amankan akun di https://bni-amankan.top atau rekening akan dibekukan."),
+    ("mama-pulsa", "Mah, pulsaku habis nih, ini nomor baruku ya. Tolong isiin pulsa 200rb ke 0878-1234-5566, urgent banget. Nanti aku jelasin."),
+    ("paylater", "Akun ShopeePayLater Anda bermasalah dan limit akan dibekukan. Hubungi CS resmi kami di WhatsApp 0896-4455-6677 untuk verifikasi."),
+    ("admin-seragam", "Dibutuhkan admin online shop, kerja dari HP, gaji Rp 4 juta per bulan tanpa pengalaman. Daftar via Telegram @kerja_admin_id dan setor biaya seragam Rp 150.000."),
+    ("kurir-ktp", "Selamat siang, saya kurir ekspedisi. Alamat paket Anda kurang jelas. Mohon kirim foto KTP dan share lokasi lewat WhatsApp ini supaya saya bisa antar."),
+    ("emas-digital", "Investasi emas digital cuma Rp 500 ribu, untung 5% setiap hari dijamin! Sudah ribuan member sukses. Gabung grup eksklusif: wa.me/6281299887766"),
+    ("pdam", "Peringatan terakhir! Tagihan air PDAM Anda menunggak 3 bulan. Jika tidak dibayar hari ini, meteran dicabut. Bayar via link ini: pdam-bayar-cepat.xyz"),
+    ("surat-panggilan", "Pengadilan Negeri Jakarta Pusat: Anda dipanggil sebagai saksi kasus penipuan. Unduh surat panggilan di Panggilan_PN.apk dan segera konfirmasi."),
+    ("ovo-kyc", "OVO: Akun Anda belum terverifikasi dan akan dibatasi. Lakukan verifikasi KYC sekarang di ovo-verifikasi-kyc.com agar saldo tetap aman."),
+    ("hadiah-motor", "Pertamina berbagi hadiah 17 Agustus! Anda terpilih mendapatkan motor Honda Vario. Hubungi panitia 0812-7766-5544, siapkan biaya pajak Rp 2.500.000."),
+    ("pinjaman-cepat", "Butuh dana cepat? Pinjaman cair 15 menit tanpa BI checking, KTP saja. Syarat: transfer dulu biaya verifikasi Rp 300.000. Hubungi admin sekarang."),
+    ("rs-kritis", "Assalamualaikum, ini Ibu Nur. Suami saya sedang kritis di rumah sakit, butuh biaya operasi mendesak. Mohon bantuan transfer Rp 3.000.000, saya ganti minggu depan."),
+    ("instagram-banding", "Instagram: Akun Anda dilaporkan melanggar hak cipta dan akan dihapus dalam 24 jam. Ajukan banding di meta-appeal-help.com sekarang."),
+    ("tiket-bali", "Tiket pesawat promo ke Bali hanya Rp 300.000 pp! Transfer pembayaran hari ini ke rekening BCA 5678 1234 a.n. Rina Travel, tiket dikirim setelah bukti transfer."),
+    ("mandiri-cvv", "Kami dari Bank Mandiri. Kartu kredit Anda digunakan untuk transaksi mencurigakan di luar negeri. Untuk memblokir, mohon berikan nomor kartu dan tiga digit CVV di belakang kartu."),
+    ("selisih-ongkir", "Paket Anda berhasil dikirim, tetapi terdapat selisih ongkir Rp 12.500. Segera bayar lewat tautan berikut agar paket dapat diterima: https://ongkir-bayar.top"),
+    ("tugas-tiktok", "Kerja sampingan mudah: tonton dan like video TikTok, bonus Rp 10.000 per tugas, withdraw tiap hari. Daftar WA 0813-2299-7788. Tugas pertama wajib deposit Rp 100.000."),
+    ("pajak-restitusi", "Direktorat Jenderal Pajak: Anda memiliki kelebihan bayar pajak Rp 8.750.000. Klaim pengembalian di http://djp-restitusi.cc dalam 48 jam."),
+    ("wa-kode-salah", "Halo kak, aku salah kirim kode verifikasi WhatsApp ke nomor kamu. Boleh tolong kirim balik kodenya? Penting banget, makasih ya."),
+    ("asuransi-bonus", "Selamat! Polis asuransi Anda berhak menerima bonus Rp 15.000.000. Hubungi agen kami dan bayar pajak penghargaan Rp 1.000.000 untuk pencairan."),
+    ("airdrop", "Airdrop token gratis! Hubungkan wallet Anda ke situs resmi kami dan klaim 5000 USDT. Cepat, hanya untuk 100 orang pertama."),
+    ("direktur", "Pak, saya Direktur Utama. Saya sedang rapat, tidak bisa ditelepon. Tolong transfer Rp 25.000.000 ke rekening vendor ini sekarang, rahasiakan dulu ya."),
+    ("limit-kartu", "Selamat! Limit kartu kredit Anda disetujui naik menjadi Rp 50 juta. Hubungi 0856-1122-3344 dan siapkan kode OTP untuk aktivasi."),
+    ("tentara-pbb", "Halo sayang, aku tentara PBB di Suriah. Aku mau kirim paket berisi uang dan emas untukmu. Kamu hanya perlu bayar biaya pengiriman Rp 4.500.000."),
+    ("sewa-rumah", "Rumah disewakan murah Rp 1,5 juta per bulan, lokasi strategis. Karena banyak peminat, mohon transfer uang muka Rp 1.000.000 dulu untuk booking. Pemilik di luar kota."),
+]
+
+LEGIT = [
+    ("bri-otp", "BRImo: Kode OTP Anda adalah 739281. Berlaku 3 menit. Demi keamanan, jangan berikan kode ini kepada siapa pun."),
+    ("gopay", "GoPay: Pembayaran Rp 45.000 ke Kopi Kenangan berhasil. Sisa saldo GoPay Anda Rp 120.500."),
+    ("sicepat", "SiCepat: Paket dengan resi 00123456789 sudah sampai di kantor cabang tujuan dan akan diantar hari ini."),
+    ("dokter-gigi", "Drg. Maya: Pengingat kontrol gigi Anda Jumat jam 16.00. Balas YA untuk konfirmasi atau hubungi klinik jika ingin mengubah jadwal."),
+    ("kampus", "Pengumuman: Kuliah Statistika hari Senin ditiadakan karena dosen berhalangan. Pengganti akan diinformasikan lewat grup kelas."),
+    ("arisan", "Arisan keluarga bulan ini di rumah Tante Rina, Minggu jam 11 siang. Bawa makanan kecil ya. Yang belum setor iuran bisa kasih ke Bu Wati."),
+    ("indihome", "IndiHome: Tagihan internet bulan November Rp 385.000 sudah terbit. Jatuh tempo 20 November. Bayar lewat myIndiHome, mobile banking, atau minimarket."),
+    ("tiket-kai", "KAI Access: Kode booking ABC123 untuk KA Argo Parahyangan, Jakarta-Bandung, 14 Oktober 07.00 sudah terkonfirmasi. Tunjukkan e-tiket saat boarding."),
+    ("bank-edukasi", "Mandiri mengingatkan: jangan pernah memberikan data pribadi seperti PIN, password, dan OTP kepada siapa pun, termasuk yang mengaku petugas bank."),
+    ("lembur", "Tim, besok deadline laporan jam 12 siang. Kalau ada kendala bilang saja ke saya hari ini ya. Terima kasih atas kerja kerasnya."),
+    ("lazada", "Lazada: Flash sale 12.12 mulai pukul 00.00. Cek voucher Anda di aplikasi Lazada. Berlaku untuk produk tertentu."),
+    ("gofood", "GoFood: Pesanan Anda sedang disiapkan oleh restoran. Driver akan segera menjemput. Estimasi tiba pukul 12.40."),
+    ("puskesmas", "Puskesmas Kebon Jeruk: Jadwal vaksin anak Anda Rabu, 09.00-11.00. Mohon membawa buku KIA dan kartu imunisasi."),
+    ("bpjs-tk", "BPJS Ketenagakerjaan: Iuran JHT bulan ini berhasil diterima. Saldo dapat dicek di aplikasi JMO."),
+    ("reuni", "Guys, reuni SMA jadi Sabtu depan jam 7 malam di resto Padang Sederhana. Konfirmasi ke Dewi ya paling lambat Rabu."),
+    ("pln-info", "PLN: Akan ada pemeliharaan jaringan listrik di wilayah Anda pada Minggu 09.00-13.00. Mohon maaf atas ketidaknyamanannya. Info resmi: PLN 123."),
+    ("tokopedia-ulasan", "Tokopedia: Bagaimana pesanan Anda? Beri ulasan dan dapatkan poin. Terima kasih sudah berbelanja."),
+    ("cicilan", "Adira Finance: Pengingat cicilan bulan ini Rp 1.450.000 jatuh tempo tanggal 15. Pembayaran dapat melalui ATM, mobile banking, atau Indomaret."),
+    ("guru-pr", "Selamat sore Bapak/Ibu, PR matematika halaman 45 dikumpulkan hari Selasa. Mohon anak-anak didampingi belajar di rumah. Terima kasih."),
+    ("rekening-baru", "Bank Jago: Selamat datang! Rekening Anda sudah aktif. Mulai transaksi pertama dengan aman di aplikasi Jago."),
+    ("maxim", "Maxim: Pesanan Anda dibatalkan oleh driver. Silakan pesan ulang, kami mohon maaf atas ketidaknyamanannya."),
+    ("pedagang", "Bu, bayam dan tomat hari ini masih segar. Mau dikirim ke rumah? Bisa bayar tunai saat barang sampai ya."),
+    ("premi", "Prudential: Premi polis Anda bulan ini akan didebit otomatis pada 25 Oktober sebesar Rp 750.000. Pastikan saldo mencukupi."),
+    ("pos-indonesia", "Pos Indonesia: Kiriman Anda P2345678 sudah tiba di kantor pos dan dapat diambil dengan membawa KTP asli. Jam layanan 08.00-16.00."),
+    ("ojk-edukasi", "Waspada pinjaman online ilegal. Cek legalitas pinjol di OJK melalui kontak 157 atau WhatsApp 081157157157 sebelum meminjam."),
+]

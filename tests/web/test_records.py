@@ -74,6 +74,32 @@ def test_connect_code_status_and_unlink(client, monkeypatch):
     assert client.post("/api/telegram/unlink").json() == {"unlinked": 1} and client.get("/api/telegram/status").json() == {"linked": 0}
 
 
+def test_with_a_bot_the_card_is_one_link_and_the_code_is_folded_away(client, monkeypatch):
+    monkeypatch.setenv("TELEGRAM_BOT_USERNAME", "@BaitproofBot")
+    for url in ("/records",):
+        html = client.get(url).text
+        assert 'id="tg" data-bot="BaitproofBot"' in html and 'id="tg-open"' in html and "Open Telegram to connect" in html and 'id="tg-connect"' not in html
+        assert "Tap Start in Telegram and you are connected" in html and '<details class="tg-alt">' in html and "Show a code instead" in html
+        assert "/static/js/telegram.js" in html
+    zh = TestClient(app, cookies={"lang": "zh"}).get("/records").text
+    assert "打开 Telegram 完成连接" in zh and "改用代码" in zh
+
+
+def test_without_a_bot_the_card_keeps_the_button_and_the_code(client):
+    html = client.get("/records").text
+    assert 'id="tg-connect"' in html and 'id="tg-open"' not in html and 'id="tg-code" hidden' in html and "Connect once with a short code." in html
+
+
+def test_my_profile_carries_the_same_card_once_there_is_a_profile(monkeypatch):
+    monkeypatch.setenv("BAITPROOF_MULTIUSER", "1")
+    monkeypatch.setenv("TELEGRAM_BOT_USERNAME", "BaitproofBot")
+    c = TestClient(app)
+    assert 'id="tg"' not in c.get("/me").text  # no profile yet: just the make-a-profile form
+    c.post("/me/create", data={"nickname": "Aiman", "avatar": ""})
+    html = c.get("/me").text
+    assert html.count('id="tg"') == 1 and 'id="tg-open"' in html and "/static/js/telegram.js" in html
+
+
 def test_without_a_bot_username_the_page_still_explains_how(client, monkeypatch):
     monkeypatch.delenv("TELEGRAM_BOT_USERNAME", raising=False)
     assert client.post("/api/telegram/code").json()["deep_link"] == ""
