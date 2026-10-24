@@ -25,11 +25,11 @@ if [ -z "$(swapon --show --noheadings)" ]; then
     && (grep -q '^/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab >/dev/null) || echo "(could not add swap; continuing)"
 fi
 
-# Nightly upkeep as the service user: a backup of all data, then remove empty visitor profiles (every cookie-less page view makes a ~130 KB file)
+# Nightly upkeep as the service user: remove empty visitor profiles, then back up what is left (every cookie-less page view makes a ~130 KB file)
 sudo tee /etc/cron.d/baitproof >/dev/null <<'CRON'
 BAITPROOF_DB=/var/lib/baitproof/baitproof.sqlite
-15 3 * * * baitproof cd /opt/baitproof && .venv/bin/python -m scripts.ops.backup >> /var/lib/baitproof/logs/maintenance.log 2>&1
-30 3 * * * baitproof cd /opt/baitproof && .venv/bin/python -m scripts.ops.prune_profiles --apply >> /var/lib/baitproof/logs/maintenance.log 2>&1
+30 3 * * * baitproof cd /opt/baitproof && .venv/bin/python -m scripts.ops.backup >> /var/lib/baitproof/logs/maintenance.log 2>&1
+15 3 * * * baitproof cd /opt/baitproof && .venv/bin/python -m scripts.ops.prune_profiles --apply >> /var/lib/baitproof/logs/maintenance.log 2>&1
 CRON
 
 # Caddy: automatic HTTPS for a domain, or plain HTTP for an IP-only demo
