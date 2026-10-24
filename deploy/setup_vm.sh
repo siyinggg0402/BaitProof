@@ -9,13 +9,14 @@ DOMAIN="${2:-}"
 sudo apt-get update -y && sudo apt-get install -y python3-venv git caddy cron fonts-noto-cjk fonts-noto-core libfribidi0 libharfbuzz0b  # the fonts draw Chinese and Tamil on the share-card image (Tamil also needs Pillow's text shaping)
 sudo useradd --system --home /opt/baitproof baitproof 2>/dev/null || true
 sudo mkdir -p /opt/baitproof /var/lib/baitproof/logs
-sudo chown -R "$USER" /opt/baitproof
-git clone "$REPO" /opt/baitproof 2>/dev/null || git -C /opt/baitproof pull
+sudo chown baitproof:baitproof /opt/baitproof
 cd /opt/baitproof
-python3 -m venv .venv && .venv/bin/pip install -q -r requirements.txt
-[ -f .env ] || cp .env.example .env
+# Everything inside /opt/baitproof is made and updated by the service user, so this script can be re-run by whoever runs it (the .env file is locked to that user)
+if [ -d .git ]; then sudo -u baitproof git pull; else sudo -u baitproof git clone "$REPO" .; fi
+sudo -u baitproof python3 -m venv .venv && sudo -u baitproof .venv/bin/pip install -q -r requirements.txt
+[ -f .env ] || sudo -u baitproof cp .env.example .env
 sudo chown -R baitproof:baitproof /var/lib/baitproof
-sudo chown -R baitproof /opt/baitproof && sudo chmod 600 .env
+sudo chmod 600 .env
 sudo cp deploy/baitproof.service /etc/systemd/system/
 
 # A small server (1 GB) can run out of memory while pip builds things: give it a 1 GB swap file once
@@ -39,7 +40,7 @@ else
 fi
 
 # The Telegram bot is optional: it only starts once TELEGRAM_BOT_TOKEN is in .env
-if grep -q '^TELEGRAM_BOT_TOKEN=.\+' .env; then
+if sudo grep -q '^TELEGRAM_BOT_TOKEN=.\+' .env; then
   sudo -u baitproof .venv/bin/pip install -q "python-telegram-bot>=21"
   sudo cp deploy/baitproof-bot.service /etc/systemd/system/
   BOT=baitproof-bot
@@ -51,6 +52,6 @@ fi
 sudo systemctl daemon-reload
 sudo systemctl enable --now baitproof $BOT
 sudo systemctl restart baitproof $BOT caddy
-sleep 3
+for _ in $(seq 1 20); do curl -fsS -o /dev/null http://127.0.0.1:8000/ 2>/dev/null && break; sleep 2; done  # the app takes a little while to start on a small server
 curl -fsS -o /dev/null -w "web app: HTTP %{http_code}\n" http://127.0.0.1:8000/ || echo "web app did not answer: sudo journalctl -u baitproof -n 50"
-echo "Open ports 80 and 443 in the Nebius security group. Fill in /opt/baitproof/.env (NEBIUS_API_KEY ...) and re-run if you have not."
+echo "Open ports 80 and 443 in your cloud firewall (security group). Fill in /opt/baitproof/.env (NEBIUS_API_KEY ...) and re-run this script if you have not."

@@ -5,7 +5,7 @@ After=network.target baitproof.service
 [Service]
 User=baitproof
 WorkingDirectory=/opt/baitproof
-EnvironmentFile=/opt/baitproof/.env
+# The app reads /opt/baitproof/.env itself (python-dotenv, from WorkingDirectory). Not EnvironmentFile=: systemd keeps a trailing `# comment` as part of the value, and it would let .env override the paths set below.
 # Same data directory as the web app: a chat linked with a code shares the website profile.
 Environment=BAITPROOF_MULTIUSER=1
 Environment=BAITPROOF_DB=/var/lib/baitproof/baitproof.sqlite
