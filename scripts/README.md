@@ -9,6 +9,8 @@ Run everything from the repo root as `python -m scripts.<group>.<name>`. Nothing
 | `scripts.eval.languages [--sets en-hard3,zh-holdout,...] [--modes rules,llm,full] [--misses] [--save f.json] [--diff f.json]` | One table for English, Chinese, Malay, Indonesian and Tamil: scams caught, "not sure", scams called safe, genuine cleared, false alarms, for the rules alone, one plain model call and the whole pipeline. The sets are authored by us, so it is a development signal, not a benchmark. | cents (`rules` is free) |
 | `scripts.eval.multilingual [--langs zh,id,ja,...]` | The same real SMS machine-translated into other languages: does anything break where there are no rules? | cents |
 | `scripts.ops.make_vapid` | Make the site's Web Push (VAPID) keys and add them to `.env` if they are not there; never prints the private key. | free |
+| `scripts.ops.backup [--out DIR] [--keep 7]` | One compressed, consistent backup of the shared database and every visitor profile. The server runs it nightly. | free |
+| `scripts.ops.prune_profiles [--days 7] [--apply]` | Remove empty visitor profiles nobody owns (report only without `--apply`). The server runs it nightly. | free |
 | `scripts.data.fetch [--multilingual]` | Download the third-party evaluation data into `data/external/` (never committed). | free |
 | `scripts.data.seed_demo` | Put the local database in a believable mid-training state for the demo. | free |
 | `scripts.ops.verify_setup [--list]` | Check the Nebius endpoint, the Nemotron model id and (if set) Tavily. Never prints the key. | one tiny call |
