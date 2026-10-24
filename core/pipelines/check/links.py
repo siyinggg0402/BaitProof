@@ -19,7 +19,7 @@ TLDS = ("com", "net", "org", "xyz", "top", "click", "info", "icu", "co", "io", "
         "live", "pro", "biz", "app", "tk", "ink", "work", "buzz", "store", "cyou", "today", "gov", "edu", "uk", "us", "sbs", "cfd", "ws", "to", "gl")
 _TLD = "(?:" + "|".join(sorted(TLDS, key=len, reverse=True)) + ")"
 
-_INVISIBLE = re.compile("[​‌‍⁠﻿­]")  # zero-width space / joiners, word joiner, BOM, soft hyphen
+_INVISIBLE = re.compile("[\u200b\u200c\u200d\u2060\ufeff\u00ad]")  # zero-width space / joiners, word joiner, BOM, soft hyphen
 _DOTS = re.compile(r"(?<=[A-Za-z0-9-])[。．｡](?=[A-Za-z0-9-])")  # ideographic / full-width / half-width ideographic full stop between letters of a name
 _HXXP = re.compile(r"\bh[xX*]{2}p(s?)(?=\s*(?:[:\[\(]|\s))", re.I)
 # "evil[.]top" (tight), or "evil [.] top" (spaced: only when an ending follows, so a lone "[.]" or "(.)" in ordinary text is left alone)

@@ -7,6 +7,7 @@ pydantic>=2.6
 openai>=1.30
 tavily-python>=0.3
 python-dotenv>=1.0
-pillow>=10.1
+pillow>=10.1,<13; python_version < "3.11"
+pillow>=13.0.0; python_version >= "3.11"   # 12.x has known security fixes only in 13: use Ubuntu 24.04 (Python 3.12) on a server
 phonenumbers>=8.13
 # The Telegram bot is optional: pip install "python-telegram-bot>=21"

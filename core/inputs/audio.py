@@ -148,7 +148,7 @@ def decode(data: bytes, fmt: str):
 
 
 # ---------------------------------------------------------------- the words
-_CONTROL = re.compile("[\x00-\x08\x0b-\x1f\x7f-\x9f​-‏ -‮⁠-⁩﻿]")
+_CONTROL = re.compile("[\x00-\x08\x0b-\x1f\x7f-\x9f\u200b-\u200f\u2028-\u202e\u2060-\u2069\ufeff]")
 _PROMPTS = {"zh": "以下是普通话的句子。", "zh-Hant": "以下是普通話的句子。"}  # nudges the model towards the script the user reads
 
 

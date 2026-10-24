@@ -32,7 +32,7 @@ class Item:
 
 
 def _id(text: str) -> str:
-    return "g" + hashlib.sha1(" ".join(text.lower().split()).encode()).hexdigest()[:10]
+    return "g" + hashlib.sha1(" ".join(text.lower().split()).encode(), usedforsecurity=False).hexdigest()[:10]
 
 
 def build_pool(lang: str = "en") -> list[Item]:
