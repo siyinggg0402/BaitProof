@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 
 from core.ai import fewshot
 from core.lang import i18n
-from core.lang.text import CJK
+from core.lang.text import CJK, in_language
 from core.domain.tactics import TACTICS
 from core.storage import groups, library, links
 
@@ -36,8 +36,8 @@ def _id(text: str) -> str:
 
 
 def build_pool(lang: str = "en") -> list[Item]:
-    """Newest-first priority: the person's own scams (any language: they are from their own circle), then the curated seeds for `lang`, then the
-    authored bank (English only). Duplicates removed."""
+    """Newest-first priority: the person's own scams and the family's, only those written in `lang` (the language shown is the site's, never the message's),
+    then the curated seeds for `lang`, then the authored bank (English only). Duplicates removed."""
     lang = i18n.norm(lang)
     safe_tell = i18n.tr(SAFE_TELL, lang)
     items: dict[str, Item] = {}
@@ -45,24 +45,23 @@ def build_pool(lang: str = "en") -> list[Item]:
     def add(it: Item) -> None:
         items.setdefault(it.id, it)
 
-    for e in library.user_examples():
-        tell, action = e["tell"], e["action"]
-        if lang in ("ms", "ta") and e["tactics"] and (CJK.search(tell) or CJK.search(action)):  # a Chinese message from their own circle: our wording in their language for the trick
-            tell = i18n.tactic_text(e["tactics"][0], "tell", lang, TACTICS) if CJK.search(tell) else tell
-            action = i18n.tactic_text(e["tactics"][0], "action", lang, TACTICS) if CJK.search(action) else action
-        add(Item(_id(e["text"]), e["text"], "scam", list(e["tactics"]), tell, e["tell_phrase"], action, "yours"))
-    for e in groups.scams_for(links.current_profile()):  # scams the family chose to share (already redacted)
-        tell, action = e["tell"], e["action"]
-        if lang in ("ms", "ta") and e["tactics"] and (CJK.search(tell) or CJK.search(action)):
-            tell = i18n.tactic_text(e["tactics"][0], "tell", lang, TACTICS) if CJK.search(tell) else tell
-            action = i18n.tactic_text(e["tactics"][0], "action", lang, TACTICS) if CJK.search(action) else action
-        add(Item(_id(e["text"]), e["text"], "scam", list(e["tactics"]), tell, e["tell_phrase"], action, "family"))
+    for source, entries in (("yours", library.user_examples()), ("family", groups.scams_for(links.current_profile()))):  # the family's are already redacted
+        for e in entries:
+            if not in_language(e["text"], lang):  # a message in another language (a Spanish scam they once checked, a Chinese one from a relative) never shows up in this site's game
+                continue
+            tell, action = e["tell"], e["action"]
+            if e["tactics"]:  # written in whatever language the checker was in at the time: use our own wording for the trick unless it is already in this site's language
+                tell = tell if in_language(tell, lang) else i18n.tactic_text(e["tactics"][0], "tell", lang, TACTICS)
+                action = action if in_language(action, lang) else i18n.tactic_text(e["tactics"][0], "action", lang, TACTICS)
+            add(Item(_id(e["text"]), e["text"], "scam", list(e["tactics"]), tell, e["tell_phrase"], action, source))
     for e in library.seed_examples(lang):
         if e["is_scam"]:
             add(Item(_id(e["text"]), e["text"], "scam", list(e["tactics"]), e["tell"], e["tell_phrase"], e["action"], "seed"))
         else:  # a seed may say truth="unsure": could be real or fake (the "check first" answer)
             add(Item(_id(e["text"]), e["text"], e.get("truth") or "safe", [], e["tell"] or safe_tell, "", e["action"], "seed"))
-    for b in (fewshot.load_authored() if lang == "en" else []):
+    for b in (fewshot.load_authored() if lang == "en" else []):  # (it also holds a Spanish and a French example for the model; they are not for people to play)
+        if not in_language(b.text, "en"):
+            continue
         truth = "scam" if b.verdict in fewshot.SCAMMY else b.verdict
         why = b.why[:1].upper() + b.why[1:] + "." if b.why else ""
         add(Item(_id(b.text), b.text, truth, list(b.tactics), why if truth != "safe" else (why or SAFE_TELL), "", "", "bank"))

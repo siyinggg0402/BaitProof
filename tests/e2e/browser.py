@@ -353,6 +353,7 @@ def switch_language(page, code: str, tag: str) -> None:
     page.click("#lang summary")
     page.click(f"#lang a[hreflang='{tag}']")
     expect(page.locator("html")).to_have_attribute("lang", tag)
+    page.wait_for_load_state("load")  # (on a slow link the new page is still arriving)
     assert not page.evaluate("document.getElementById('lang').open"), "the menu should be closed after choosing"
 
 

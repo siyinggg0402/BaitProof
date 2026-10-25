@@ -161,10 +161,16 @@ def test_a_chinese_scam_from_their_own_circle_is_explained_in_malay_not_in_chine
     assert train.localized("礼品卡、加密货币和电汇是骗子收钱的方式。", "irreversible-payment", "tell", "ms") == "Kad hadiah, kripto dan pindahan wang ialah cara penipu menerima bayaran. Bil sebenar tidak pernah menggunakannya."
     assert train.localized("Nothing here is a trick.", "irreversible-payment", "tell", "ms") == "Nothing here is a trick."  # (anything that is not Chinese is kept)
     assert train.localized("礼品卡", "", "tell", "ms") == ""
-    monkeypatch.setattr(library, "user_examples", lambda: [{"id": "u1", "source": "user", "is_scam": True, "text": "【顺丰】请于24小时内点击链接补全信息。", "tactics": ["urgency-pressure"],
-                                                          "tell_phrase": "24小时内", "tell": "正规公司会给你时间。", "action": "先停下来。"}])
+    chinese = {"id": "u1", "source": "user", "is_scam": True, "text": "【顺丰】请于24小时内点击链接补全信息。", "tactics": ["urgency-pressure"],
+               "tell_phrase": "24小时内", "tell": "正规公司会给你时间。", "action": "先停下来。"}
+    malay = {"id": "u2", "source": "user", "is_scam": True, "text": "Pos Laju: bungkusan anda ditahan. Sila bayar yuran di http://poslaju-bayar.top sekarang.", "tactics": ["urgency-pressure"],
+             "tell_phrase": "sekarang", "tell": "正规公司会给你时间。", "action": "先停下来。"}  # a Malay message checked while the site was in Chinese: its explanation was written in Chinese
+    monkeypatch.setattr(library, "user_examples", lambda: [chinese, malay])
     mine = [i for i in gp.build_pool("ms") if i.source == "yours"]
-    assert mine and mine[0].text.startswith("【顺丰】") and "Syarikat sebenar" in mine[0].tell and "Berhenti" in mine[0].action
+    # the Malay site shows only the Malay message (never the Chinese one), and explains it in Malay, not in the language the checker happened to be in
+    assert [i.text[:8] for i in mine] == ["Pos Laju"] and "Syarikat sebenar" in mine[0].tell and "Berhenti" in mine[0].action
+    zh = [i for i in gp.build_pool("zh") if i.source == "yours"]
+    assert [i.text[:4] for i in zh] == ["【顺丰】"] and zh[0].tell == "正规公司会给你时间。"  # and the Chinese site shows the Chinese one, as written
 
 
 FLAGGED = (V.SCAM, V.LIKELY_SCAM)

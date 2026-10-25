@@ -54,12 +54,28 @@ def is_traditional_char(c: str) -> bool:
     return c in _T2S and _T2S[c] != c
 
 
-@lru_cache(maxsize=2048)
 def detect(text: str) -> str:
-    """'en' | 'zh' (Simplified) | 'zh-Hant' (Traditional) | 'ms' (Malay / Indonesian) | 'ja' | 'ko' | 'ar' | 'hi' | ... | 'other'."""
+    """'en' | 'zh' (Simplified) | 'zh-Hant' (Traditional) | 'ms' (Malay / Indonesian) | 'ja' | 'ko' | 'ar' | 'hi' | ... | 'other'. Too short to tell: English."""
+    return _detect(text, False)
+
+
+def detect_strict(text: str) -> str:
+    """Like `detect`, but only on positive evidence: '' when nothing says what language it is (no letters, a few words, nothing recognised), never a guess of English."""
+    return _detect(text, True)
+
+
+def in_language(text: str, site: str) -> bool:
+    """Is `text` positively written in the language of the site ('en' | 'zh' | 'zh-Hant' | 'ms' | 'ta')? Simplified and Traditional both count as Chinese, and Malay
+    includes Indonesian. Spanish, French, anything unrecognised, and text too short to tell never match: this decides what a person may be shown in a game."""
+    fold = {"zh-Hant": "zh"}
+    return bool(text) and fold.get(detect_strict(text), detect_strict(text)) == fold.get(site, site)
+
+
+@lru_cache(maxsize=2048)
+def _detect(text: str, strict: bool) -> str:
     letters = [c for c in text if c.isalpha()]
     if not letters:
-        return "en"
+        return "" if strict else "en"
     n = len(letters)
     cjk, kana, hangul = len(CJK.findall(text)), len(_KANA.findall(text)), len(_HANGUL.findall(text))
     if hangul / n > 0.2:
@@ -75,12 +91,14 @@ def detect(text: str) -> str:
             return code
     words = re.findall(r"[^\W\d_]+", re.sub(r"https?://\S+|www\.\S+|\S+@\S+|\b[\w-]+(?:\.[\w-]+)+\b", " ", text.lower()))  # links and addresses say nothing about language
     if not words:
-        return "en"
+        return "" if strict else "en"
     score = {"en": sum(w in _EN for w in words) / len(words), "ms": sum(w in _MS for w in words) / len(words)}
     for code, sw in _OTHER_LATIN.items():
         score[code] = sum(w in sw for w in words) / len(words)
     best = max(score, key=score.get)
     if score[best] < 0.08:
+        if strict:
+            return "other" if len(words) >= 6 else ""
         return "en" if len(words) < 6 else "other"  # too short to tell: assume English; long and unrecognised: say so
     return best if best in ("en", "ms") else "other"
 

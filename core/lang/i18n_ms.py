@@ -123,6 +123,7 @@ MS.update({
     "removed reassurance that contradicted a scam verdict": "membuang jaminan yang bercanggah dengan keputusan penipuan",
     "not a confident scam: kept out of training": "bukan penipuan yang meyakinkan: tidak dimasukkan dalam latihan",
     "low confidence: kept out of training": "keyakinan rendah: tidak dimasukkan dalam latihan",
+    "in a language we do not cover yet: kept out of training": "bahasa ini belum disokong: tidak dimasukkan dalam latihan",
     "only the model suspects it (no independent evidence): kept out of training": "hanya model yang mengesyaki (tiada bukti bebas): tidak dimasukkan dalam latihan",
     "added to training": "dimasukkan dalam latihan",
     "confident enough": "cukup yakin",

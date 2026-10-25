@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 
 from core.domain import intents
 from core.lang.i18n import tr
-from core.lang.text import Dual, canon
+from core.lang.text import RULES_LANGS, Dual, canon
 from core.domain.schemas import TacticHit, Verdict
 
 from .evidence import Ledger
@@ -122,9 +122,11 @@ def arbitrate(ledger: Ledger, intent: Intent, f: Findings, model_verdict: Verdic
     return d
 
 
-def flywheel_gate(d: Decision, ledger: Ledger, lang: str = "en") -> tuple[bool, str]:
+def flywheel_gate(d: Decision, ledger: Ledger, lang: str = "en", message_lang: str = "en") -> tuple[bool, str]:
     """Only confident scam verdicts backed by NON-MODEL evidence may feed the training library, so neither a wrong
-    label nor a model hallucination can be drilled as truth."""
+    label nor a model hallucination can be drilled as truth. And only messages in a language the site covers: a Spanish scam is still judged, but it is not kept to be drilled."""
+    if message_lang not in RULES_LANGS:
+        return False, tr("in a language we do not cover yet: kept out of training", lang)
     if d.verdict not in (Verdict.SCAM, Verdict.LIKELY_SCAM) or not ledger.tactic_ids():  # needs a tactic to drill
         return False, tr("not a confident scam: kept out of training", lang)
     if d.confidence == "low":

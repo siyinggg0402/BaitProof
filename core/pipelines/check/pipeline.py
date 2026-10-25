@@ -137,7 +137,7 @@ def _check(text: str, store: bool, tr_: Trace, run: obs.Run, reply: str = "en", 
     tell, action, fixes = gates.output_gate(verdict, tell, action, T(CAVEAT), reply)
     tr_.add("output", "flag" if fixes else "pass", "; ".join(fixes) if fixes else "tone and safety rules satisfied")
 
-    ok, why = gates.flywheel_gate(d, ledger, reply)
+    ok, why = gates.flywheel_gate(d, ledger, reply, ing.lang)
     added: list[str] = []
     if ok and store:
         ids = ledger.tactic_ids()
