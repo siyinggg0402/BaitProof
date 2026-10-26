@@ -1,6 +1,7 @@
 """Deterministic gates: grounding, verdict arbiter, flywheel. The model proposes; these decide."""
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 
 from core.domain import intents
@@ -10,6 +11,8 @@ from core.domain.schemas import TacticHit, Verdict
 
 from .evidence import Ledger
 from .intent import Intent
+from core.lang.zh import BRAND_NAMES
+from .knowledge import BRANDS
 from .tools import Findings
 
 
@@ -120,6 +123,25 @@ def arbitrate(ledger: Ledger, intent: Intent, f: Findings, model_verdict: Verdic
     if injection and d.verdict == Verdict.SAFE:
         d = Decision(Verdict.UNSURE, "low", [T("message tries to instruct the checker")])
     return d
+
+
+_ADDRESS = re.compile(r"(?<![A-Za-z0-9-])(?:[A-Za-z0-9][A-Za-z0-9-]*\.)+[A-Za-z]{2,}(?![A-Za-z0-9-])")  # a web address, also right beside Chinese text
+_BIG_NUMBER = re.compile(r"\d[\d,.]*\d")
+_REAL_SITES = frozenset(BRANDS.values())
+
+
+def grounded_sentence(sentence: str, message: str, numbers: bool = True) -> bool:
+    """A sentence the model wrote about a message may describe it but not add to it: every web address in it must be in the message (or be a company's real address),
+    and so must every number of two or more digits, and any Chinese company it names. (The model once answered a Chinese parcel scam with the example from its own prompt, "Pay 1.45 at dpd-fee.top".)"""
+    text = canon(message)
+    named = {key for name, key in BRAND_NAMES.items() if name in sentence}  # a Chinese company named in the sentence must be one the message names too (not another bank)
+    if named and not named <= {key for name, key in BRAND_NAMES.items() if name in message} | {key for key in BRAND_NAMES.values() if key in message.lower()}:
+        return False
+    for found in _ADDRESS.findall(sentence):
+        site = found.lower()
+        if canon(site) not in text and not any(site == real or site.endswith("." + real) for real in _REAL_SITES):
+            return False
+    return not numbers or all(canon(n) in text for n in _BIG_NUMBER.findall(sentence))
 
 
 def flywheel_gate(d: Decision, ledger: Ledger, lang: str = "en", message_lang: str = "en") -> tuple[bool, str]:

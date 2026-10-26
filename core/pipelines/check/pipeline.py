@@ -110,6 +110,16 @@ def _check(text: str, store: bool, tr_: Trace, run: obs.Run, reply: str = "en", 
     tell = str(out.get("the_tell", ""))[:400] if out else ""
     action = str(out.get("action", ""))[:400] if out else ""
     abstract, phrase = (str(out.get("abstract_example", "")), str(out.get("tell_phrase", ""))) if out else ("", "")
+    dropped: list[str] = []
+
+    def grounded(sentence: str, numbers: bool = True) -> str:
+        """The model's sentence, or "" (our own wording for the trick is used instead) when it describes things that are not in the message."""
+        if sentence and not gates.grounded_sentence(sentence, ing.text, numbers=numbers):
+            dropped.append(sentence)
+            return ""
+        return sentence
+
+    tell, action = grounded(tell), grounded(action, numbers=False)
 
     plain_code = it.purpose == "one-time-code" and intents.clearing_conditions_met("one-time-code", ing.text, it.asks)  # the rules recognised a plain login-code delivery that asks for nothing: a second reviewer only ever misreads its "do not share this code" as secrecy
     if d.verdict == Verdict.SAFE and case.votes and not plain_code:
@@ -125,6 +135,7 @@ def _check(text: str, store: bool, tr_: Trace, run: obs.Run, reply: str = "en", 
             tr_.add("critic", "pass", "second reviewer found nothing")
 
     tell, action = localize.explain_in(reply, tell, action, ledger)  # the model's sentences, in the reader's language (or "" to use the static text below)
+    tell, action = grounded(tell), grounded(action, numbers=False)  # (a translation can bring in a company the model named in English: look again)
     tactics = ledger.tactic_hits()
     verdict, first = d.verdict, (tactics[0].id if tactics else None)
     if not tell and first:
@@ -135,6 +146,8 @@ def _check(text: str, store: bool, tr_: Trace, run: obs.Run, reply: str = "en", 
     if verdict == Verdict.SAFE and not tell:
         tell = T("Nothing here asks for money, codes, passwords or a rush, and I found no red flags.")
     tell, action, fixes = gates.output_gate(verdict, tell, action, T(CAVEAT), reply)
+    if dropped:
+        fixes.append(T("replaced an explanation that mentioned things not in the message"))
     tr_.add("output", "flag" if fixes else "pass", "; ".join(fixes) if fixes else "tone and safety rules satisfied")
 
     ok, why = gates.flywheel_gate(d, ledger, reply, ing.lang)

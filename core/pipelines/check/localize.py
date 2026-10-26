@@ -5,11 +5,23 @@ in the reader's script; if that call fails the caller falls back to the static, 
 from __future__ import annotations
 
 import json
+import re
 
 from core.ai import llm
 from core.ai.prompts import LOCALIZE_SYSTEM
 from core.lang import i18n
 from core.lang.text import CJK, detect, to_simplified
+
+
+_LATIN = re.compile(r"[A-Za-z]")
+_ADDRESS_LIKE = re.compile(r"\S*[A-Za-z0-9-]\.[A-Za-z]{2,}\S*")  # web addresses are Latin letters in a Chinese sentence too: left out of the count
+
+
+def mostly_chinese(text: str) -> bool:
+    """Chinese, not English with a Chinese quote inside it ("It says you must click within 24小时内"): a Chinese character carries about as much as three Latin letters."""
+    plain = _ADDRESS_LIKE.sub(" ", text)
+    cjk = len(CJK.findall(plain))
+    return cjk > 0 and cjk * 3 >= len(_LATIN.findall(plain))
 
 
 def in_script(text: str, lang: str) -> bool:
@@ -18,11 +30,11 @@ def in_script(text: str, lang: str) -> bool:
         return True
     if i18n.norm(lang) in ("ms", "ta"):
         return detect(text) == i18n.norm(lang)
-    return bool(CJK.search(text))
+    return mostly_chinese(text)
 
 
 def _is_in(lang: str, text: str) -> bool:
-    return detect(text) == i18n.norm(lang) if i18n.norm(lang) in ("ms", "ta") else bool(CJK.search(text))
+    return detect(text) == i18n.norm(lang) if i18n.norm(lang) in ("ms", "ta") else mostly_chinese(text)
 
 
 def convert_script(text: str, lang: str) -> str:

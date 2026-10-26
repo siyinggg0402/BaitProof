@@ -148,6 +148,7 @@ ZH: dict[str, str] = {
     "removed reassurance that contradicted a scam verdict": "删掉了与骗局结论矛盾的安慰话",
     "not a confident scam: kept out of training": "不是确定的骗局：不放入训练",
     "low confidence: kept out of training": "把握不高：不放入训练",
+    "replaced an explanation that mentioned things not in the message": "替换了一段提到消息里没有的内容的说明",
     "in a language we do not cover yet: kept out of training": "目前还不支持这种语言：不放入训练",
     "only the model suspects it (no independent evidence): kept out of training": "只有AI怀疑它（没有独立证据）：不放入训练",
     "added to training": "已加入训练",

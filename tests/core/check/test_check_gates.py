@@ -136,3 +136,22 @@ def test_a_recognised_normal_login_code_is_still_safe_without_a_link(monkeypatch
     _fake_llm(monkeypatch, {"verdict": "safe", "purpose": "one-time-code", "tactics": [], "the_tell": "", "action": ""})
     r = check_message("Your code is 482913. It expires in 10 minutes. Never share it.", store=False, log=False)
     assert r.verdict == V.SAFE and any(e.source == "purpose:one-time-code" for e in r.evidence)
+
+
+def test_a_model_sentence_may_not_add_addresses_or_numbers_the_message_lacks():
+    msg = "Your parcel is held. Pay now at http://sf-express-cn.top/addr within 24 hours."
+    ok = gates.grounded_sentence
+    assert ok("It asks you to pay at sf-express-cn.top within 24 hours.", msg)
+    assert not ok("Your parcel is on hold. Pay 1.45 at dpd-fee.top", msg)  # the example from the model's own prompt
+    assert not ok("It wants 500 dollars.", msg) and ok("It wants 500 dollars.", msg, numbers=False)
+    assert ok("A real DBS link ends in dbs.com.", msg)  # a company's own address is fine to mention
+    assert ok("要求24小时内点击sf-express-cn.top。", msg)  # (an address right beside Chinese text is still found and found in the message)
+    assert not ok("请在dpd-fee.top支付。", msg)
+
+
+def test_a_sentence_may_not_name_a_different_chinese_company():
+    msg = "【中国工商银行】您的账户存在异常，已被临时冻结。请立即登录 http://icbc-verify-cn.top 验证身份。"
+    assert gates.grounded_sentence("请使用卡片背面的电话号码联系中国工商银行。", msg)
+    assert not gates.grounded_sentence("请使用卡片背面的电话号码联系中国建设银行。", msg)   # a different bank
+    assert gates.grounded_sentence("请使用卡片背面的电话号码致电银行。", msg)              # no bank named: fine
+    assert gates.grounded_sentence("请联系工商银行。", "Your icbc account is frozen: http://icbc-verify-cn.top")  # (the message names it by its address)

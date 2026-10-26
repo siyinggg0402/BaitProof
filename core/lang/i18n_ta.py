@@ -84,6 +84,7 @@ TA: dict[str, str] = {
     "removed reassurance that contradicted a scam verdict": "மோசடி என்ற முடிவுக்கு முரணான ஆறுதல் வாசகத்தை நீக்கியது",
     "not a confident scam: kept out of training": "உறுதியான மோசடி அல்ல: பயிற்சியில் சேர்க்கப்படவில்லை",
     "low confidence: kept out of training": "குறைந்த உறுதி: பயிற்சியில் சேர்க்கப்படவில்லை",
+    "replaced an explanation that mentioned things not in the message": "செய்தியில் இல்லாத விஷயங்களைக் குறிப்பிட்ட விளக்கத்தை மாற்றினோம்",
     "in a language we do not cover yet: kept out of training": "இந்த மொழி இன்னும் ஆதரிக்கப்படவில்லை: பயிற்சியில் சேர்க்கப்படவில்லை",
     "only the model suspects it (no independent evidence): kept out of training": "AI மாதிரி மட்டுமே சந்தேகிக்கிறது (சுயாதீன ஆதாரம் இல்லை): பயிற்சியில் சேர்க்கப்படவில்லை",
     "added to training": "பயிற்சியில் சேர்க்கப்பட்டது",
