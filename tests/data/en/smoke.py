@@ -1,4 +1,4 @@
-"""Labeled messages for the Check gate (PLAN §8 Phase 1). expect = acceptable verdicts."""
+"""Labeled messages for the Check gate. expect = acceptable verdicts."""
 from core.domain.schemas import Verdict as V
 
 SCAMS = [

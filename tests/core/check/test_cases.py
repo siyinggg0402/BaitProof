@@ -1,4 +1,4 @@
-"""Regression tests for the failures a live comparison found on the hard sets (see README, 'Measured accuracy')."""
+"""Regression tests for the failures a live comparison found on the hard sets (see docs/EVALUATION.md)."""
 import pytest
 
 from core.ai import llm

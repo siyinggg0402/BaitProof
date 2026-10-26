@@ -1,6 +1,6 @@
 """HARD set, written once, BEFORE the first comparison run, to measure the architecture rather than keyword matching.
 SCAMS: subtle (no gift cards / 'urgent' / prize words). LEGIT: genuine messages that look scammy. First-run numbers are
-recorded in the README; any fix made afterwards makes this a dev set."""
+recorded in docs/EVALUATION.md; any fix made afterwards makes this a dev set."""
 
 SCAMS = [
     ("wrong-number", "Hi, is this Margaret? I got your number from Linda at the book club. Sorry if I've got the wrong person!"),

@@ -1,4 +1,4 @@
-"""Shareable 'Can you spot the scam?' challenge (PLAN §6d). No accounts; does not touch the personal model."""
+"""Shareable 'Can you spot the scam?' challenge. No accounts; does not touch the personal model."""
 from __future__ import annotations
 
 import json

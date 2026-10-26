@@ -1,4 +1,4 @@
-"""The controlled tactic vocabulary (PLAN §3). Grow it deliberately, never per message."""
+"""The controlled tactic vocabulary. Grow it deliberately, never per message."""
 from __future__ import annotations
 
 TACTICS: dict[str, dict[str, str]] = {

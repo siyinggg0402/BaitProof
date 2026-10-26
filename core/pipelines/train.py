@@ -1,4 +1,4 @@
-"""Train pipeline (PLAN §6c): select tactics -> build drills from real/seed examples -> grade -> update model."""
+"""Train pipeline: select tactics -> build drills from real/seed examples -> grade -> update model."""
 from __future__ import annotations
 
 import random

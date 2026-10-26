@@ -1,21 +1,23 @@
-# Deploying Baitproof on a Nebius VM
+# Deploying Baitproof on a small Ubuntu server
 
-About 20 minutes. You need: a Nebius account with a VM, your Token Factory API key, and (optional) a domain and a Telegram bot token.
-Inference stays on Nebius Token Factory; the VM only runs the web app (and the bot).
+About 20 minutes. You need: any small Ubuntu server (the demo runs on a Google Cloud `e2-small`, 2 GB, in Singapore), your Nebius Token Factory API key, and (optional) a domain and a Telegram bot token.
+Inference stays on Nebius Token Factory: every model call goes there. The server only runs the web app and the bot (FastAPI and SQLite), with no model and no GPU on it.
 
 ## 0. Put the code where the VM can fetch it
-The VM clones your repository, so it has to be reachable: a **public** GitHub repo, or a private one with a deploy key. On your own machine, check `git status` shows no `.env` (it is git-ignored), commit what you want to ship, then push it yourself: `git push -u origin main`. Never commit `.env` or a key.
+The server clones your repository, so it has to be reachable: a **public** GitHub repo, or a private one with a deploy key. On your own machine, check `git status` shows no `.env` (it is git-ignored), commit what you want to ship, then push it yourself: `git push -u origin main`. Never commit `.env` or a key.
 
-## 1. Create the VM
-- Ubuntu 22.04 or 24.04, 2 vCPU / 4 GB RAM is plenty (the model runs on Token Factory, not on the VM). A public IP.
-- Security group: allow **22** (SSH), **80** and **443** (web).
+## 1. Create the server
+- **Ubuntu 24.04** (its Python 3.12 gets the patched Pillow 13; 22.04's Python 3.10 cannot), 1 to 2 GB of RAM is enough (the model runs on Token Factory, not here), a public IP, and a boot disk of at least 10 GB.
+- Firewall: allow **22** (SSH), **80** and **443** (web).
+
+**Example: Google Cloud Compute Engine** (Compute Engine > VM instances > Create instance). Name `baitproof`; region `asia-southeast1` (Singapore); machine `e2-small`; boot disk Ubuntu 24.04 LTS, 20 GB; tick *Allow HTTP traffic* and *Allow HTTPS traffic*; under Advanced options > Security > Manage access add your SSH public key as `ssh-ed25519 AAAA... yourname` (the last word becomes the login name; not `root`, not `baitproof`). Then VPC network > IP addresses > Reserve a static external address and attach it to the server, so the address survives a restart. Set a budget alert (Billing > Budgets & alerts): it warns, it does not stop spending. The free trial credit is enough for a few months of this size.
 
 ## 2. Domain (optional, recommended)
-Create an `A` record for your domain pointing at the VM's public IP. With a domain, Caddy gets an HTTPS certificate automatically. Without one the app is served over plain HTTP on the IP, which is fine for a quick demo (but Telegram deep links and `https` cookies are nicer with a domain). **The installable app and the Android Share option need HTTPS**: browsers only run the service worker on HTTPS or `localhost`, so on a bare IP the site works but has no Install button and does not appear in the Share sheet.
+Create an `A` record for your domain pointing at the server's public IP. With a domain, Caddy gets an HTTPS certificate automatically. Without one the app is served over plain HTTP on the IP, which is fine for a quick demo (but Telegram deep links and `https` cookies are nicer with a domain). **The installable app and the Android Share option need HTTPS**: browsers only run the service worker on HTTPS or `localhost`, so on a bare IP the site works but has no Install button and does not appear in the Share sheet.
 
 ## 3. Install
 ```bash
-ssh ubuntu@<vm-ip>
+ssh <your-login>@<server-ip>   # or the cloud console's browser SSH button, if your network blocks port 22
 git clone <your-public-repo-url> baitproof && cd baitproof
 bash deploy/setup_vm.sh <your-public-repo-url> [your.domain.com]
 ```

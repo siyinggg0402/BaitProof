@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 class Verdict(str, Enum):
     SCAM = "scam"
     LIKELY_SCAM = "likely_scam"
-    SAFE = "safe"  # always shown as "looks safe, but verify" (PLAN §3)
+    SAFE = "safe"  # always shown as "looks safe, but verify"
     UNSURE = "unsure"
     VICTIM = "victim_support"
 

@@ -1,4 +1,4 @@
-"""Check pipeline (PLAN §6a): ingest -> victim triage -> intent -> tools -> analysis -> grounding -> arbiter
+"""Check pipeline: ingest -> victim triage -> intent -> tools -> analysis -> grounding -> arbiter
 -> critic -> compose -> flywheel gate. Each gate writes to the trace."""
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""All prompts live here (PLAN §7)."""
+"""All prompts live here."""
 from core.domain.tactics import vocabulary_prompt
 
 from core.domain.intents import catalogue_prompt  # noqa: E402  (grouped with the vocab on purpose)

@@ -31,7 +31,7 @@ class Example:
 
 
 def enabled() -> bool:
-    """Off by default until a measurement says it helps (see README). BAITPROOF_FEWSHOT=1 turns it on."""
+    """Off by default until a measurement says it helps (see docs/EVALUATION.md). BAITPROOF_FEWSHOT=1 turns it on."""
     return os.getenv("BAITPROOF_FEWSHOT", "0") == "1"
 
 

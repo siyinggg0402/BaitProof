@@ -1,4 +1,4 @@
-"""Server-rendered share-card image (1200x630). Pillow only, no design project (PLAN §5).
+"""Server-rendered share-card image (1200x630). Pillow only, no design project.
 
 Chinese needs a font with Chinese glyphs, which Pillow does not ship. We look for one that is installed on the machine (macOS, Windows or Linux)
 and use it only if it really has every character we are about to draw; with none, the card is drawn in English instead of showing empty boxes."""

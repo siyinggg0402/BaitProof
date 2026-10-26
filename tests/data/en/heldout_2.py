@@ -1,5 +1,5 @@
 """Held-out set #2: written AFTER set #1 was used for tuning, to measure generalisation.
-First-run results are recorded in the README; any rule fixes after that make this a dev set too."""
+First-run results are recorded in docs/EVALUATION.md; any rule fixes after that make this a dev set too."""
 
 SCAMS = [
     ("Hi, I'm texting about the overdue toll on your account. Settle $12.40 at once to avoid a late fine: toll-settle-now.top/pay", "toll"),

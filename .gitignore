@@ -14,3 +14,7 @@ data/external/*
 
 # Local copy of the public phishing list (re-downloaded daily)
 data/cache/
+
+# Personal submission notes (the video script and the hackathon checklist): kept on this machine, not in the repository
+docs/DEMO.md
+docs/HACKATHON.md

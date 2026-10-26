@@ -1,5 +1,5 @@
 """Telegram bot logic, kept free of any Telegram import so it is unit-testable offline.
-One shared engine (core/) behind both channels (PLAN §5). Each chat gets its own anonymous profile.
+One shared engine (core/) behind both channels. Each chat gets its own anonymous profile.
 
 Replies are plain data: a `Reply` is a message plus optional buttons, and tapping a button comes back to `on_callback` as a short string.
 bot/telegram_bot.py only turns these into Telegram calls."""

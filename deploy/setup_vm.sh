@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run ON the Nebius VM (Ubuntu) as a sudoer:   bash deploy/setup_vm.sh <git-repo-url> [domain]
+# Run ON the server (Ubuntu 24.04, any provider) as a sudoer:   bash deploy/setup_vm.sh <git-repo-url> [domain]
 #   domain given  -> Caddy serves it over HTTPS (point its DNS A record at this VM first)
 #   no domain     -> plain HTTP on port 80 (fine for an IP-only demo)
 # Safe to re-run: after you fill in /opt/baitproof/.env, run it again (or `sudo systemctl restart baitproof baitproof-bot`).

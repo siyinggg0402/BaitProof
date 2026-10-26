@@ -1,4 +1,4 @@
-"""Personal model: per-tactic mastery + the transparent Baitproof score (PLAN §6b)."""
+"""Personal model: per-tactic mastery + the transparent Baitproof score."""
 from __future__ import annotations
 
 from datetime import timedelta
