@@ -4,8 +4,6 @@
 
 **A personal scam-defense coach for your family.** Forward a suspicious message and Baitproof tells you if it's a scam, points at the *one giveaway*, and adds that trick to your training. It learns which tricks *you* fall for, drills those, turns them into a game, and lets you send a "can you spot the scam?" challenge to your parents. It reads **English, Chinese (简体, 繁體 and mixed with English), Malay and Indonesian** with its own rules, and any other language through the model; the website, Telegram bot, practice and game speak English, 简体中文 and 繁體中文.
 
-*Hoxhunt for protecting your parents, not your payroll.*
-
 Built for the Nebius x NVIDIA Global AI Hackathon 2026, track **Personal AI**.
 
 ## What you can do
