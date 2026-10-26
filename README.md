@@ -4,8 +4,6 @@
 
 **A personal scam-defense coach for your family.** Forward a suspicious message and Baitproof tells you if it's a scam, points at the *one giveaway*, and adds that trick to your training. It learns which tricks *you* fall for, drills those, and turns them into games you can play with your family and friends.
 
-*Hoxhunt for protecting your parents, not your payroll.*
-
 **Try it: https://baitproof-sy.duckdns.org** (free, no account). English, 简体中文, 繁體中文, Bahasa Melayu and தமிழ். MIT licence.
 
 ## Hackathon requirements
