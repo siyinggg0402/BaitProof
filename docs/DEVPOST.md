@@ -76,5 +76,4 @@ Written from what we actually ran into; edit it to your own opinion before you s
 ## Try it
 - Demo: https://baitproof-sy.duckdns.org
 - Code (MIT): https://github.com/siyinggg0402/Is-This-Legit
-- Video: [add the YouTube link when uploaded]
 - Run it yourself: `README.md`, and `deploy/README.md` for a small Ubuntu server.
