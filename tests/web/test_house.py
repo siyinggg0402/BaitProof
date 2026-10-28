@@ -178,3 +178,11 @@ def test_the_pages_that_lead_to_the_house_say_so():
     befriend(a, b)
     assert 'href="/house"' in a.get("/train").text and 'href="/house"' in a.get("/me").text
     assert f'href="/house/visit/{friend["pub"]}"' in a.get("/friends").text
+
+
+def test_house_controls_can_be_reached_and_named_without_a_mouse():
+    """Found by an accessibility scan: on a phone the character button shows only an icon, the shop list could not take focus, and the shop was a landmark inside a landmark."""
+    html = TestClient(app).get("/house").text
+    assert re.search(r'id="open-char" aria-label="[^"]+"', html)
+    assert 'id="list" tabindex="0"' in html
+    assert '<section class="hh-shop" id="shop"' in html and "<aside" not in html

@@ -115,7 +115,7 @@ def investigate(ing: Ingested, it: Intent, tr: Trace, run) -> Case:
     case = Case(ing, it, f, gate, Ledger(), tr, run)
     analysis.rule_evidence(ing, it, f, case.ledger)
     if not case.model_pass():
-        tr.add("analysis", "skip", "no AI configured: using built-in rules only")
+        tr.add("analysis", "skip", "the AI reviewer was not available: using built-in rules only")
         tr.add("grounding", "pass", "{n} red flag(s) from built-in rules", n=len(case.ledger.tactic_ids()))
     analysis.safe_evidence(ing, it, case.ledger, f)
     d = case.decide()

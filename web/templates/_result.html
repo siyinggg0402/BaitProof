@@ -40,7 +40,7 @@
     {% if v in ('scam', 'likely_scam', 'unsure', 'victim_support') %}
     <details class="help"{% if v in ('scam', 'victim_support') %} open{% endif %}><summary>{{ icon('lifebuoy') }} {{ _("Need help, or want to report it?") }}</summary>
       <p>{{ _("Already paid or shared something? Call your bank straight away, then use an official line:") }}</p>
-      {% for c in help_lines(result.lang) %}<h4>{{ c.country }}</h4>
+      {% for c in help_lines(result.lang) %}<h3>{{ c.country }}</h3>
       <ul>{% for it in c['items'] %}<li>{{ it.text }}{% if it.tel %} <a href="tel:{{ it.tel }}">{{ it.tel }}</a>{% endif %}{% if it.url %} <a href="{{ it.url }}" rel="noopener" target="_blank">{{ it.url_text }}</a>{% endif %}</li>{% endfor %}</ul>{% endfor %}
       <p class="muted">{{ _("Real officials never ask you to move money or share your bank login by phone.") }} {{ _("Official lines checked against government pages in {when}.", when=_(help_verified)) }}</p>
     </details>

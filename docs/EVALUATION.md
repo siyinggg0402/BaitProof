@@ -83,6 +83,29 @@ The same re-run on the machine-translated SMS of section 5 (30 + 30 per language
 
 **Data caveats.** The English datasets are older (2003-2012 UK/Singapore/India SMS); "spam" is not always "scam"; some labelled-genuine finance messages were volunteer-written and look templated. Our own seed and hard sets are partly contaminated because rules were written after seeing failure categories, which is why the fresh train split is the headline number. None of the third-party data is committed.
 
+**7. Other models, 27 Oct 2026** (the same one-call baseline as everywhere above: the system prompt in `scripts/common.py`, temperature 0, one live run per model, all on Nebius Token Factory). 389 labelled messages: English hard set 3 (20 + 20), English Singapore (20 + 20), real SMS never tuned on (50 + 50 of the 100 + 100 sample), Chinese held out (39 + 40), Malay (20 + 20), Indonesian fresh (20 + 20), Tamil held out (25 + 25): 194 scams and 195 genuine messages. Pooled across the five languages:
+
+| Model | Scams caught (of 194) | Scams called safe | Genuine wrongly flagged (of 195) | Seconds per call |
+|---|---|---|---|---|
+| DeepSeek-V4.1-Flash | 189 | 2 | **1** (0.5%) | 5.7 |
+| gpt-oss-120b | 190 | 3 | 5 (3%) | 4.2 |
+| Qwen3-235B-A22B | 189 | 0 | 6 (3%) | 3.3 |
+| Nemotron 3 Super 120B-A12B | 189 | 0 | 7 (4%) | 3.6 |
+| Qwen3-30B-A3B | 188 | 1 | 31 (16%) | 3.5 |
+| **Nemotron 3 Nano 30B-A3B (ours)** | 191 | 0 | **51** (26%) | 3.8 |
+| Gemma-3-27B | 193 | 0 | 62 (32%) | 4.3 |
+
+Catching scams is easy for all of them. The difference is judging genuine messages: Nemotron Nano flags about a quarter on its own, like Gemma, and unlike the larger models; within the Nemotron family the bigger Super is far better calibrated at the same speed. Third-party price lists (not confirmed against Nebius's own) put Super at about four times Nano's price, which is why the app runs Nano.
+
+**The same messages through the whole pipeline** (the gates; network tools off for this run; the pipeline's prompts were written for Nemotron Nano). Five of the sets above, 154 scams and 155 genuine messages (the Indonesian set and the English Singapore set were left out), for the two models whose runs finished:
+
+| Model | Plain call: caught / called safe / genuine wrongly flagged | Whole pipeline: caught / "not sure" / called safe / genuine wrongly flagged |
+|---|---|---|
+| Nemotron 3 Nano 30B-A3B | 151 / 0 / 44 of 155 | 133 / 21 / **0** / **0** of 155 |
+| Qwen3-30B-A3B | 148 / 1 / 28 of 155 | 139 / 15 / **0** / **1** of 155 |
+
+So the gates remove the over-flagging whichever model sits inside them, at the price of 10 to 14% of scams becoming "not sure". The pipeline runs for DeepSeek-V4.1-Flash, Gemma-3-27B and Nemotron 3 Super were started but not finished, so there is no pipeline comparison for them. Caveats: our own sets (the Chinese, Malay, Indonesian and Tamil ones are written by us), one run each, so read any figure as plus or minus a few messages. To repeat a plain-call run for one model: `NEBIUS_MODEL=<model id> python -m scripts.eval.languages --modes llm --sets en-hard3,en-sg,en-real,zh-holdout,ms-holdout,id-fresh,ta-holdout` (that script uses all 100 + 100 of the real-SMS sample, not 50 + 50).
+
 ## Limitations
 - The deploy files run the live demo, but the one server is a single point of failure: there is no second copy, only a nightly backup on the same disk (copy it off now and then, see deploy/README.md). The demo's data resets if the server is rebuilt.
 - The Telegram connector is tested through its handlers; its connection to the live Telegram API is checked by hand, not by the test suite.

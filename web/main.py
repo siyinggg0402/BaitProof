@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.exception_handlers import http_exception_handler
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -38,6 +39,13 @@ async def translated_errors(request: Request, exc: StarletteHTTPException):
         exc = StarletteHTTPException(exc.status_code, ui.tr(exc.detail, request_lang(request)), headers=exc.headers)
     return await http_exception_handler(request, exc)
 
+
+async def healthz(_request: Request):
+    """For an uptime monitor. Added at the Starlette level so it skips the per-visitor profile (a ping with no cookie would otherwise make a new database file each time)."""
+    return JSONResponse({"ok": True}, headers={"Cache-Control": "no-store"})
+
+
+app.add_route("/healthz", healthz, methods=["GET", "HEAD"])
 
 for router in (language.router, check.router, inputs.router, records.router, practice.router, pwa.router, account.router, road.router, family.router, link.router, push.router, duel.router, house.router):
     app.include_router(router)

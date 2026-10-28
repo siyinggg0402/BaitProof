@@ -1,4 +1,15 @@
 {% extends "base.html" %}
+{% block meta %}
+{# what WhatsApp, Telegram and search results show when someone shares the link: the page's own lead line, so it is already in the visitor's language #}
+{% set about = _("Paste any suspicious message. Baitproof tells you if it's a scam and shows you the giveaway.") %}
+<meta name="description" content="{{ about }}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Baitproof">
+<meta property="og:description" content="{{ about }}">
+<meta property="og:url" content="{{ request.base_url }}">
+<meta property="og:image" content="{{ request.url_for('static', path='img/icon-512.png') }}">
+<meta name="twitter:card" content="summary">
+{% endblock %}
 {% block content %}
 {% set o = origin if origin is defined and origin else {} %}
 {% set harder %}<span class="dots"><span class="grad">{{ _("harder to fool") }}</span></span>{% endset %}

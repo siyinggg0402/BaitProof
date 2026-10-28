@@ -14,7 +14,7 @@
     <a class="hh-btn" href="/friends">{{ icon('users') }} <span>{{ _("Friends") }}</span></a>
     {% else %}
     <p class="hh-points" title="{{ _('XP to spend') }}">{{ icon('star') }} <b id="points-n">0</b> <span>{{ _("XP to spend") }}</span></p>
-    <button type="button" class="hh-btn" id="open-char">{{ icon('user') }} <span>{{ _("My character") }}</span></button>
+    <button type="button" class="hh-btn" id="open-char" aria-label="{{ _('My character') }}">{{ icon('user') }} <span>{{ _("My character") }}</span></button>
     {% endif %}
     <span class="hh-zoom"><button type="button" class="hh-btn sq" id="zoom-in" aria-label="{{ _('Zoom in') }}">{{ icon('plus') }}</button><button type="button" class="hh-btn sq" id="zoom-out" aria-label="{{ _('Zoom out') }}">{{ icon('minus') }}</button></span>
   </div>
@@ -32,11 +32,11 @@
   </div>
 
   {% if not visit_pub %}
-  <aside class="hh-shop" id="shop" aria-label="{{ _('Shop') }}">
+  <section class="hh-shop" id="shop" aria-label="{{ _('Shop') }}">
     <div class="hh-tabs" id="tabs" role="tablist" aria-label="{{ _('Shop sections') }}"></div>
     <p class="hh-hint" id="hint">{{ _("Buy something and it appears in your room. Drag it to move it, or tap it to turn it or put it away.") }}</p>
-    <div class="hh-list" id="list"></div>
-  </aside>
+    <div class="hh-list" id="list" tabindex="0"></div>
+  </section>
   {% endif %}
 
   <div class="over" id="nogl" hidden>

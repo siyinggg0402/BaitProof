@@ -6,6 +6,8 @@
 
 **Try it: https://baitproof-sy.duckdns.org** (free, no account). English, 简体中文, 繁體中文, Bahasa Melayu and தமிழ். MIT licence.
 
+<p align="center"><img src="docs/img/check.jpg" alt="A scam verdict with the giveaway and the evidence" width="32%"> <img src="docs/img/check-zh.jpg" alt="The same kind of check in Chinese" width="32%"> <img src="docs/img/road.jpg" alt="Scam Road, the 3D driving game" width="32%"></p>
+
 ## Hackathon requirements
 Nebius x NVIDIA Global AI Hackathon 2026, track **Personal AI**.
 

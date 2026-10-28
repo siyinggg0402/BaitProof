@@ -137,7 +137,7 @@ ZH: dict[str, str] = {
     "{n} link(s), {m} payment method(s) found": "发现 {n} 个链接、{m} 种付款方式",
     "message tries to give the checker instructions": "这条消息在给检查器下指令",
     "sounds like you may already have acted: switching to support": "听起来你可能已经照做了：转为提供支持",
-    "no AI configured: using built-in rules only": "未配置AI：只用内置规则",
+    "the AI reviewer was not available: using built-in rules only": "AI审阅者暂时不可用：只用内置规则",
     "{n} red flag(s) from built-in rules": "内置规则发现 {n} 个红旗",
     "second reviewer found nothing": "第二位审阅者没发现问题",
     "tone and safety rules satisfied": "语气和安全规则均已满足",

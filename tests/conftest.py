@@ -16,6 +16,8 @@ def isolated(tmp_path, monkeypatch):
     monkeypatch.setenv("BAITPROOF_CACHE_DIR", str(tmp_path / "cache"))  # never a phishing list left on this machine by a real run
     monkeypatch.setenv("BAITPROOF_NET_TOOLS", "0")  # tests never touch the network; a test opts in and mocks the call
     monkeypatch.setattr(llm, "available", lambda: False)  # tests are offline & deterministic
+    monkeypatch.setitem(llm._breaker, "fails", 0)  # a test that makes the model fail must not leave it paused for the next test
+    monkeypatch.setitem(llm._breaker, "until", 0.0)
 
     def no_network(*_a, **_k):
         raise OSError("the network is closed in tests; a test that needs an answer mocks the tool")

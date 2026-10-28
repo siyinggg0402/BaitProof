@@ -112,7 +112,7 @@ MS.update({
     "{n} link(s), {m} payment method(s) found": "{n} pautan, {m} kaedah pembayaran ditemui",
     "message tries to give the checker instructions": "mesej cuba memberi arahan kepada penyemak",
     "sounds like you may already have acted: switching to support": "bunyinya anda mungkin sudah bertindak: beralih kepada sokongan",
-    "no AI configured: using built-in rules only": "tiada AI dikonfigurasi: hanya menggunakan peraturan terbina dalam",
+    "the AI reviewer was not available: using built-in rules only": "Penyemak AI tidak tersedia: hanya menggunakan peraturan terbina dalam",
     "{n} red flag(s) from built-in rules": "{n} tanda amaran daripada peraturan terbina dalam",
     "second reviewer found nothing": "penyemak kedua tidak menjumpai apa-apa",
     "tone and safety rules satisfied": "peraturan nada dan keselamatan dipenuhi",

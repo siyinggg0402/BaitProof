@@ -25,6 +25,14 @@ class LLMUnavailable(Exception):
     """No key configured, or the call/JSON failed. Callers must degrade, never crash."""
 
 
+# When the service keeps failing (a revoked key, credit used up, an outage), every stage of a check would try, wait and retry on its own, and one check could
+# take a minute before it fell back to the rules. After BREAKER_FAILS failed calls in a row the model is skipped for BREAKER_PAUSE seconds (callers see the
+# same LLMUnavailable they already handle); the next call after that is a trial, and one answer clears the count. A reply that is not valid JSON is the model's
+# fault, not the service's, so it does not count.
+BREAKER_FAILS, BREAKER_PAUSE = 3, float(os.getenv("BAITPROOF_BREAKER_PAUSE", "45"))  # 0 turns the pause off (a long evaluation run wants every call tried)
+_breaker = {"fails": 0, "until": 0.0}
+
+
 def available() -> bool:
     return bool(os.getenv("NEBIUS_API_KEY") and os.getenv("NEBIUS_BASE_URL") and os.getenv("NEBIUS_MODEL"))
 
@@ -73,9 +81,12 @@ def chat_json(system: str, user: str, heavy: bool = True, retries: int = 1, purp
     model = os.environ["NEBIUS_MODEL"] if heavy else os.getenv("NEBIUS_MODEL_LIGHT") or os.environ["NEBIUS_MODEL"]
     user, scrubbed = scrub_outgoing(user)  # outgoing-data gate: callers already redact; this catches anything that slipped through
     global _flag_supported
+    if time.monotonic() < _breaker["until"]:
+        raise LLMUnavailable("paused after repeated failures")
     last: Exception | None = None
     for _ in range(retries + 1):
         t0 = time.perf_counter()
+        reached = False  # did the service answer at all (even with text we cannot read)?
         try:
             extra = {} if _THINKING or not _flag_supported else {"extra_body": {"chat_template_kwargs": {"enable_thinking": False}}}
             try:
@@ -90,6 +101,8 @@ def chat_json(system: str, user: str, heavy: bool = True, retries: int = 1, purp
                         messages=[{"role": "system", "content": system}, {"role": "user", "content": user}])
                 else:
                     raise
+            reached = True
+            _breaker["fails"] = 0
             USAGE["calls"] += 1
             tin = tout = 0
             if resp.usage:
@@ -103,6 +116,11 @@ def chat_json(system: str, user: str, heavy: bool = True, retries: int = 1, purp
             last = e
             record_llm(purpose=purpose, model=model, ms=int((time.perf_counter() - t0) * 1000), ok=False,
                        error=f"{type(e).__name__} {getattr(e, 'status_code', '')}".strip())
+            if not reached:
+                _breaker["fails"] += 1
+                if _breaker["fails"] >= BREAKER_FAILS:
+                    _breaker["until"] = time.monotonic() + BREAKER_PAUSE
+                    break  # the rest of this call's attempts would only fail the same way
     raise LLMUnavailable(str(last))
 
 

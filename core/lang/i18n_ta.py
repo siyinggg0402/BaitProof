@@ -73,7 +73,7 @@ TA: dict[str, str] = {
     "{n} link(s), {m} payment method(s) found": "{n} இணைப்பு(கள்), {m} பணம் செலுத்தும் முறை(கள்) கண்டறியப்பட்டன",
     "message tries to give the checker instructions": "செய்தி சரிபார்ப்புக் கருவிக்கு அறிவுறுத்தல்கள் கொடுக்க முயல்கிறது",
     "sounds like you may already have acted: switching to support": "நீங்கள் ஏற்கெனவே நடவடிக்கை எடுத்திருக்கலாம் எனத் தெரிகிறது: ஆதரவு முறைக்கு மாறுகிறது",
-    "no AI configured: using built-in rules only": "AI அமைக்கப்படவில்லை: உள்ளமைந்த விதிகளை மட்டும் பயன்படுத்துகிறது",
+    "the AI reviewer was not available: using built-in rules only": "AI மதிப்பாய்வாளர் கிடைக்கவில்லை: உள்ளமைந்த விதிகளை மட்டும் பயன்படுத்துகிறது",
     "{n} red flag(s) from built-in rules": "உள்ளமைந்த விதிகளின்படி {n} எச்சரிக்கை அறிகுறி(கள்)",
     "second reviewer found nothing": "இரண்டாவது மதிப்பாய்வாளர் எதுவும் காணவில்லை",
     "tone and safety rules satisfied": "தொனி மற்றும் பாதுகாப்பு விதிகள் பூர்த்தியாயின",

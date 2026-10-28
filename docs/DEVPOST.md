@@ -46,6 +46,7 @@ Scams reach people in the chats they already use, in the language they already r
 - Chinese (hand-written holdout, 39 + 40): 36 of 39 scams caught, 0 called safe, 0 of 40 genuine flagged (a plain model flags 13).
 - Malay, Indonesian and Tamil: 0 scams called safe in every set. Languages with no rules (model alone, never "safe"): 0 of 320 called safe in the first run, 2 of about 360 in the latest (an English spam the translation left in English, and a food promotion).
 - Every verdict carries its evidence, and the model cannot talk the system out of hard evidence.
+- The gates work with whichever model sits inside them: on the same 309 messages, genuine messages wrongly flagged fell from 44 to 0 with Nemotron Nano (and from 28 to 1 with Qwen3-30B-A3B), with no scam called safe.
 - It is live, free, needs no account, and speaks all four of Singapore's official languages.
 
 ## What we learned
@@ -69,6 +70,7 @@ Written from what we actually ran into; edit it to your own opinion before you s
 
 **NVIDIA Nemotron**
 - *Strong at catching, weak at clearing:* a plain "is this a scam?" call caught 98 of 100 financial scams but called 12 to 33% of genuine messages scams. That is why the model only proposes and deterministic gates decide.
+- *Compared with six other models* (same prompt, 389 messages in five languages, 27 October 2026): every model catches 96 to 99% of scams, but on genuine messages Nemotron 3 Nano wrongly flagged 51 of 195 (26%), against 62 (32%) for Gemma-3-27B, 31 (16%) for Qwen3-30B-A3B, and 7 (4%) for the larger Nemotron 3 Super, 6 for Qwen3-235B, 5 for gpt-oss-120b and 1 for DeepSeek-V4.1-Flash. Inside our gates the difference disappears (44 to 0 for Nano). We would love a Nano-sized model as well calibrated as Super.
 - *Sensitive to the prompt:* adding Chinese examples and a reply-language line made it more suspicious (20 of 40 genuine messages cleared instead of 30), so we measured it and removed them.
 - *Non-English:* for languages where we have no rules, a model-only "safe" let 1 to 2 of 40 scams through, so there we never let it say "safe".
 - *Vision:* Nemotron 3.5 Super VL read the text from a screenshot of a fake parcel-fee message correctly, including the link; we still show what it read for the person to correct.

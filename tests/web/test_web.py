@@ -50,6 +50,31 @@ def test_public_deploy_isolates_visitors_but_shares_challenges(monkeypatch):
     assert b.get(f"/challenge/{cid}").status_code == 200  # a different person can open it
 
 
+def test_healthz_answers_without_making_a_visitor_profile(monkeypatch, tmp_path):
+    monkeypatch.setenv("BAITPROOF_MULTIUSER", "1")
+    from web.main import app
+
+    c = TestClient(app)
+    for r in (c.get("/healthz"), c.head("/healthz")):
+        assert r.status_code == 200 and r.headers["cache-control"] == "no-store"
+        assert "bp" not in r.cookies  # an uptime monitor never gets a profile cookie
+    assert c.get("/healthz").json() == {"ok": True}
+    assert not (tmp_path / "profiles").exists()  # ... and never leaves a database file behind
+
+
+def test_home_page_has_a_description_and_a_share_preview_in_the_visitors_language():
+    from web.main import app
+
+    c = TestClient(app)
+    en = c.get("/").text
+    assert 'name="description"' in en and 'property="og:title" content="Baitproof"' in en
+    assert 'property="og:image" content="http://testserver/static/img/icon-512.png"' in en  # absolute, so WhatsApp and Telegram can fetch it
+    assert 'aria-label="Baitproof"' in en  # the logo link has no visible text on a phone
+    assert c.get("/static/img/icon-512.png").status_code == 200
+    zh = c.get("/", headers={"Accept-Language": "zh-CN"}).text
+    assert "骗局" in zh.split('name="description"')[1].split(">")[0]  # the preview follows the page's language
+
+
 def test_rate_limit_and_headers(monkeypatch):
     from web import deps
     from web.main import app

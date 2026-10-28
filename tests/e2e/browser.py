@@ -417,7 +417,7 @@ def zh_pass(page, base, no_overflow, expect_401, quiet) -> None:
     # game: Inbox Rush by keyboard (S / F), one whole round
     page.goto(base + "/game")
     page.wait_for_selector(".mode-card")
-    assert "收件箱快答" in page.inner_text(".mode-card >> nth=0") and "第1级" in page.inner_text(".hud-card")
+    assert "收件箱快答" in page.inner_text(".mode-card >> nth=0") and re.search(r"第\d+级", page.inner_text(".hud-card"))  # the practice above has already earned some XP
     no_overflow("zh-game-hub")
     page.click(".mode-card >> nth=0")
     for i in range(9):  # (a Chinese round can have fewer than 8 messages: stop when the results appear)

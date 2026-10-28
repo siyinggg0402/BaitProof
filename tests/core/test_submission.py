@@ -47,6 +47,7 @@ def test_no_leftover_planning_notes_or_the_old_hosting_in_the_docs():
 def test_every_file_the_readme_links_to_exists():
     import re
 
-    for target in re.findall(r"\]\(([^)#]+)(?:#[^)]*)?\)", read("README.md")):
+    readme = read("README.md")
+    for target in re.findall(r"\]\(([^)#]+)(?:#[^)]*)?\)", readme) + re.findall(r'<img src="([^"]+)"', readme):  # links and pictures
         if not target.startswith("http"):
             assert (ROOT / target).exists(), target
