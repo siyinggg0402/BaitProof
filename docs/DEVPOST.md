@@ -1,6 +1,6 @@
 # Baitproof: Devpost submission draft
 
-Paste this into the Devpost form (the seven story headings match Devpost's template). Add the video link when it is uploaded. Track: **Personal AI**. Built on **Nebius Token Factory** with **NVIDIA Nemotron** (`nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B` for checks, `nvidia/Nemotron-3.5-Super-VL` for screenshots) and **Tavily** for web lookups. Devpost reads the dollar sign as maths, so this text has none: keep it that way.
+Track: **Personal AI**. Built on **Nebius Token Factory** with **NVIDIA Nemotron** (`nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B` for checks, `nvidia/Nemotron-3.5-Super-VL` for screenshots) and **Tavily** for web lookups.
 
 ## Tagline
 A free scam-defence coach for Singapore's families and friends. Paste a message, get a verdict and the giveaway, then train on the tricks that fool you. Already in all four official languages.
