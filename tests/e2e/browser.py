@@ -968,6 +968,15 @@ def social_pass(p, base, problems, truth, social_db) -> None:
     ov_a("me")
     invite = aiman.get_attribute("[data-copy]", "data-copy")
     assert "/join/" in invite
+    # when neither clipboard method works the button must not claim "Copied": the text is shown, selected, for the person to copy themselves
+    stuck = ctx_a.new_page()
+    stuck.add_init_script("navigator.clipboard.writeText = () => Promise.reject(new DOMException('no', 'NotAllowedError')); document.execCommand = () => false;")
+    stuck.goto(base + "/me")
+    stuck.click("[data-copy]")
+    stuck.wait_for_selector(".copy-manual input")
+    assert stuck.input_value(".copy-manual input") == invite and "Copied" not in stuck.inner_text("[data-copy]")
+    assert stuck.evaluate("() => document.activeElement.classList.contains('copy-field')"), "the box is focused and selected"
+    stuck.close()
     aiman.goto(base + "/friends")
     ov_a("friends-empty")
     assert "Add a friend to compete" in aiman.inner_text("main") and aiman.is_visible(".tabs a[aria-current=page]:has-text('Friends')")
@@ -1191,6 +1200,9 @@ def social_pass(p, base, problems, truth, social_db) -> None:
     aiman.check("input[name=pub]")
     aiman.click("button:has-text('Open a race')")
     aiman.wait_for_selector("#lobby:not([hidden])")
+    aiman.click("#lobby [data-copy]")      # "Copy invite link" in the waiting room (it once had no handler at all)
+    link = aiman.evaluate("() => navigator.clipboard.readText()")
+    assert re.fullmatch(r"https?://[^/]+/duel/[A-Z0-9]{6}", link), link      # (the host is BAITPROOF_URL when that is set, so only the shape is checked)
     mei.goto(base + "/duel")
     assert "Aiman challenged you" in mei.inner_text("main")
     ov_m("duel-invite")

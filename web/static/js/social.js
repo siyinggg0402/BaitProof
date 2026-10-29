@@ -1,18 +1,4 @@
-// Profile and friends pages: "Copy" buttons (an invite link, a friend code, a sign-in key). Everything else on these pages is plain forms.
-document.querySelectorAll("[data-copy]").forEach((b) => {
-  const label = b.textContent;
-  b.addEventListener("click", async () => {
-    try { await navigator.clipboard.writeText(b.dataset.copy); }
-    catch (_) {
-      const ta = document.createElement("textarea");  // an older browser, or no permission: select it and copy by hand
-      ta.value = b.dataset.copy; document.body.append(ta); ta.select();
-      try { document.execCommand("copy"); } catch (__) { /* nothing more to try */ }
-      ta.remove();
-    }
-    b.textContent = b.dataset.done || label;
-    setTimeout(() => { b.textContent = label; }, 1800);
-  });
-});
+// Profile, friends and family pages. (The "Copy" buttons are handled for every page in app.js.) Everything else on these pages is plain forms.
 
 // "Join with a code": the code the person types becomes part of the address (the invite page then asks them to confirm).
 const joinForm = document.getElementById("join-form");

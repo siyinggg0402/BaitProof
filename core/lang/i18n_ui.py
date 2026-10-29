@@ -130,6 +130,7 @@ UI_ZH: dict[str, str] = {
     "I spotted {right} of {total} scam messages.": "{total}条消息里，我答对了{right}条。", "Can you beat me?": "你能超过我吗？",
     "Family challenge": "家人挑战", "Take the challenge": "接受挑战", "More ways to share": "更多分享方式", "Challenge link: {url}": "挑战链接：{url}",
     "Copied! Paste it into a message to your family.": "已复制！粘贴到发给家人的消息里就行。", "Copy this link:": "请复制这个链接：",
+    "Copying did not work in this browser. Select the text below and copy it yourself:": "这个浏览器没能自动复制。请选中下面的文字，自己复制：",
     "Hi {name}, I just tried a quick 2-minute quiz on spotting scam messages and got {pct}%. Scammers target families like ours, so could you try it too? {link}":
         "{name}，我刚做了一个2分钟的防骗小测验，答对了{pct}%。骗子专挑我们这样的家庭下手，你也来试试好吗？{link}",
     "there": "你好呀", "Mum": "妈妈", "Who is this for?": "这条消息发给谁？", "Who is it for?": "发给谁？", "WhatsApp": "WhatsApp", "Text message": "短信", "Email": "邮件",

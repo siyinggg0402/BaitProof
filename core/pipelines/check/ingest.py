@@ -19,6 +19,15 @@ from .knowledge import AMBIGUOUS_BRANDS, BRANDS, INJECTION_RE, RAILS, VICTIM_RE,
 
 MAX_LEN = 4000
 AMOUNT_RE = Dual(r"[$€£₹]\s?\d[\d,.]*|\bRs\.? ?\d[\d,.]*|\bINR\.? ?\d[\d,.]*|\b\d[\d,.]*\s?(?:dollars|usd|eur|rupees)\b|\bRM\s?\d[\d,.]*|\bS\$\s?\d[\d,.]*", ZH.AMOUNT, MS.AMOUNT, TA.AMOUNT)
+# A message that is the same few characters or words over and over ("xxxxxxxx…", "test test test …") says nothing after the first few copies, but it makes the model run on until
+# it hits its output limit (measured: 20 to 65 seconds for one check). Such a run is squashed to a few copies before anything reads it. The thresholds are far beyond anything real, so
+# amounts, phone numbers, "haha" and decorative lines are left alone: 25 identical characters in a row, or a 2 to 30 character unit repeated 8 times or more.
+CHAR_RUN_RE = re.compile(r"(.)\1{24,}", re.S)
+UNIT_RUN_RE = re.compile(r"(.{2,30}?)\1{7,}", re.S)
+
+
+def squash_repeats(text: str) -> str:
+    return UNIT_RUN_RE.sub(lambda m: m.group(1) * 3, CHAR_RUN_RE.sub(lambda m: m.group(1) * 10, text))
 
 
 @dataclass
@@ -48,7 +57,7 @@ class Ingested:
 
 
 def ingest(raw: str) -> Ingested:
-    text = re.sub(r"[ \t]+", " ", raw.replace("\x00", "")).strip()[:MAX_LEN]
+    text = squash_repeats(re.sub(r"[ \t]+", " ", raw.replace("\x00", "")).strip())[:MAX_LEN]  # (squashed before cutting, so a long run cannot push the real message out)
     if not text:
         raise ValueError("empty message")
     email_spans = [m.span() for m in library.EMAIL_RE.finditer(text)]

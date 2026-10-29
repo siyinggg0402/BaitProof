@@ -155,3 +155,19 @@ def test_a_sentence_may_not_name_a_different_chinese_company():
     assert not gates.grounded_sentence("请使用卡片背面的电话号码联系中国建设银行。", msg)   # a different bank
     assert gates.grounded_sentence("请使用卡片背面的电话号码致电银行。", msg)              # no bank named: fine
     assert gates.grounded_sentence("请联系工商银行。", "Your icbc account is frozen: http://icbc-verify-cn.top")  # (the message names it by its address)
+
+
+def test_a_message_that_repeats_itself_is_squashed_before_anything_reads_it():
+    """"xxxxxxxx…" or "test test test …" made the model run on to its output limit (20 to 65 seconds for one check). A run is cut to a few copies; real content, with its
+    long numbers and decorative lines, is left exactly as written."""
+    from core.pipelines.check.ingest import squash_repeats
+
+    assert squash_repeats("x" * 400) == "x" * 10
+    assert squash_repeats("hello " * 80) == "hello " * 3
+    assert squash_repeats("点击链接" * 60) == "点击链接" * 3
+    assert squash_repeats("ab" * 2000) == "ab" * 3
+    real = "Pay $1,000,000 now. Call 0000000000 or 000-000-0000. Haha haha haha haha. =========== xy xy xy xy xy xy xy"
+    assert squash_repeats(real) == real
+    # squashed before the message is cut to its length limit, so a long run cannot push the real content out
+    ing = ingest("x" * 3990 + " now pay at dhl-fee-pay.xyz today")
+    assert "dhl-fee-pay.xyz" in ing.text and "dhl-fee-pay.xyz" in ing.entities.hosts

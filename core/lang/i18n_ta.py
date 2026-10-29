@@ -388,6 +388,7 @@ TA: dict[str, str] = {
     "Challenge link: {url}": "சவால் இணைப்பு: {url}",
     "Copied! Paste it into a message to your family.": "நகலெடுக்கப்பட்டது! உங்கள் குடும்பத்துக்கு அனுப்பும் செய்தியில் ஒட்டுங்கள்.",
     "Copy this link:": "இந்த இணைப்பை நகலெடுக்கவும்:",
+    "Copying did not work in this browser. Select the text below and copy it yourself:": "இந்த உலாவியில் நகலெடுக்க முடியவில்லை. கீழே உள்ள உரையைத் தேர்ந்தெடுத்து நீங்களே நகலெடுக்கவும்:",
     "Hi {name}, I just tried a quick 2-minute quiz on spotting scam messages and got {pct}%. Scammers target families like ours, so could you try it too? {link}": "வணக்கம் {name}, மோசடிச் செய்திகளைக் கண்டுபிடிப்பது பற்றிய 2 நிமிட வினாடி வினாவை இப்போதுதான் செய்து பார்த்தேன்; {pct}% கிடைத்தது. மோசடிக்காரர்கள் நம்மைப் போன்ற குடும்பங்களைக் குறிவைக்கிறார்கள். நீங்களும் முயற்சி செய்து பார்க்க முடியுமா? {link}",
     "there": "அன்பானவரே",
     "Mum": "அம்மா",

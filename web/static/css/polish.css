@@ -212,3 +212,10 @@ progress.xpbar::-webkit-progress-value{background:var(--brand)}progress.xpbar::-
 .tg-alt summary{cursor:pointer;color:var(--muted);font:600 .9rem var(--sans);min-height:32px;display:flex;align-items:center}
 .tg-alt summary:hover{color:var(--ink)}.tg-alt summary:focus-visible{outline:3px solid var(--brand);outline-offset:2px;border-radius:6px}
 .tg-alt[open] summary{color:var(--ink)}
+
+/* ---- "Copy" buttons (web/static/js/app.js): an off-screen box the text is selected in, and the box shown when nothing could copy it */
+.copy-ghost{position:fixed;top:0;left:0;width:1px;height:1px;padding:0;border:0;opacity:0;font-size:16px;pointer-events:none}
+.copy-manual{margin-top:12px}
+.copy-manual p{margin:0 0 6px;font-size:.92rem}
+.copy-field{width:100%;font:600 .95rem var(--mono);padding:11px 12px;border:1px solid var(--line-2);border-radius:12px;background:var(--bg);color:var(--ink);user-select:all}
+.copy-field:focus-visible{outline:3px solid var(--brand);outline-offset:2px}

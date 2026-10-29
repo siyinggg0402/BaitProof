@@ -410,6 +410,7 @@ MS.update({
     "Challenge link: {url}": "Pautan cabaran: {url}",
     "Copied! Paste it into a message to your family.": "Disalin! Tampal ke dalam mesej kepada keluarga anda.",
     "Copy this link:": "Salin pautan ini:",
+    "Copying did not work in this browser. Select the text below and copy it yourself:": "Penyalinan tidak berjaya dalam pelayar ini. Pilih teks di bawah dan salin sendiri:",
     "Hi {name}, I just tried a quick 2-minute quiz on spotting scam messages and got {pct}%. Scammers target families like ours, so could you try it too? {link}": "Hai {name}, saya baru mencuba kuiz 2 minit tentang mengesan mesej penipuan dan mendapat {pct}%. Penipu menyasarkan keluarga seperti kita, jadi bolehkah anda cuba juga? {link}",
     "there": "sana",
     "Mum": "Mak",

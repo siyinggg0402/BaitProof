@@ -14,6 +14,47 @@ document.addEventListener("click", (e) => {
   }
 });
 
+// Every "Copy" button (a sign-in key, an invite link, the family summary): data-copy is the text, data-done the label to show afterwards. One handler for all pages, so a button
+// added to a new page works without its own script (the race waiting room's invite button had none).
+document.addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-copy]");
+  if (!b) return;
+  if (!b.dataset.label) b.dataset.label = b.textContent;
+  if (!(await copyText(b.dataset.copy))) return copyByHand(b, b.dataset.copy);
+  b.textContent = b.dataset.done || b.dataset.label;
+  clearTimeout(b.resetTimer);
+  b.resetTimer = setTimeout(() => { b.textContent = b.dataset.label; }, 1800);
+});
+
+// Put text on the clipboard and say whether it worked. The browser's clipboard API first; when it is missing or refuses (an in-app browser, an older phone, a page that is not
+// focused), the old select-and-copy way. A button must only say "Copied" when this returns true.
+async function copyText(text) {
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(text); return true; }
+  } catch (_) { /* refused here: try the old way */ }
+  const ta = el("textarea", { value: text, readOnly: true, className: "copy-ghost" }), was = document.activeElement;
+  document.body.append(ta);
+  ta.focus(); ta.select(); ta.setSelectionRange(0, text.length);  // (setSelectionRange is what makes iPhones select it)
+  let ok = false;
+  try { ok = document.execCommand("copy"); } catch (_) { /* no */ }
+  ta.remove();
+  if (was && was.focus) was.focus();
+  return ok;
+}
+
+// Nothing could copy it: show the text in a box, already selected, so the person can copy it themselves (Ctrl/Cmd+C, or press and hold).
+function copyByHand(b, text) {
+  const host = b.parentElement;
+  let box = host.nextElementSibling && host.nextElementSibling.classList.contains("copy-manual") ? host.nextElementSibling : null;
+  if (!box) {
+    const note = t("Copying did not work in this browser. Select the text below and copy it yourself:");
+    box = el("div", { className: "copy-manual", role: "status" }, el("p", { className: "muted", textContent: note }), el("input", { type: "text", readOnly: true, value: text, className: "copy-field", ariaLabel: note }));
+    host.after(box);
+  }
+  const field = box.querySelector("input");
+  field.focus(); field.select(); field.setSelectionRange(0, text.length);
+}
+
 let mapFilter = "all";
 function applyFilter() {
   document.querySelectorAll("#map li").forEach((li) => {
@@ -79,8 +120,7 @@ function familyBox(pct, link) {
   const mail = el("a", { className: "btn sec", textContent: t("Email") });
   const note = el("p", { className: "muted", ariaLive: "polite" });
   const copy = el("button", { type: "button", className: "btn sec", textContent: t("Copy message"), onclick: async () => {
-    try { await navigator.clipboard.writeText(msg(name.value)); note.textContent = t("Copied! Paste it into any chat."); }
-    catch (_) { note.textContent = msg(name.value); }
+    note.textContent = (await copyText(msg(name.value))) ? t("Copied! Paste it into any chat.") : msg(name.value);  // (when nothing can copy, the message itself is shown to copy by hand)
   } });
   const update = () => {
     const x = encodeURIComponent(msg(name.value));

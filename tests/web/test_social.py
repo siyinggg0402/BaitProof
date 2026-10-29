@@ -236,6 +236,25 @@ def test_the_road_page_is_one_module_of_our_own_plus_the_vendored_three_js_and_n
     assert c.get("/static/vendor/LICENSE-three.txt").status_code == 200
 
 
+def test_every_copy_button_is_handled_by_the_script_every_page_loads():
+    """A "Copy" button is only markup (data-copy holds the text); app.js, which base.html loads on every page, does the copying. The race waiting room's invite button once
+    sat on a page that loaded no handler, so tapping it did nothing."""
+    from pathlib import Path
+
+    web = Path(__file__).resolve().parents[2] / "web"
+    app_js = (web / "static/js/app.js").read_text()
+    assert 'closest("[data-copy]")' in app_js and "async function copyText" in app_js
+    assert "[data-copy]" not in (web / "static/js/social.js").read_text(), "a second handler would copy twice"
+    for page in (web / "templates").glob("*.html"):
+        if "data-copy" in page.read_text() and not page.name.startswith("_"):  # (a "_" file is a piece another page includes)
+            assert '{% extends "base.html" %}' in page.read_text(), f"{page.name} has a Copy button but does not load app.js"
+    # the waiting room itself, as a visitor gets it
+    c = visitor()
+    c.post("/me/create", data={"nickname": "Aiman"})
+    lobby = c.post("/duel/new", follow_redirects=True)
+    assert lobby.status_code == 200 and re.search(r'data-copy="https?://[^"]+/duel/[A-Z0-9]{6}"', lobby.text), "the waiting room's Copy invite link button holds the invite link"
+
+
 def play(c, n, wrong=0):
     """Drive n right gates then `wrong` wrong ones, through the API (the same calls the page makes). Returns the last answer."""
     run = c.post("/api/road/start").json()
