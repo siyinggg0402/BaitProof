@@ -2,7 +2,7 @@
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-MODEL = "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B"
+MODEL = "nvidia/Nemotron-3_5-Lightning"
 VISION = "nvidia/Nemotron-3.5-Super-VL"
 DEMO = "https://baitproof-sy.duckdns.org"
 REPO = "https://github.com/siyinggg0402/Is-This-Legit"

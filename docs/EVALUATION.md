@@ -11,7 +11,8 @@ The full measurements behind the summary table in the [README](../README.md#resu
 
 | System | Scams caught | "Not sure" | Called safe | Genuine cleared | "Not sure" | False alarms |
 |---|---|---|---|---|---|---|
-| **Baitproof pipeline** (default) | **76 / 100** | 24 | **0** | 58 / 100 | 40 | **2** |
+| **Baitproof pipeline** (default), on Nemotron 3 Nano | **76 / 100** | 24 | **0** | 58 / 100 | 40 | **2** |
+| **Baitproof pipeline** on Nemotron 3.5 Lightning, the model the app now runs (30 Oct 2026, one run) | **78 / 100** | 22 | **0** | 61 / 100 | 37 | **2** |
 | Pipeline + few-shot retrieval | 80 / 100 | 20 | 0 | 38 / 100 | 60 | 2 |
 | Rules only, offline, all 1,019 scams + 4,198 genuine | 617 / 1,019 (61%) | 401 | 1, now 0 (note) | 1 | 4,142 | 55 (1.3%) |
 
@@ -75,6 +76,20 @@ The three scams it only calls "not sure" are short first-contact messages with n
 | Tamil, held out (25 + 25) | 25 / 25, 14 to 17 of 25 | 25 / 0 / **0** | 16 of 25 / **0** |
 | Tamil, development (25 + 25) and practice bank (42 + 14) | 25 / 25, 8 of 25 and 42 / 42, 7 of 14 | 25 / 0 / **0** and 42 / 0 / **0** | 11 to 19 of 25 and 10 of 14 / **0** |
 
+**Re-run on Nemotron 3.5 Lightning, 30 October 2026** (the model the app now runs, because Nebius retires Nano on 9 November; the table above is from Nano's runs). One live run each, the same `python -m scripts.eval.languages --modes llm,full` command:
+
+| Set (scams + genuine) | Plain Lightning call: scams caught (called safe) / genuine called a scam | Baitproof: scams caught / "not sure" / called safe | Genuine cleared / called a scam |
+|---|---|---|---|
+| English, real SMS, never tuned on (100 + 100) | 99 (1) / 100, 32 of 100 | 78 / 22 / **0** | 61 of 100 / **2** |
+| English, held out (44 + 22) | 44 / 44, 1 of 22 | 43 / 1 / **0** | 18 of 22 / **0** |
+| English, Singapore and Malaysia, fresh (20 + 20) | 20 / 20, 1 of 20 | 19 / 1 / **0** | 16 of 20 / **0** |
+| Chinese, held out (39 + 40) | 39 / 39, 15 of 40 | 36 / 3 / **0** | 30 of 40 / **0** |
+| Malay (20 + 20) | 20 / 20, 6 of 20 | 20 / 0 / **0** | 17 of 20 / **0** |
+| Indonesian, fresh (20 + 20) | 20 / 20, 4 of 20 | 20 / 0 / **0** | 18 of 20 / **1** (a bank transfer notice) |
+| Tamil, held out (25 + 25) | 25 / 25, 20 of 25 | 25 / 0 / **0** | 22 of 25 / **0** |
+
+On Lightning the plain call is a more suspicious judge than Nano was (32% of genuine English SMS against 12%, 80% of genuine Tamil against 56 to 68%), and the gates still bring the wrongly flagged genuine messages down to 3 of 247 (summed over the seven sets) and keep "called safe" at 0 for every set. The two English false alarms are a friendly text ("Yes... I trust u to buy new stuff ASAP so I can try it out") and a message about sending account details to a dorm account; the Indonesian one is a bank transfer notice. Compared with Nano's table above, Lightning cleared more genuine Tamil (22 against 16) and Malay (17 against 16) messages and fewer Chinese ones (30 against 33).
+
 Before the Tamil rule pack existed, the same Tamil development set read 11 of 25 scams caught (the rest "not sure"), 0 of 25 genuine cleared and 2 false alarms; the practice bank read 25 of 42. The other first readings that exposed gaps (and what fixed them): the Indonesian holdout (opening hours "09.00-11.00" read as a premium phone number; short Indonesian messages detected as "other" so no rules ran on them; a courier update read as an impersonation; "do not share this code" read as a request; vocabulary such as KTP, pulsa, rb/jt, tilang, "lowongan driver"), a Chinese anti-fraud public notice called a scam (it quotes "safe account"), and an English `.apk` invitation. The Indonesian holdout and the Tamil practice bank are development sets now: they were read after the first run.
 
 The same re-run on the machine-translated SMS of section 5 (30 + 30 per language, model only inside the gates) caught: Hindi 3, Spanish 14, Russian 15, Portuguese 15, Arabic 17, French 17, German 17, Japanese 18, Korean 21, Bengali 22, Turkish 22 and Indonesian 21 of 30, with two scams called safe (an English spam the translation left in English, in the Russian set, and a fast-food promotion in the Indonesian set) and one false alarm (Turkish). Those languages have no rules, so most of what they miss comes back as "not sure". A model that first translates the message to English was proposed and not tried.
@@ -92,19 +107,21 @@ The same re-run on the machine-translated SMS of section 5 (30 + 30 per language
 | Qwen3-235B-A22B | 189 | 0 | 6 (3%) | 3.3 |
 | Nemotron 3 Super 120B-A12B | 189 | 0 | 7 (4%) | 3.6 |
 | Qwen3-30B-A3B | 188 | 1 | 31 (16%) | 3.5 |
-| **Nemotron 3 Nano 30B-A3B (ours)** | 191 | 0 | **51** (26%) | 3.8 |
+| Nemotron 3 Nano 30B-A3B (our model until 30 Oct 2026; retired by Nebius on 9 Nov) | 191 | 0 | 51 (26%) | 3.8 |
 | Gemma-3-27B | 193 | 0 | 62 (32%) | 4.3 |
+| **Nemotron 3.5 Lightning (ours from 30 Oct 2026)** | 193 | 1 | **65** (33%) | 1.9 |
 
-Catching scams is easy for all of them. The difference is judging genuine messages: Nemotron Nano flags about a quarter on its own, like Gemma, and unlike the larger models; within the Nemotron family the bigger Super is far better calibrated at the same speed. Third-party price lists (not confirmed against Nebius's own) put Super at about four times Nano's price, which is why the app runs Nano.
+Catching scams is easy for all of them. The difference is judging genuine messages: Nemotron Nano and its successor Lightning flag a quarter to a third on their own, like Gemma, and unlike the larger models; within the Nemotron family the bigger Super is far better calibrated at the same speed. Nebius's notice retires Nano, Super, DeepSeek-V4.1-Flash and Qwen3-235B on 9 November 2026 (serverless; no automatic rerouting) and names Lightning, a 30B model with 3B active parameters like Nano, as Nano's replacement at the same list price (US$0.06 in / $0.24 out per million tokens, read from the Token Factory model list), so the app runs Lightning from 30 October. (Super retires on the same day; Nemotron 3 Ultra 550B, which stays, was not tested: it is far larger and slower.)
 
-**The same messages through the whole pipeline** (the gates; network tools off for this run; the pipeline's prompts were written for Nemotron Nano). Five of the sets above, 154 scams and 155 genuine messages (the Indonesian set and the English Singapore set were left out), for the two models whose runs finished:
+**The same messages through the whole pipeline** (the gates; network tools off for this run; the pipeline's prompts were written for Nemotron Nano). Five of the sets above, 154 scams and 155 genuine messages (the Indonesian set and the English Singapore set were left out), for the three models whose runs finished (Lightning's was run on 30 October 2026):
 
 | Model | Plain call: caught / called safe / genuine wrongly flagged | Whole pipeline: caught / "not sure" / called safe / genuine wrongly flagged |
 |---|---|---|
 | Nemotron 3 Nano 30B-A3B | 151 / 0 / 44 of 155 | 133 / 21 / **0** / **0** of 155 |
+| **Nemotron 3.5 Lightning (ours now)** | 153 / 1 / 60 of 155 | 139 / 15 / **0** / **2** of 155 |
 | Qwen3-30B-A3B | 148 / 1 / 28 of 155 | 139 / 15 / **0** / **1** of 155 |
 
-So the gates remove the over-flagging whichever model sits inside them, at the price of 10 to 14% of scams becoming "not sure". The pipeline runs for DeepSeek-V4.1-Flash, Gemma-3-27B and Nemotron 3 Super were started but not finished, so there is no pipeline comparison for them. Caveats: our own sets (the Chinese, Malay, Indonesian and Tamil ones are written by us), one run each, so read any figure as plus or minus a few messages. To repeat a plain-call run for one model: `NEBIUS_MODEL=<model id> python -m scripts.eval.languages --modes llm --sets en-hard3,en-sg,en-real,zh-holdout,ms-holdout,id-fresh,ta-holdout` (that script uses all 100 + 100 of the real-SMS sample, not 50 + 50).
+So the gates remove most of the over-flagging whichever model sits inside them, at the price of 10 to 14% of scams becoming "not sure". Lightning's two wrongly flagged genuine messages are both official warnings about scams (a Malay police advisory and a Tamil anti-scam helpline notice) that Nano left as "not sure"; it also cleared more genuine messages (102 against 95) and caught 6 more scams. Speed is mixed: per message through the pipeline, with 8 requests at a time, Lightning's median was 9.5 s against Nano's 11.8 s, but 12 of 309 took over 30 s (Nano: 2) and 3 over 60 s (Nano: 0), so its slow tail is worse. In three back-to-back single checks of one parcel scam from the developer's machine (which reaches Token Factory through a proxy), Lightning took 9 to 14 s and Nano 6 to 7 s, so treat the speed comparison as unsettled until it is timed from the server. The pipeline runs for DeepSeek-V4.1-Flash, Gemma-3-27B and Nemotron 3 Super were started but not finished, so there is no pipeline comparison for them. Caveats: our own sets (the Chinese, Malay, Indonesian and Tamil ones are written by us), one run each, so read any figure as plus or minus a few messages. To repeat a plain-call run for one model: `NEBIUS_MODEL=<model id> python -m scripts.eval.languages --modes llm --sets en-hard3,en-sg,en-real,zh-holdout,ms-holdout,id-fresh,ta-holdout` (that script uses all 100 + 100 of the real-SMS sample, not 50 + 50).
 
 ## Limitations
 - The deploy files run the live demo, but the one server is a single point of failure: there is no second copy, only a nightly backup on the same disk (copy it off now and then, see deploy/README.md). The demo's data resets if the server is rebuilt.

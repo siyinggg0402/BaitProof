@@ -31,7 +31,7 @@ sudo -u baitproof nano /opt/baitproof/.env      # never commit this file
 |---|---|
 | `NEBIUS_API_KEY` | your Token Factory key |
 | `NEBIUS_BASE_URL` | `https://api.tokenfactory.nebius.com/v1/` |
-| `NEBIUS_MODEL` | `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B` |
+| `NEBIUS_MODEL` | `nvidia/Nemotron-3_5-Lightning` |
 | `BAITPROOF_URL` | the public address, e.g. `https://your.domain.com` (the bot uses it for links) |
 | `BAITPROOF_ADMIN_TOKEN` | a long random string: it unlocks `/admin` (health, metrics, feedback) |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME` | optional, from @BotFather |

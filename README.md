@@ -14,7 +14,7 @@ Nebius x NVIDIA Global AI Hackathon 2026, track **Personal AI**.
 | Requirement | How and where we meet it |
 |---|---|
 | Built and run on **Nebius Token Factory** | Every model call goes to Token Factory's OpenAI-compatible endpoint (`core/ai/llm.py`, `.env.example`). The web app and Telegram bot are a small FastAPI and SQLite server (Google Cloud, Singapore) with no model on it. |
-| At least one **NVIDIA open model** | `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B` runs every check (temperature 0, thinking off, about $0.0003 per check). `nvidia/Nemotron-3.5-Super-VL` reads screenshots. |
+| At least one **NVIDIA open model** | `nvidia/Nemotron-3_5-Lightning` runs every check (temperature 0, thinking off, about $0.0003 per check). `nvidia/Nemotron-3.5-Super-VL` reads screenshots. |
 | **Tavily** (extra prize) | `core/ai/verify.py`: when a message names a company, it looks up the company's real website and scam reports about the link. Shown in "How I decided"; weak evidence that never decides alone. |
 | Working **demo** | https://baitproof-sy.duckdns.org |
 | Public **repository**, open licence, README | This repository, MIT ([LICENSE](LICENSE)); how to run it is under [Setup](#setup). |
@@ -55,17 +55,17 @@ Each check writes one JSON line with no message text; `/admin` (set `BAITPROOF_A
 The language you *see* is always the site's language (the header menu), never the language of a message: a game only shows messages written in the site's language, and a browser test checks this for every language.
 
 ## Results
-Our own test sets, with one plain model call as the baseline. Full tables, first readings and negative results are in [docs/EVALUATION.md](docs/EVALUATION.md).
+Our own test sets, run on `Nemotron-3_5-Lightning` (30 October 2026, one run), with one plain call to the same model as the baseline. Earlier runs on Nemotron 3 Nano, which Nebius retires on 9 November, gave the same picture (real SMS: 76 to 79 caught, 0 to 1 called safe, 0 to 2 false alarms). Full tables, first readings and negative results are in [docs/EVALUATION.md](docs/EVALUATION.md).
 
 | Set (scams + genuine) | Plain model: scams caught / genuine wrongly flagged | Baitproof: scams caught / called safe / genuine wrongly flagged |
 |---|---|---|
-| Real English SMS, never tuned on (100 + 100) | 94 / 12 | 76 to 79 / **0 to 1** / 0 to 2 (two runs) |
-| Chinese, held out (39 + 40) | 38 / 13 | 36 / **0** / 0 |
+| Real English SMS, never tuned on (100 + 100) | 99 / 32 | 78 / **0** / 2 |
+| Chinese, held out (39 + 40) | 39 / 15 | 36 / **0** / 0 |
 | Malay (20 + 20) | 20 / 6 | 20 / **0** / 0 |
-| Indonesian, fresh (20 + 20) | 20 / 3 | 20 / **0** / 0 |
-| Tamil, held out (25 + 25) | 25 / 14 to 17 | 25 / **0** / 0 |
+| Indonesian, fresh (20 + 20) | 20 / 4 | 20 / **0** / 1 |
+| Tamil, held out (25 + 25) | 25 / 20 | 25 / **0** / 0 |
 
-A single model call is the better scam *catcher* and a poor judge of genuine messages (it flagged 12 to 33% of them). The gates give up some catches (as "not sure", never as "safe") so a parent's real bank text is not called a scam. Runs move by one or two messages, so read any figure as plus or minus 3. The Chinese, Malay, Indonesian and Tamil sets are written by us from common scam scripts: a development signal, not a benchmark.
+A single model call is the better scam *catcher* and a poor judge of genuine messages (it flagged 20 to 80% of them). The gates give up some catches (as "not sure", never as "safe") so a parent's real bank text is not called a scam. Runs move by one or two messages, so read any figure as plus or minus 3. The Chinese, Malay, Indonesian and Tamil sets are written by us from common scam scripts: a development signal, not a benchmark.
 
 ## Setup
 ```bash
